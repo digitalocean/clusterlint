@@ -2,10 +2,14 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/digitalocean/clusterlint"
+	"github.com/digitalocean/clusterlint/checks"
+	_ "github.com/digitalocean/clusterlint/checks/noop"
+	"github.com/urfave/cli"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -19,8 +23,48 @@ type KubernetesAPI struct {
 }
 
 func main() {
-	api := &KubernetesAPI{Client: buildClient()}
-	api.fetch()
+	app := cli.NewApp()
+	app.Name = "clusterlint"
+	app.Usage = "Linter for k8sobjects from a live cluster"
+	app.Action = func(c *cli.Context) error {
+		fmt.Println("Print help docs")
+		return nil
+	}
+	app.Commands = []cli.Command{
+		{
+			Name:  "list",
+			Usage: "list all checks in the registry",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "group, g",
+					Usage: "list all checks in group `GROUP`",
+				},
+			},
+			Action: func(c *cli.Context) error {
+				group := c.String("group")
+				listChecks(group)
+				return nil
+			},
+		},
+	}
+	err := app.Run(os.Args)
+	if err != nil {
+		panic("boo")
+	}
+	// api := &KubernetesAPI{Client: buildClient()}
+	// api.fetch()
+}
+
+func listChecks(group string) {
+	var allChecks []checks.Check
+	if group == "" {
+		allChecks = checks.List()
+	} else {
+		allChecks = checks.GetGroup(group)
+	}
+	for _, check := range allChecks {
+		fmt.Printf("%s : %s\n", check.Name(), check.Description())
+	}
 }
 
 func (k KubernetesAPI) fetch() *clusterlint.KubeObjects {
