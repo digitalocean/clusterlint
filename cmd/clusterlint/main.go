@@ -32,43 +32,43 @@ type KubeObjects struct {
 func main() {
 	client := buildClient()
 	opts := metav1.ListOptions{}
-	Objects := KubeObjects{}
+	objects := KubeObjects{}
 	var err error
 
-	Objects.Nodes, err = client.Nodes().List(opts)
+	objects.Nodes, err = client.Nodes().List(opts)
 	handleError(err)
 
-	Objects.PersistentVolumes, err = client.PersistentVolumes().List(opts)
+	objects.PersistentVolumes, err = client.PersistentVolumes().List(opts)
 	handleError(err)
 
-	Objects.ComponentStatuses, err = client.ComponentStatuses().List(opts)
+	objects.ComponentStatuses, err = client.ComponentStatuses().List(opts)
 	handleError(err)
 
-	Objects.Pods, err = client.Pods(all).List(opts)
+	objects.Pods, err = client.Pods(all).List(opts)
 	handleError(err)
 
-	Objects.PodTemplates, err = client.PodTemplates(all).List(opts)
+	objects.PodTemplates, err = client.PodTemplates(all).List(opts)
 	handleError(err)
 
-	Objects.PersistentVolumeClaims, err = client.PersistentVolumeClaims(all).List(opts)
+	objects.PersistentVolumeClaims, err = client.PersistentVolumeClaims(all).List(opts)
 	handleError(err)
 
-	Objects.ConfigMaps, err = client.ConfigMaps(all).List(opts)
+	objects.ConfigMaps, err = client.ConfigMaps(all).List(opts)
 	handleError(err)
 
-	Objects.Secrets, err = client.Secrets(all).List(opts)
+	objects.Secrets, err = client.Secrets(all).List(opts)
 	handleError(err)
 
-	Objects.Services, err = client.Services(all).List(opts)
+	objects.Services, err = client.Services(all).List(opts)
 	handleError(err)
 
-	Objects.ServiceAccounts, err = client.ServiceAccounts(all).List(opts)
+	objects.ServiceAccounts, err = client.ServiceAccounts(all).List(opts)
 	handleError(err)
 
-	Objects.ResourceQuotas, err = client.ResourceQuotas(all).List(opts)
+	objects.ResourceQuotas, err = client.ResourceQuotas(all).List(opts)
 	handleError(err)
 
-	Objects.LimitRanges, err = client.LimitRanges(all).List(opts)
+	objects.LimitRanges, err = client.LimitRanges(all).List(opts)
 	handleError(err)
 }
 
