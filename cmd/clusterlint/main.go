@@ -1,12 +1,14 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"path/filepath"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -28,9 +30,7 @@ type KubeObjects struct {
 }
 
 func main() {
-	var kubeconfig string = filepath.Join(os.Getenv("HOME"), ".kube", "config")
-	config, _ := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	client := kubernetes.NewForConfigOrDie(config).CoreV1()
+	client := buildClient()
 	opts := metav1.ListOptions{}
 	Objects := KubeObjects{}
 	var err error
@@ -70,7 +70,15 @@ func main() {
 
 	Objects.LimitRanges, err = client.LimitRanges(all).List(opts)
 	handleError(err)
+}
 
+func buildClient() v1.CoreV1Interface {
+	k8sconfig := flag.String("kubeconfig", filepath.Join(os.Getenv("HOME"), ".kube", "config"), "absolute path to the kubeconfig file")
+	flag.Parse()
+
+	config, _ := clientcmd.BuildConfigFromFlags("", *k8sconfig)
+	client := kubernetes.NewForConfigOrDie(config).CoreV1()
+	return client
 }
 
 func handleError(err error) {
