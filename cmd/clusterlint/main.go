@@ -8,6 +8,7 @@ import (
 	"github.com/digitalocean/clusterlint"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -69,11 +70,26 @@ func (k KubernetesAPI) fetch() *clusterlint.KubeObjects {
 
 func buildClient() kubernetes.Interface {
 	k8sconfig := flag.String("kubeconfig", filepath.Join(os.Getenv("HOME"), ".kube", "config"), "absolute path to the kubeconfig file")
+	context := flag.String("context", "", "context for the kubernetes client. default: current context")
 	flag.Parse()
 
-	config, _ := clientcmd.BuildConfigFromFlags("", *k8sconfig)
+	var config *rest.Config
+	if "" != *context {
+		config, _ = buildConfigFromFlags(context, k8sconfig)
+	} else {
+		config, _ = clientcmd.BuildConfigFromFlags("", *k8sconfig)
+	}
+
 	client := kubernetes.NewForConfigOrDie(config)
 	return client
+}
+
+func buildConfigFromFlags(context, kubeconfigPath *string) (*rest.Config, error) {
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		&clientcmd.ClientConfigLoadingRules{ExplicitPath: *kubeconfigPath},
+		&clientcmd.ConfigOverrides{
+			CurrentContext: *context,
+		}).ClientConfig()
 }
 
 func handleError(err error) {
