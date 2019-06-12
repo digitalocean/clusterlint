@@ -1,4 +1,4 @@
-package main
+package kube
 
 import (
 	"testing"
@@ -7,10 +7,13 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-func TestFetchOfCoreObjects(t *testing.T) {
-	api := &KubernetesAPI{Client: fake.NewSimpleClientset()}
+func TestFetchObjects(t *testing.T) {
+	api := &Client{
+		kubeClient: fake.NewSimpleClientset(),
+	}
 
-	actual := api.fetch()
+	actual, err := api.FetchObjects()
+	assert.NoError(t, err)
 
 	assert.NotNil(t, actual.Nodes)
 	assert.NotNil(t, actual.PersistentVolumes)
