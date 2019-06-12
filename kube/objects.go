@@ -1,10 +1,10 @@
-package clusterlint
+package kube
 
 import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type KubeObjects struct {
+type Objects struct {
 	Nodes                  *corev1.NodeList
 	PersistentVolumes      *corev1.PersistentVolumeList
 	ComponentStatuses      *corev1.ComponentStatusList

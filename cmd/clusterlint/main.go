@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/digitalocean/clusterlint"
 	"github.com/digitalocean/clusterlint/checks"
 	_ "github.com/digitalocean/clusterlint/checks/noop"
+	"github.com/digitalocean/clusterlint/kube"
 	"github.com/urfave/cli"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -97,7 +97,7 @@ func runChecks(group, name string) {
 
 // runChecksForGroup runs all checks in the specified group if found
 // runs all checks in the registry if group is not specified
-func runChecksForGroup(group string, objects *clusterlint.KubeObjects) {
+func runChecksForGroup(group string, objects *kube.Objects) {
 	allChecks := getChecks(group)
 	var warnings, errors []error
 	var mu sync.Mutex
@@ -127,7 +127,7 @@ func runChecksForGroup(group string, objects *clusterlint.KubeObjects) {
 
 // runCheck runs a specific check identified by check.Name()
 // errors out if the check is not found in the registry
-func runCheck(name string, objects *clusterlint.KubeObjects) {
+func runCheck(name string, objects *kube.Objects) {
 	check, err := checks.Get(name)
 	if err != nil {
 		handleError(err)
@@ -158,12 +158,12 @@ func getChecks(group string) []checks.Check {
 	return checks.GetGroup(group)
 }
 
-// fetch initializes a KubeObjects instance with live cluster objects
+// fetch initializes a kube.Objects instance with live cluster objects
 // Currently limited to core k8s API objects
-func (k KubernetesAPI) fetch() *clusterlint.KubeObjects {
+func (k KubernetesAPI) fetch() *kube.Objects {
 	client := k.Client.CoreV1()
 	opts := metav1.ListOptions{}
-	objects := &clusterlint.KubeObjects{}
+	objects := &kube.Objects{}
 	var err error
 
 	objects.Nodes, err = client.Nodes().List(opts)
