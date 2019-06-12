@@ -1,6 +1,6 @@
 package checks
 
-import "github.com/digitalocean/clusterlint"
+import "github.com/digitalocean/clusterlint/kube"
 
 // Check is a check that can run on Kubernetes objects.
 type Check interface {
@@ -16,5 +16,5 @@ type Check interface {
 	// Run runs this check on a set of Kubernetes objects. It can return
 	// warnings (low-priority problems) and errors (high-priority problems) as
 	// well as an error value indicating that the check failed to run.
-	Run(*clusterlint.KubeObjects) (warnings []error, errors []error, err error)
+	Run(*kube.Objects) (warnings []error, errors []error, err error)
 }

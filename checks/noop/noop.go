@@ -1,8 +1,8 @@
 package noop
 
 import (
-	"github.com/digitalocean/clusterlint"
 	"github.com/digitalocean/clusterlint/checks"
+	"github.com/digitalocean/clusterlint/kube"
 )
 
 func init() {
@@ -30,6 +30,6 @@ func (nc *check) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (nc *check) Run(*clusterlint.KubeObjects) (warnings []error, errors []error, err error) {
+func (nc *check) Run(*kube.Objects) (warnings []error, errors []error, err error) {
 	return nil, nil, nil
 }
