@@ -8,10 +8,12 @@ import (
 	"sync"
 
 	"github.com/digitalocean/clusterlint/checks"
-	_ "github.com/digitalocean/clusterlint/checks/noop"
 	"github.com/digitalocean/clusterlint/kube"
 	"github.com/urfave/cli"
 	"golang.org/x/sync/errgroup"
+
+	// Side-effect import to get all the checks registered.
+	_ "github.com/digitalocean/clusterlint/checks/all"
 )
 
 const all string = ""
