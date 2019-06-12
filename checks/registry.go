@@ -84,3 +84,12 @@ func GetGroup(name string) []Check {
 
 	return ret
 }
+
+func Get(name string) (Check, error) {
+	registry.mu.RLock()
+	defer registry.mu.RUnlock()
+	if registry.checks[name] != nil {
+		return registry.checks[name], nil
+	}
+	return nil, fmt.Errorf("Check not found: %s", name)
+}
