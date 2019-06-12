@@ -16,8 +16,6 @@ import (
 	_ "github.com/digitalocean/clusterlint/checks/all"
 )
 
-const all string = ""
-
 func main() {
 	app := cli.NewApp()
 	app.Name = "clusterlint"
