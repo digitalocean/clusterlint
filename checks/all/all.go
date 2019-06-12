@@ -3,5 +3,6 @@
 package all
 
 import (
+	_ "github.com/digitalocean/clusterlint/checks/basic"
 	_ "github.com/digitalocean/clusterlint/checks/noop"
 )
