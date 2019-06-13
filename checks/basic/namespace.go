@@ -15,66 +15,69 @@ import (
 const namespace = "default"
 
 func init() {
-	checks.Register(&check{})
+	checks.Register(&defaultNamespaceCheck{})
 }
 
-type check struct{}
+type defaultNamespaceCheck struct{}
+
+type alert struct {
+	Warnings []error
+	Errors   []error
+	mu       sync.Mutex
+}
 
 // Name returns a unique name for this check.
-func (nc *check) Name() string {
-	return "namespace"
+func (nc *defaultNamespaceCheck) Name() string {
+	return "default-namespace"
 }
 
 // Groups returns a list of group names this check should be part of.
-func (nc *check) Groups() []string {
+func (nc *defaultNamespaceCheck) Groups() []string {
 	return []string{"basic"}
 }
 
 // Description returns a detailed human-readable description of what this check
 // does.
-func (nc *check) Description() string {
+func (nc *defaultNamespaceCheck) Description() string {
 	return "Checks if there are any user created k8s objects in the default namespace."
 }
 
 // warn adds warnings for k8s objects that should not be in the default namespace
-func warn(k8stype string, item metav1.ObjectMeta, w *[]error, mu *sync.Mutex) {
+func warn(k8stype string, item metav1.ObjectMeta, alert *alert) {
 	if namespace == item.GetNamespace() {
-		mu.Lock()
-		*w = append(*w, fmt.Errorf("%s '%s' is in the default namespace", k8stype, item.GetName()))
-		mu.Unlock()
+		alert.mu.Lock()
+		alert.Warnings = append(alert.Warnings, fmt.Errorf("%s '%s' is in the default namespace", k8stype, item.GetName()))
+		alert.mu.Unlock()
 	}
 }
 
 // collect retrieves all objects of a specific type that are in
 // default namespace
-func collect(item interface{}, names *[]string, guard *sync.Mutex) {
-	obj, ok := item.(metav1.ObjectMeta)
-	if ok {
-		if namespace == obj.GetNamespace() {
-			guard.Lock()
-			*names = append(*names, obj.GetName())
-			guard.Unlock()
-		}
+func collect(item metav1.ObjectMeta, names *[]string, guard *sync.Mutex) {
+	if namespace == item.GetNamespace() {
+		guard.Lock()
+		*names = append(*names, item.GetName())
+		guard.Unlock()
 	}
 }
 
 // warning adds a special warning for secrets, services and SAs which have
 // one default k8s object in the default namespace.
-func warning(k8stype string, obj []string, w *[]error, mu *sync.Mutex) {
+func warning(k8stype string, obj []string, alert *alert) {
 	if len(obj) > 1 {
-		mu.Lock()
-		*w = append(*w, fmt.Errorf("There are user created %s defined in the default namespace: %s.", k8stype, strings.Join(obj, ",")))
-		mu.Unlock()
+		alert.mu.Lock()
+		alert.Warnings = append(alert.Warnings, fmt.Errorf("There are user created %s defined in the default namespace: %s.", k8stype, strings.Join(obj, ",")))
+		alert.mu.Unlock()
 	}
 }
 
 // checkPods checks if there are pods in the default namespace
-func checkPods(items *corev1.PodList, w *[]error, mu *sync.Mutex) error {
+func checkPods(items *corev1.PodList, alert *alert) error {
 	var g errgroup.Group
 	for _, item := range items.Items {
 		item := item
 		g.Go(func() error {
-			warn("Pod", item.ObjectMeta, w, mu)
+			warn("Pod", item.ObjectMeta, alert)
 			return nil
 		})
 	}
@@ -83,12 +86,12 @@ func checkPods(items *corev1.PodList, w *[]error, mu *sync.Mutex) error {
 }
 
 // checkPodTemplates checks if there are pod templates in the default namespace
-func checkPodTemplates(items *corev1.PodTemplateList, w *[]error, mu *sync.Mutex) error {
+func checkPodTemplates(items *corev1.PodTemplateList, alert *alert) error {
 	var g errgroup.Group
 	for _, item := range items.Items {
 		item := item
 		g.Go(func() error {
-			warn("Pod template", item.ObjectMeta, w, mu)
+			warn("Pod template", item.ObjectMeta, alert)
 			return nil
 		})
 	}
@@ -97,12 +100,12 @@ func checkPodTemplates(items *corev1.PodTemplateList, w *[]error, mu *sync.Mutex
 }
 
 // checkPVCs checks if there are pvcs in the default namespace
-func checkPVCs(items *corev1.PersistentVolumeClaimList, w *[]error, mu *sync.Mutex) error {
+func checkPVCs(items *corev1.PersistentVolumeClaimList, alert *alert) error {
 	var g errgroup.Group
 	for _, item := range items.Items {
 		item := item
 		g.Go(func() error {
-			warn("Persistent Volume Claim", item.ObjectMeta, w, mu)
+			warn("Persistent Volume Claim", item.ObjectMeta, alert)
 			return nil
 		})
 	}
@@ -111,12 +114,12 @@ func checkPVCs(items *corev1.PersistentVolumeClaimList, w *[]error, mu *sync.Mut
 }
 
 // checkConfigMaps checks if there are config maps in the default namespace
-func checkConfigMaps(items *corev1.ConfigMapList, w *[]error, mu *sync.Mutex) error {
+func checkConfigMaps(items *corev1.ConfigMapList, alert *alert) error {
 	var g errgroup.Group
 	for _, item := range items.Items {
 		item := item
 		g.Go(func() error {
-			warn("Config Map", item.ObjectMeta, w, mu)
+			warn("Config Map", item.ObjectMeta, alert)
 			return nil
 		})
 	}
@@ -125,12 +128,12 @@ func checkConfigMaps(items *corev1.ConfigMapList, w *[]error, mu *sync.Mutex) er
 }
 
 // checkQuotas checks if there are quotas in the default namespace
-func checkQuotas(items *corev1.ResourceQuotaList, w *[]error, mu *sync.Mutex) error {
+func checkQuotas(items *corev1.ResourceQuotaList, alert *alert) error {
 	var g errgroup.Group
 	for _, item := range items.Items {
 		item := item
 		g.Go(func() error {
-			warn("Resource Quota", item.ObjectMeta, w, mu)
+			warn("Resource Quota", item.ObjectMeta, alert)
 			return nil
 		})
 	}
@@ -139,12 +142,12 @@ func checkQuotas(items *corev1.ResourceQuotaList, w *[]error, mu *sync.Mutex) er
 }
 
 // checkLimits checks if there are limits in the default namespace
-func checkLimits(items *corev1.LimitRangeList, w *[]error, mu *sync.Mutex) error {
+func checkLimits(items *corev1.LimitRangeList, alert *alert) error {
 	var g errgroup.Group
 	for _, item := range items.Items {
 		item := item
 		g.Go(func() error {
-			warn("Limit Range", item.ObjectMeta, w, mu)
+			warn("Limit Range", item.ObjectMeta, alert)
 			return nil
 		})
 	}
@@ -153,7 +156,7 @@ func checkLimits(items *corev1.LimitRangeList, w *[]error, mu *sync.Mutex) error
 }
 
 // checkServices checks if there are user created services in the default namespace
-func checkServices(items *corev1.ServiceList, w *[]error, mu *sync.Mutex) error {
+func checkServices(items *corev1.ServiceList, alert *alert) error {
 	var g errgroup.Group
 	var names []string
 	var guard sync.Mutex
@@ -164,16 +167,16 @@ func checkServices(items *corev1.ServiceList, w *[]error, mu *sync.Mutex) error 
 			return nil
 		})
 	}
-	err1 := g.Wait()
-	if err1 != nil {
-		return err1
+	err := g.Wait()
+	if err != nil {
+		return err
 	}
-	warning("services", names, w, mu)
+	warning("services", names, alert)
 	return nil
 }
 
 // checkSecrets checks if there are user created secrets in the default namespace
-func checkSecrets(items *corev1.SecretList, w *[]error, mu *sync.Mutex) error {
+func checkSecrets(items *corev1.SecretList, alert *alert) error {
 	var g errgroup.Group
 	var names []string
 	var guard sync.Mutex
@@ -184,16 +187,16 @@ func checkSecrets(items *corev1.SecretList, w *[]error, mu *sync.Mutex) error {
 			return nil
 		})
 	}
-	err1 := g.Wait()
-	if err1 != nil {
-		return err1
+	err := g.Wait()
+	if err != nil {
+		return err
 	}
-	warning("secrets", names, w, mu)
+	warning("secrets", names, alert)
 	return nil
 }
 
 // checkSA checks if there are user created SAs in the default namespace
-func checkSA(items *corev1.ServiceAccountList, w *[]error, mu *sync.Mutex) error {
+func checkSA(items *corev1.ServiceAccountList, alert *alert) error {
 	var g errgroup.Group
 	var names []string
 	var guard sync.Mutex
@@ -204,56 +207,55 @@ func checkSA(items *corev1.ServiceAccountList, w *[]error, mu *sync.Mutex) error
 			return nil
 		})
 	}
-	err1 := g.Wait()
-	if err1 != nil {
-		return err1
+	err := g.Wait()
+	if err != nil {
+		return err
 	}
-	warning("service account", names, w, mu)
+	warning("service account", names, alert)
 	return nil
 }
 
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (nc *check) Run(objects *kube.Objects) (warnings []error, errors []error, err error) {
-	var w []error
+func (nc *defaultNamespaceCheck) Run(objects *kube.Objects) (warnings []error, errors []error, err error) {
+	alert := &alert{}
 	var g errgroup.Group
-	var mu sync.Mutex
 	g.Go(func() error {
-		return checkPods(objects.Pods, &w, &mu)
+		return checkPods(objects.Pods, alert)
 	})
 
 	g.Go(func() error {
-		return checkPodTemplates(objects.PodTemplates, &w, &mu)
+		return checkPodTemplates(objects.PodTemplates, alert)
 	})
 
 	g.Go(func() error {
-		return checkPVCs(objects.PersistentVolumeClaims, &w, &mu)
+		return checkPVCs(objects.PersistentVolumeClaims, alert)
 	})
 
 	g.Go(func() error {
-		return checkConfigMaps(objects.ConfigMaps, &w, &mu)
+		return checkConfigMaps(objects.ConfigMaps, alert)
 	})
 
 	g.Go(func() error {
-		return checkQuotas(objects.ResourceQuotas, &w, &mu)
+		return checkQuotas(objects.ResourceQuotas, alert)
 	})
 
 	g.Go(func() error {
-		return checkLimits(objects.LimitRanges, &w, &mu)
+		return checkLimits(objects.LimitRanges, alert)
 	})
 
 	g.Go(func() error {
-		return checkServices(objects.Services, &w, &mu)
+		return checkServices(objects.Services, alert)
 	})
 
 	g.Go(func() error {
-		return checkSecrets(objects.Secrets, &w, &mu)
+		return checkSecrets(objects.Secrets, alert)
 	})
 
 	g.Go(func() error {
-		return checkSA(objects.ServiceAccounts, &w, &mu)
+		return checkSA(objects.ServiceAccounts, alert)
 	})
 
-	return w, nil, g.Wait()
+	return alert.Warnings, alert.Errors, g.Wait()
 }
