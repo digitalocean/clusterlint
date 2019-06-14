@@ -12,18 +12,21 @@ import (
 
 func TestNamespaceWarning(t *testing.T) {
 	scenarios := []struct {
+		name     string
 		arg      *kube.Objects
 		expected []error
 	}{
-		{empty(), nil},
-		{userCreatedObjects(), errors()},
+		{"no objects in cluster", empty(), nil},
+		{"user created objects in default namespace", userCreatedObjects(), errors()},
 	}
 
 	namespace := defaultNamespaceCheck{}
 
 	for _, scenario := range scenarios {
-		w, _, _ := namespace.Run(scenario.arg)
-		assert.ElementsMatch(t, scenario.expected, w)
+		t.Run(scenario.name, func(t *testing.T) {
+			w, _, _ := namespace.Run(scenario.arg)
+			assert.ElementsMatch(t, scenario.expected, w)
+		})
 	}
 }
 
