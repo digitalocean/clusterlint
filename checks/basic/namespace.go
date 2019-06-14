@@ -26,6 +26,25 @@ type alert struct {
 	mu       sync.Mutex
 }
 
+// warn adds warnings for k8s objects that should not be in the default namespace
+func (alert *alert) warn(k8stype string, item metav1.ObjectMeta) {
+	if namespace == item.GetNamespace() {
+		alert.mu.Lock()
+		alert.Warnings = append(alert.Warnings, fmt.Errorf("%s '%s' is in the default namespace.", k8stype, item.GetName()))
+		alert.mu.Unlock()
+	}
+}
+
+// warning adds a special warning for secrets, services and SAs which have
+// one default k8s object in the default namespace.
+func (alert *alert) warning(k8stype string, obj []string) {
+	if len(obj) > 1 {
+		alert.mu.Lock()
+		alert.Warnings = append(alert.Warnings, fmt.Errorf("There are user created %s defined in the default namespace: %s.", k8stype, strings.Join(obj, ",")))
+		alert.mu.Unlock()
+	}
+}
+
 // Name returns a unique name for this check.
 func (nc *defaultNamespaceCheck) Name() string {
 	return "default-namespace"
@@ -42,15 +61,6 @@ func (nc *defaultNamespaceCheck) Description() string {
 	return "Checks if there are any user created k8s objects in the default namespace."
 }
 
-// warn adds warnings for k8s objects that should not be in the default namespace
-func warn(k8stype string, item metav1.ObjectMeta, alert *alert) {
-	if namespace == item.GetNamespace() {
-		alert.mu.Lock()
-		alert.Warnings = append(alert.Warnings, fmt.Errorf("%s '%s' is in the default namespace", k8stype, item.GetName()))
-		alert.mu.Unlock()
-	}
-}
-
 // collect retrieves all objects of a specific type that are in
 // default namespace
 func collect(item metav1.ObjectMeta, names *[]string, guard *sync.Mutex) {
@@ -61,23 +71,13 @@ func collect(item metav1.ObjectMeta, names *[]string, guard *sync.Mutex) {
 	}
 }
 
-// warning adds a special warning for secrets, services and SAs which have
-// one default k8s object in the default namespace.
-func warning(k8stype string, obj []string, alert *alert) {
-	if len(obj) > 1 {
-		alert.mu.Lock()
-		alert.Warnings = append(alert.Warnings, fmt.Errorf("There are user created %s defined in the default namespace: %s.", k8stype, strings.Join(obj, ",")))
-		alert.mu.Unlock()
-	}
-}
-
 // checkPods checks if there are pods in the default namespace
 func checkPods(items *corev1.PodList, alert *alert) error {
 	var g errgroup.Group
 	for _, item := range items.Items {
 		item := item
 		g.Go(func() error {
-			warn("Pod", item.ObjectMeta, alert)
+			alert.warn("Pod", item.ObjectMeta)
 			return nil
 		})
 	}
@@ -91,7 +91,7 @@ func checkPodTemplates(items *corev1.PodTemplateList, alert *alert) error {
 	for _, item := range items.Items {
 		item := item
 		g.Go(func() error {
-			warn("Pod template", item.ObjectMeta, alert)
+			alert.warn("Pod template", item.ObjectMeta)
 			return nil
 		})
 	}
@@ -105,7 +105,7 @@ func checkPVCs(items *corev1.PersistentVolumeClaimList, alert *alert) error {
 	for _, item := range items.Items {
 		item := item
 		g.Go(func() error {
-			warn("Persistent Volume Claim", item.ObjectMeta, alert)
+			alert.warn("Persistent Volume Claim", item.ObjectMeta)
 			return nil
 		})
 	}
@@ -119,7 +119,7 @@ func checkConfigMaps(items *corev1.ConfigMapList, alert *alert) error {
 	for _, item := range items.Items {
 		item := item
 		g.Go(func() error {
-			warn("Config Map", item.ObjectMeta, alert)
+			alert.warn("Config Map", item.ObjectMeta)
 			return nil
 		})
 	}
@@ -133,7 +133,7 @@ func checkQuotas(items *corev1.ResourceQuotaList, alert *alert) error {
 	for _, item := range items.Items {
 		item := item
 		g.Go(func() error {
-			warn("Resource Quota", item.ObjectMeta, alert)
+			alert.warn("Resource Quota", item.ObjectMeta)
 			return nil
 		})
 	}
@@ -147,7 +147,7 @@ func checkLimits(items *corev1.LimitRangeList, alert *alert) error {
 	for _, item := range items.Items {
 		item := item
 		g.Go(func() error {
-			warn("Limit Range", item.ObjectMeta, alert)
+			alert.warn("Limit Range", item.ObjectMeta)
 			return nil
 		})
 	}
@@ -171,7 +171,7 @@ func checkServices(items *corev1.ServiceList, alert *alert) error {
 	if err != nil {
 		return err
 	}
-	warning("services", names, alert)
+	alert.warning("services", names)
 	return nil
 }
 
@@ -191,7 +191,7 @@ func checkSecrets(items *corev1.SecretList, alert *alert) error {
 	if err != nil {
 		return err
 	}
-	warning("secrets", names, alert)
+	alert.warning("secrets", names)
 	return nil
 }
 
@@ -211,7 +211,7 @@ func checkSA(items *corev1.ServiceAccountList, alert *alert) error {
 	if err != nil {
 		return err
 	}
-	warning("service account", names, alert)
+	alert.warning("service accounts", names)
 	return nil
 }
 
