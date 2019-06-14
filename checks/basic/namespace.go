@@ -12,8 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const namespace = "default"
-
 func init() {
 	checks.Register(&defaultNamespaceCheck{})
 }
@@ -66,7 +64,7 @@ func (nc *defaultNamespaceCheck) Description() string {
 // checkPods checks if there are pods in the default namespace
 func checkPods(items *corev1.PodList, alert *alert) {
 	for _, item := range items.Items {
-		if namespace == item.GetNamespace() {
+		if corev1.NamespaceDefault == item.GetNamespace() {
 			alert.warn("Pod", item.ObjectMeta)
 		}
 	}
@@ -75,7 +73,7 @@ func checkPods(items *corev1.PodList, alert *alert) {
 // checkPodTemplates checks if there are pod templates in the default namespace
 func checkPodTemplates(items *corev1.PodTemplateList, alert *alert) {
 	for _, item := range items.Items {
-		if namespace == item.GetNamespace() {
+		if corev1.NamespaceDefault == item.GetNamespace() {
 			alert.warn("Pod template", item.ObjectMeta)
 		}
 	}
@@ -84,7 +82,7 @@ func checkPodTemplates(items *corev1.PodTemplateList, alert *alert) {
 // checkPVCs checks if there are pvcs in the default namespace
 func checkPVCs(items *corev1.PersistentVolumeClaimList, alert *alert) {
 	for _, item := range items.Items {
-		if namespace == item.GetNamespace() {
+		if corev1.NamespaceDefault == item.GetNamespace() {
 			alert.warn("Persistent Volume Claim", item.ObjectMeta)
 		}
 	}
@@ -93,7 +91,7 @@ func checkPVCs(items *corev1.PersistentVolumeClaimList, alert *alert) {
 // checkConfigMaps checks if there are config maps in the default namespace
 func checkConfigMaps(items *corev1.ConfigMapList, alert *alert) {
 	for _, item := range items.Items {
-		if namespace == item.GetNamespace() {
+		if corev1.NamespaceDefault == item.GetNamespace() {
 			alert.warn("Config Map", item.ObjectMeta)
 		}
 	}
@@ -102,7 +100,7 @@ func checkConfigMaps(items *corev1.ConfigMapList, alert *alert) {
 // checkQuotas checks if there are quotas in the default namespace
 func checkQuotas(items *corev1.ResourceQuotaList, alert *alert) {
 	for _, item := range items.Items {
-		if namespace == item.GetNamespace() {
+		if corev1.NamespaceDefault == item.GetNamespace() {
 			alert.warn("Resource Quota", item.ObjectMeta)
 		}
 	}
@@ -111,7 +109,7 @@ func checkQuotas(items *corev1.ResourceQuotaList, alert *alert) {
 // checkLimits checks if there are limits in the default namespace
 func checkLimits(items *corev1.LimitRangeList, alert *alert) {
 	for _, item := range items.Items {
-		if namespace == item.GetNamespace() {
+		if corev1.NamespaceDefault == item.GetNamespace() {
 			alert.warn("Limit Range", item.ObjectMeta)
 		}
 	}
@@ -120,7 +118,7 @@ func checkLimits(items *corev1.LimitRangeList, alert *alert) {
 // checkServices checks if there are user created services in the default namespace
 func checkServices(items *corev1.ServiceList, alert *alert) {
 	for _, item := range items.Items {
-		if namespace == item.GetNamespace() && item.GetName() != "kubernetes" {
+		if corev1.NamespaceDefault == item.GetNamespace() && item.GetName() != "kubernetes" {
 			alert.warn("Service", item.ObjectMeta)
 		}
 	}
@@ -129,7 +127,7 @@ func checkServices(items *corev1.ServiceList, alert *alert) {
 // checkSecrets checks if there are user created secrets in the default namespace
 func checkSecrets(items *corev1.SecretList, alert *alert) {
 	for _, item := range items.Items {
-		if namespace == item.GetNamespace() && !strings.Contains(item.GetName(), "default-token-") {
+		if corev1.NamespaceDefault == item.GetNamespace() && !strings.Contains(item.GetName(), "default-token-") {
 			alert.warn("Secret", item.ObjectMeta)
 		}
 	}
@@ -138,7 +136,7 @@ func checkSecrets(items *corev1.SecretList, alert *alert) {
 // checkSA checks if there are user created SAs in the default namespace
 func checkSA(items *corev1.ServiceAccountList, alert *alert) {
 	for _, item := range items.Items {
-		if namespace == item.GetNamespace() && item.GetName() != "default" {
+		if corev1.NamespaceDefault == item.GetNamespace() && item.GetName() != "default" {
 			alert.warn("Service Account", item.ObjectMeta)
 		}
 	}
