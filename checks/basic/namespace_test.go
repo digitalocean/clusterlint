@@ -4,11 +4,26 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func TestNamespaceCheckMeta(t *testing.T) {
+	defaultNamespaceCheck := defaultNamespaceCheck{}
+	assert.Equal(t, "default-namespace", defaultNamespaceCheck.Name())
+	assert.Equal(t, "Checks if there are any user created k8s objects in the default namespace.", defaultNamespaceCheck.Description())
+	assert.Equal(t, []string{"basic"}, defaultNamespaceCheck.Groups())
+}
+
+func TestNamespaceCheckRegistration(t *testing.T) {
+	defaultNamespaceCheck := &defaultNamespaceCheck{}
+	check, err := checks.Get("default-namespace")
+	assert.Equal(t, check, defaultNamespaceCheck)
+	assert.Nil(t, err)
+}
 
 func TestNamespaceWarning(t *testing.T) {
 	scenarios := []struct {

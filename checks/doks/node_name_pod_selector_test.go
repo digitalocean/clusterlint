@@ -4,15 +4,25 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestGroup(t *testing.T) {
+func TestPodSelectorCheckMeta(t *testing.T) {
 	podSelectorCheck := podSelectorCheck{}
+	assert.Equal(t, "node-name-pod-selector", podSelectorCheck.Name())
+	assert.Equal(t, "Checks if there are pods which use kubernetes.io/hostname label in the node selector.", podSelectorCheck.Description())
 	assert.Equal(t, []string{"doks"}, podSelectorCheck.Groups())
+}
+
+func TestPodSelectorCheckRegistration(t *testing.T) {
+	podSelectorCheck := &podSelectorCheck{}
+	check, err := checks.Get("node-name-pod-selector")
+	assert.Equal(t, check, podSelectorCheck)
+	assert.Nil(t, err)
 }
 
 func TestNodeNameError(t *testing.T) {
