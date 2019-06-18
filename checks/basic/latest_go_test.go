@@ -11,14 +11,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestMeta(t *testing.T) {
+func TestLatestTagCheckMeta(t *testing.T) {
 	latestTagCheck := latestTagCheck{}
 	assert.Equal(t, "latest-tag", latestTagCheck.Name())
 	assert.Equal(t, "Checks if there are pods with container images having latest tag", latestTagCheck.Description())
 	assert.Equal(t, []string{"basic"}, latestTagCheck.Groups())
 }
 
-func TestRegistration(t *testing.T) {
+func TestLatestTagCheckRegistration(t *testing.T) {
 	latestTagCheck := &latestTagCheck{}
 	check, err := checks.Get("latest-tag")
 	assert.Equal(t, check, latestTagCheck)
