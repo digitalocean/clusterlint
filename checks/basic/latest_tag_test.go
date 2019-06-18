@@ -57,12 +57,12 @@ func TestLatestTagWarning(t *testing.T) {
 			expected: warnings(),
 		},
 		{
-			name:     "pod with container image - http://private:5000/repo/busybox",
+			name:     "pod with container image - private:5000/repo/busybox",
 			arg:      container("http://private:5000/repo/busybox"),
 			expected: warnings(),
 		},
 		{
-			name:     "pod with container image - http://private:5000/repo/busybox:latest",
+			name:     "pod with container image - private:5000/repo/busybox:latest",
 			arg:      container("http://private:5000/repo/busybox:latest"),
 			expected: warnings(),
 		},
