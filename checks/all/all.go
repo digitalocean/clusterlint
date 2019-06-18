@@ -6,4 +6,5 @@ import (
 	_ "github.com/digitalocean/clusterlint/checks/basic"
 	_ "github.com/digitalocean/clusterlint/checks/doks"
 	_ "github.com/digitalocean/clusterlint/checks/noop"
+	_ "github.com/digitalocean/clusterlint/checks/security"
 )

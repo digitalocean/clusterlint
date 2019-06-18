@@ -153,33 +153,37 @@ func TestLatestTagWarning(t *testing.T) {
 
 func initPod() *kube.Objects {
 	objs := &kube.Objects{
-		Pods: &corev1.PodList{},
+		Pods: &corev1.PodList{
+			Items: []corev1.Pod{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "pod_foo", Namespace: "k8s"},
+				},
+			},
+		},
 	}
 	return objs
 }
 
 func container(image string) *kube.Objects {
 	objs := initPod()
-	objs.Pods = &corev1.PodList{
-		Items: []corev1.Pod{
+	objs.Pods.Items[0].Spec = corev1.PodSpec{
+		Containers: []corev1.Container{
 			{
-				ObjectMeta: metav1.ObjectMeta{Name: "pod_foo", Namespace: "k8s"},
-				Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "bar", Image: image}}},
-			},
-		},
+				Name:  "bar",
+				Image: image,
+			}},
 	}
 	return objs
 }
 
 func initContainer(image string) *kube.Objects {
 	objs := initPod()
-	objs.Pods = &corev1.PodList{
-		Items: []corev1.Pod{
+	objs.Pods.Items[0].Spec = corev1.PodSpec{
+		InitContainers: []corev1.Container{
 			{
-				ObjectMeta: metav1.ObjectMeta{Name: "pod_foo", Namespace: "k8s"},
-				Spec:       corev1.PodSpec{InitContainers: []corev1.Container{{Name: "bar", Image: image}}},
-			},
-		},
+				Name:  "bar",
+				Image: image,
+			}},
 	}
 	return objs
 }
