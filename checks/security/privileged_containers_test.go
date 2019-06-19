@@ -83,9 +83,9 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
 			w, e, err := privilegedContainerCheck.Run(scenario.arg)
+			assert.NoError(t, err)
 			assert.ElementsMatch(t, scenario.expected, w)
 			assert.Empty(t, e)
-			assert.Nil(t, err)
 		})
 	}
 }

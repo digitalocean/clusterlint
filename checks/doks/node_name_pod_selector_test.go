@@ -47,8 +47,10 @@ func TestNodeNameError(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			_, e, _ := podSelectorCheck.Run(scenario.arg)
+			w, e, err := podSelectorCheck.Run(scenario.arg)
+			assert.NoError(t, err)
 			assert.ElementsMatch(t, scenario.expected, e)
+			assert.Empty(t, w)
 		})
 	}
 }
