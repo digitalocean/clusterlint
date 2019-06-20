@@ -1,14 +1,11 @@
 package basic
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestLatestTagCheckMeta(t *testing.T) {
@@ -26,6 +23,7 @@ func TestLatestTagCheckRegistration(t *testing.T) {
 }
 
 func TestLatestTagWarning(t *testing.T) {
+	const warning string = "[Best Practice] Use specific tags instead of latest for container 'bar' in pod 'pod_foo' in namespace 'k8s'"
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
@@ -39,32 +37,32 @@ func TestLatestTagWarning(t *testing.T) {
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox:latest",
 			arg:      container("k8s.gcr.io/busybox:latest"),
-			expected: warnings(),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - busybox:latest",
 			arg:      container("busybox:latest"),
-			expected: warnings(),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
 			arg:      container("k8s.gcr.io/busybox"),
-			expected: warnings(),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - busybox",
 			arg:      container("busybox"),
-			expected: warnings(),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - private:5000/repo/busybox",
 			arg:      container("http://private:5000/repo/busybox"),
-			expected: warnings(),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - private:5000/repo/busybox:latest",
 			arg:      container("http://private:5000/repo/busybox:latest"),
-			expected: warnings(),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - test:5000/repo@sha256:digest",
@@ -90,32 +88,32 @@ func TestLatestTagWarning(t *testing.T) {
 		{
 			name:     "pod with init container image - k8s.gcr.io/busybox:latest",
 			arg:      initContainer("k8s.gcr.io/busybox:latest"),
-			expected: warnings(),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with init container image - busybox:latest",
 			arg:      initContainer("busybox:latest"),
-			expected: warnings(),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with init container image - k8s.gcr.io/busybox",
 			arg:      initContainer("k8s.gcr.io/busybox"),
-			expected: warnings(),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with init container image - busybox",
 			arg:      initContainer("busybox"),
-			expected: warnings(),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - http://private:5000/repo/busybox",
 			arg:      container("http://private:5000/repo/busybox"),
-			expected: warnings(),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - http://private:5000/repo/busybox:latest",
 			arg:      container("http://private:5000/repo/busybox:latest"),
-			expected: warnings(),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - test:5000/repo@sha256:digest",
@@ -149,48 +147,4 @@ func TestLatestTagWarning(t *testing.T) {
 			assert.Empty(t, e)
 		})
 	}
-}
-
-func initPod() *kube.Objects {
-	objs := &kube.Objects{
-		Pods: &corev1.PodList{
-			Items: []corev1.Pod{
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "pod_foo", Namespace: "k8s"},
-				},
-			},
-		},
-	}
-	return objs
-}
-
-func container(image string) *kube.Objects {
-	objs := initPod()
-	objs.Pods.Items[0].Spec = corev1.PodSpec{
-		Containers: []corev1.Container{
-			{
-				Name:  "bar",
-				Image: image,
-			}},
-	}
-	return objs
-}
-
-func initContainer(image string) *kube.Objects {
-	objs := initPod()
-	objs.Pods.Items[0].Spec = corev1.PodSpec{
-		InitContainers: []corev1.Container{
-			{
-				Name:  "bar",
-				Image: image,
-			}},
-	}
-	return objs
-}
-
-func warnings() []error {
-	w := []error{
-		fmt.Errorf("[Best Practice] Use specific tags instead of latest for container 'bar' in pod 'pod_foo' in namespace 'k8s'"),
-	}
-	return w
 }
