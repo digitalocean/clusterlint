@@ -37,32 +37,32 @@ func TestLatestTagWarning(t *testing.T) {
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox:latest",
 			arg:      container("k8s.gcr.io/busybox:latest"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - busybox:latest",
 			arg:      container("busybox:latest"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
 			arg:      container("k8s.gcr.io/busybox"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - busybox",
 			arg:      container("busybox"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - private:5000/repo/busybox",
 			arg:      container("http://private:5000/repo/busybox"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - private:5000/repo/busybox:latest",
 			arg:      container("http://private:5000/repo/busybox:latest"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - test:5000/repo@sha256:digest",
@@ -88,32 +88,32 @@ func TestLatestTagWarning(t *testing.T) {
 		{
 			name:     "pod with init container image - k8s.gcr.io/busybox:latest",
 			arg:      initContainer("k8s.gcr.io/busybox:latest"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with init container image - busybox:latest",
 			arg:      initContainer("busybox:latest"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with init container image - k8s.gcr.io/busybox",
 			arg:      initContainer("k8s.gcr.io/busybox"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with init container image - busybox",
 			arg:      initContainer("busybox"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - http://private:5000/repo/busybox",
 			arg:      container("http://private:5000/repo/busybox"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - http://private:5000/repo/busybox:latest",
 			arg:      container("http://private:5000/repo/busybox:latest"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - test:5000/repo@sha256:digest",

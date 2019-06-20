@@ -45,9 +45,9 @@ func initContainer(image string) *kube.Objects {
 	return objs
 }
 
-func warnings(s string) []error {
-	w := []error{
+func issues(s string) []error {
+	issue := []error{
 		fmt.Errorf(s),
 	}
-	return w
+	return issue
 }

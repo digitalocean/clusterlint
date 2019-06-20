@@ -34,27 +34,36 @@ func (fq *fullyQualifiedImageCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (fq *fullyQualifiedImageCheck) Run(objects *kube.Objects) (warnings []error, errors []error, err error) {
-	var w []error
+func (fq *fullyQualifiedImageCheck) Run(objects *kube.Objects) ([]error, []error, error) {
+	var warnings, errors []error
 
 	for _, pod := range objects.Pods.Items {
 		podName := pod.GetName()
 		namespace := pod.GetNamespace()
-		w = append(w, checkImage(pod.Spec.Containers, podName, namespace)...)
-		w = append(w, checkImage(pod.Spec.InitContainers, podName, namespace)...)
+		w, e := checkImage(pod.Spec.Containers, podName, namespace)
+		warnings = append(warnings, w...)
+		errors = append(errors, e...)
+		w, e = checkImage(pod.Spec.InitContainers, podName, namespace)
+		warnings = append(warnings, w...)
+		errors = append(errors, e...)
 	}
 
-	return w, nil, nil
+	return warnings, errors, nil
 }
 
 // checkImage checks if the image name is fully qualified
 // Adds a warning if the container does not use a fully qualified image name
-func checkImage(containers []corev1.Container, podName string, namespace string) []error {
-	var w []error
+func checkImage(containers []corev1.Container, podName string, namespace string) ([]error, []error) {
+	var w, e []error
 	for _, container := range containers {
-		if value, err := reference.ParseAnyReference(container.Image); err != nil || value.String() != container.Image {
-			w = append(w, fmt.Errorf("[Best Practice] Use fully qualified image for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace))
+		value, err := reference.ParseAnyReference(container.Image)
+		if err != nil {
+			e = append(e, fmt.Errorf("[Error] Malformed image name for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace))
+		} else {
+			if value.String() != container.Image {
+				w = append(w, fmt.Errorf("[Best Practice] Use fully qualified image for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace))
+			}
 		}
 	}
-	return w
+	return w, e
 }

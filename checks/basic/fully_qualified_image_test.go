@@ -43,7 +43,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox:latest",
 			arg:      container("busybox:latest"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
@@ -53,7 +53,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox",
 			arg:      container("busybox"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -63,7 +63,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      container("repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -73,7 +73,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      container("repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox:latest",
@@ -83,7 +83,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox:latest",
 			arg:      initContainer("busybox:latest"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
@@ -93,7 +93,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox",
 			arg:      initContainer("busybox"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -103,7 +103,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      initContainer("repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -113,7 +113,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      initContainer("repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: warnings(warning),
+			expected: issues(warning),
 		},
 	}
 
@@ -122,9 +122,42 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
 			w, e, err := fullyQualifiedImageCheck.Run(scenario.arg)
+			assert.NoError(t, err)
 			assert.ElementsMatch(t, scenario.expected, w)
 			assert.Empty(t, e)
-			assert.Nil(t, err)
+
+		})
+	}
+}
+
+func TestMalformedImageError(t *testing.T) {
+	const e string = "[Error] Malformed image name for container 'bar' in pod 'pod_foo' in namespace 'k8s'"
+
+	scenarios := []struct {
+		name     string
+		arg      *kube.Objects
+		expected []error
+	}{
+		{
+			name:     "container with image : test:5000/repo/image@sha256:digest",
+			arg:      container("test:5000/repo/image@sha256:digest"),
+			expected: issues(e),
+		},
+		{
+			name:     "init container with image : test:5000/repo/image@sha256:digest",
+			arg:      initContainer("test:5000/repo/image@sha256:digest"),
+			expected: issues(e),
+		},
+	}
+	fullyQualifiedImageCheck := fullyQualifiedImageCheck{}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			w, e, err := fullyQualifiedImageCheck.Run(scenario.arg)
+			assert.NoError(t, err)
+			assert.ElementsMatch(t, scenario.expected, e)
+			assert.Empty(t, w)
+
 		})
 	}
 }
