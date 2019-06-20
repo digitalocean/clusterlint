@@ -7,14 +7,13 @@ import (
 	"github.com/digitalocean/clusterlint/kube"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestMeta(t *testing.T) {
 	podStatusCheck := podStatusCheck{}
 	assert.Equal(t, "pod-state", podStatusCheck.Name())
 	assert.Equal(t, "Check if there are unhealthy pods in the cluster", podStatusCheck.Description())
-	assert.Equal(t, []string{"basic"}, podStatusCheck.Groups())
+	assert.Equal(t, []string{"workload-health"}, podStatusCheck.Groups())
 }
 
 func TestPodStateError(t *testing.T) {
@@ -71,22 +70,10 @@ func TestPodStateError(t *testing.T) {
 	}
 }
 
-func initPod() *kube.Objects {
-	objs := &kube.Objects{
-		Pods: &corev1.PodList{},
-	}
-	return objs
-}
-
 func status(status corev1.PodPhase) *kube.Objects {
 	objs := initPod()
-	objs.Pods = &corev1.PodList{
-		Items: []corev1.Pod{
-			{
-				ObjectMeta: metav1.ObjectMeta{Name: "pod_foo", Namespace: "k8s"},
-				Status:     corev1.PodStatus{Phase: status},
-			},
-		},
+	objs.Pods.Items[0].Status = corev1.PodStatus{
+		Phase: status,
 	}
 	return objs
 }

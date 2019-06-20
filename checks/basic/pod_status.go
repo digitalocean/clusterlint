@@ -21,7 +21,7 @@ func (p *podStatusCheck) Name() string {
 
 // Groups returns a list of group names this check should be part of.
 func (p *podStatusCheck) Groups() []string {
-	return []string{"basic"}
+	return []string{"workload-health"}
 }
 
 // Description returns a detailed human-readable description of what this check
