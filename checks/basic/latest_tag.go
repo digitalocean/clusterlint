@@ -6,6 +6,7 @@ import (
 
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
+	"github.com/docker/distribution/reference"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -51,8 +52,9 @@ func (l *latestTagCheck) Run(objects *kube.Objects) (warnings []error, errors []
 func checkTags(containers []corev1.Container, podName string, namespace string) []error {
 	var w []error
 	for _, container := range containers {
-		image := container.Image[strings.LastIndex(container.Image, "/")+1:]
-		if strings.Contains(image, ":latest") || !strings.Contains(image, ":") {
+		namedRef, _ := reference.ParseNormalizedNamed(container.Image)
+		tagNameOnly := reference.TagNameOnly(namedRef)
+		if strings.HasSuffix(tagNameOnly.String(), ":latest") {
 			w = append(w, fmt.Errorf("[Best Practice] Use specific tags instead of latest for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace))
 		}
 	}
