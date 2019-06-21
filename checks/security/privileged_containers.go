@@ -33,27 +33,27 @@ func (pc *privilegedContainerCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (pc *privilegedContainerCheck) Run(objects *kube.Objects) (warnings []error, errors []error, err error) {
-	var w []error
+func (pc *privilegedContainerCheck) Run(objects *kube.Objects) ([]kube.Diagnostic, error) {
+	var diagnostics []kube.Diagnostic
 
 	for _, pod := range objects.Pods.Items {
 		podName := pod.GetName()
 		namespace := pod.GetNamespace()
-		w = append(w, checkPrivileged(pod.Spec.Containers, podName, namespace)...)
-		w = append(w, checkPrivileged(pod.Spec.InitContainers, podName, namespace)...)
+		diagnostics = append(diagnostics, checkPrivileged(pod.Spec.Containers, podName, namespace)...)
+		diagnostics = append(diagnostics, checkPrivileged(pod.Spec.InitContainers, podName, namespace)...)
 	}
 
-	return w, nil, nil
+	return diagnostics, nil
 }
 
 // checkPrivileged checks if the container is running in privileged mode
 // Adds a warning if it finds any privileged container
-func checkPrivileged(containers []corev1.Container, podName string, namespace string) []error {
-	var w []error
+func checkPrivileged(containers []corev1.Container, podName string, namespace string) []kube.Diagnostic {
+	var d []kube.Diagnostic
 	for _, container := range containers {
 		if container.SecurityContext != nil && container.SecurityContext.Privileged != nil && *container.SecurityContext.Privileged {
-			w = append(w, fmt.Errorf("[Best Practice] Privileged container '%s' found in pod '%s', namespace '%s'.", container.Name, podName, namespace))
+			d = append(d, kube.Diagnostic{Category: "warning", Message: fmt.Sprintf("[Best Practice] Privileged container '%s' found in pod '%s', namespace '%s'.", container.Name, podName, namespace)})
 		}
 	}
-	return w
+	return d
 }

@@ -29,7 +29,7 @@ func TestNamespaceWarning(t *testing.T) {
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []error
+		expected []kube.Diagnostic
 	}{
 		{"no objects in cluster", empty(), nil},
 		{"user created objects in default namespace", userCreatedObjects(), errors()},
@@ -39,10 +39,9 @@ func TestNamespaceWarning(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			w, e, err := namespace.Run(scenario.arg)
+			d, err := namespace.Run(scenario.arg)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, scenario.expected, w)
-			assert.Empty(t, e)
+			assert.ElementsMatch(t, scenario.expected, d)
 		})
 	}
 }
@@ -74,15 +73,16 @@ func userCreatedObjects() *kube.Objects {
 	return objs
 }
 
-func errors() []error {
-	w := []error{
-		fmt.Errorf("Pod 'pod_foo' is in the default namespace."),
-		fmt.Errorf("Pod template 'template_foo' is in the default namespace."),
-		fmt.Errorf("Persistent Volume Claim 'pvc_foo' is in the default namespace."),
-		fmt.Errorf("Config Map 'cm_foo' is in the default namespace."),
-		fmt.Errorf("Service 'svc_foo' is in the default namespace."),
-		fmt.Errorf("Secret 'secret_foo' is in the default namespace."),
-		fmt.Errorf("Service Account 'sa_foo' is in the default namespace."),
+func errors() []kube.Diagnostic {
+	const warning string = "warning"
+	d := []kube.Diagnostic{
+		{Category: warning, Message: fmt.Sprintf("Pod 'pod_foo' is in the default namespace.")},
+		{Category: warning, Message: fmt.Sprintf("Pod template 'template_foo' is in the default namespace.")},
+		{Category: warning, Message: fmt.Sprintf("Persistent Volume Claim 'pvc_foo' is in the default namespace.")},
+		{Category: warning, Message: fmt.Sprintf("Config Map 'cm_foo' is in the default namespace.")},
+		{Category: warning, Message: fmt.Sprintf("Service 'svc_foo' is in the default namespace.")},
+		{Category: warning, Message: fmt.Sprintf("Secret 'secret_foo' is in the default namespace.")},
+		{Category: warning, Message: fmt.Sprintf("Service Account 'sa_foo' is in the default namespace.")},
 	}
-	return w
+	return d
 }

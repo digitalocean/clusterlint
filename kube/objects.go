@@ -30,6 +30,14 @@ type Client struct {
 	kubeClient kubernetes.Interface
 }
 
+// Diagnostic encapsulates the information each check returns.
+type Diagnostic struct {
+	Category string
+	Message  string
+
+	Metadata map[string]string
+}
+
 // FetchObjects returns the objects from a Kubernetes cluster.
 func (c *Client) FetchObjects() (*Objects, error) {
 	const all = ""

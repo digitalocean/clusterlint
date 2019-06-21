@@ -29,7 +29,7 @@ func TestNodeNameError(t *testing.T) {
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []error
+		expected []kube.Diagnostic
 	}{
 		{
 			name:     "no node name selector",
@@ -47,10 +47,9 @@ func TestNodeNameError(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			w, e, err := podSelectorCheck.Run(scenario.arg)
+			d, err := podSelectorCheck.Run(scenario.arg)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, scenario.expected, e)
-			assert.Empty(t, w)
+			assert.ElementsMatch(t, scenario.expected, d)
 		})
 	}
 }
@@ -75,9 +74,9 @@ func invalidPod() *kube.Objects {
 	return objs
 }
 
-func errors() []error {
-	e := []error{
-		fmt.Errorf("pod 'pod_foo' in namespace 'k8s' uses the node name for node selector"),
+func errors() []kube.Diagnostic {
+	diagnostics := []kube.Diagnostic{
+		{Category: "error", Message: fmt.Sprintf("pod 'pod_foo' in namespace 'k8s' uses the node name for node selector")},
 	}
-	return e
+	return diagnostics
 }

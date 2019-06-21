@@ -102,7 +102,7 @@ func runChecks(c *cli.Context) error {
 // runs all checks in the registry if group is not specified
 func runChecksForGroup(group string, objects *kube.Objects) error {
 	allChecks := getChecks(group)
-	var warnings, errors []error
+	var diagnostics []kube.Diagnostic
 	var mu sync.Mutex
 	var g errgroup.Group
 
@@ -110,19 +110,18 @@ func runChecksForGroup(group string, objects *kube.Objects) error {
 		check := check
 		g.Go(func() error {
 			log.Println("Running check: ", check.Name())
-			w, e, err := check.Run(objects)
+			d, err := check.Run(objects)
 			if err != nil {
 				return err
 			}
 			mu.Lock()
-			warnings = append(warnings, w...)
-			errors = append(errors, e...)
+			diagnostics = append(diagnostics, d...)
 			mu.Unlock()
 			return nil
 		})
 	}
 	err := g.Wait()
-	showErrorsAndWarnings(warnings, errors)
+	showDiagnostics(diagnostics)
 
 	return err
 }
@@ -136,19 +135,22 @@ func runCheck(name string, objects *kube.Objects) error {
 	}
 
 	log.Println("Running check: ", name)
-	warnings, errors, err := check.Run(objects)
-	showErrorsAndWarnings(warnings, errors)
+	diagnostics, err := check.Run(objects)
+	showDiagnostics(diagnostics)
 
 	return err
 }
 
 // showErrorsAndWarnings displays all the errors and warnings returned by checks
-func showErrorsAndWarnings(warnings, errors []error) {
-	for _, warning := range warnings {
-		log.Println("Warning: ", warning.Error())
-	}
-	for _, err := range errors {
-		log.Println("Error: ", err.Error())
+func showDiagnostics(diagnostics []kube.Diagnostic) {
+	for _, diagnostic := range diagnostics {
+		log.Printf("[%s] %s\n", diagnostic.Category, diagnostic.Message)
+		if len(diagnostic.Metadata) > 0 {
+			log.Println("Object Meta Information: ")
+			for key, value := range diagnostic.Metadata {
+				log.Printf("%s: %s\n", key, value)
+			}
+		}
 	}
 }
 

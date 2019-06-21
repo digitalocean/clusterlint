@@ -23,11 +23,12 @@ func TestLatestTagCheckRegistration(t *testing.T) {
 }
 
 func TestLatestTagWarning(t *testing.T) {
-	const warning string = "[Best Practice] Use specific tags instead of latest for container 'bar' in pod 'pod_foo' in namespace 'k8s'"
+	const message string = "[Best Practice] Use specific tags instead of latest for container 'bar' in pod 'pod_foo' in namespace 'k8s'"
+	const category string = "warning"
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []error
+		expected []kube.Diagnostic
 	}{
 		{
 			name:     "no pods",
@@ -37,32 +38,32 @@ func TestLatestTagWarning(t *testing.T) {
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox:latest",
 			arg:      container("k8s.gcr.io/busybox:latest"),
-			expected: issues(warning),
+			expected: issues(category, message),
 		},
 		{
 			name:     "pod with container image - busybox:latest",
 			arg:      container("busybox:latest"),
-			expected: issues(warning),
+			expected: issues(category, message),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
 			arg:      container("k8s.gcr.io/busybox"),
-			expected: issues(warning),
+			expected: issues(category, message),
 		},
 		{
 			name:     "pod with container image - busybox",
 			arg:      container("busybox"),
-			expected: issues(warning),
+			expected: issues(category, message),
 		},
 		{
 			name:     "pod with container image - private:5000/repo/busybox",
 			arg:      container("private:5000/repo/busybox"),
-			expected: issues(warning),
+			expected: issues(category, message),
 		},
 		{
 			name:     "pod with container image - private:5000/repo/busybox:latest",
 			arg:      container("private:5000/repo/busybox:latest"),
-			expected: issues(warning),
+			expected: issues(category, message),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -88,32 +89,32 @@ func TestLatestTagWarning(t *testing.T) {
 		{
 			name:     "pod with init container image - k8s.gcr.io/busybox:latest",
 			arg:      initContainer("k8s.gcr.io/busybox:latest"),
-			expected: issues(warning),
+			expected: issues(category, message),
 		},
 		{
 			name:     "pod with init container image - busybox:latest",
 			arg:      initContainer("busybox:latest"),
-			expected: issues(warning),
+			expected: issues(category, message),
 		},
 		{
 			name:     "pod with init container image - k8s.gcr.io/busybox",
 			arg:      initContainer("k8s.gcr.io/busybox"),
-			expected: issues(warning),
+			expected: issues(category, message),
 		},
 		{
 			name:     "pod with init container image - busybox",
 			arg:      initContainer("busybox"),
-			expected: issues(warning),
+			expected: issues(category, message),
 		},
 		{
 			name:     "pod with container image - private:5000/repo/busybox",
 			arg:      container("private:5000/repo/busybox"),
-			expected: issues(warning),
+			expected: issues(category, message),
 		},
 		{
 			name:     "pod with container image - private:5000/repo/busybox:latest",
 			arg:      container("private:5000/repo/busybox:latest"),
-			expected: issues(warning),
+			expected: issues(category, message),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -141,10 +142,9 @@ func TestLatestTagWarning(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			w, e, err := latestTagCheck.Run(scenario.arg)
+			d, err := latestTagCheck.Run(scenario.arg)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, scenario.expected, w)
-			assert.Empty(t, e)
+			assert.ElementsMatch(t, scenario.expected, d)
 		})
 	}
 }

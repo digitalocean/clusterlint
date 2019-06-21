@@ -34,36 +34,34 @@ func (fq *fullyQualifiedImageCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (fq *fullyQualifiedImageCheck) Run(objects *kube.Objects) ([]error, []error, error) {
-	var warnings, errors []error
+func (fq *fullyQualifiedImageCheck) Run(objects *kube.Objects) ([]kube.Diagnostic, error) {
+	var diagnostics []kube.Diagnostic
 
 	for _, pod := range objects.Pods.Items {
 		podName := pod.GetName()
 		namespace := pod.GetNamespace()
-		w, e := checkImage(pod.Spec.Containers, podName, namespace)
-		warnings = append(warnings, w...)
-		errors = append(errors, e...)
-		w, e = checkImage(pod.Spec.InitContainers, podName, namespace)
-		warnings = append(warnings, w...)
-		errors = append(errors, e...)
+		d := checkImage(pod.Spec.Containers, podName, namespace)
+		diagnostics = append(diagnostics, d...)
+		d = checkImage(pod.Spec.InitContainers, podName, namespace)
+		diagnostics = append(diagnostics, d...)
 	}
 
-	return warnings, errors, nil
+	return diagnostics, nil
 }
 
 // checkImage checks if the image name is fully qualified
 // Adds a warning if the container does not use a fully qualified image name
-func checkImage(containers []corev1.Container, podName string, namespace string) ([]error, []error) {
-	var w, e []error
+func checkImage(containers []corev1.Container, podName string, namespace string) []kube.Diagnostic {
+	var d []kube.Diagnostic
 	for _, container := range containers {
 		value, err := reference.ParseAnyReference(container.Image)
 		if err != nil {
-			e = append(e, fmt.Errorf("[Error] Malformed image name for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace))
+			d = append(d, kube.Diagnostic{Category: "error", Message: fmt.Sprintf("Malformed image name for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace)})
 		} else {
 			if value.String() != container.Image {
-				w = append(w, fmt.Errorf("[Best Practice] Use fully qualified image for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace))
+				d = append(d, kube.Diagnostic{Category: "warning", Message: fmt.Sprintf("Use fully qualified image for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace)})
 			}
 		}
 	}
-	return w, e
+	return d
 }

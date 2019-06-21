@@ -1,8 +1,6 @@
 package basic
 
 import (
-	"fmt"
-
 	"github.com/digitalocean/clusterlint/kube"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,9 +43,9 @@ func initContainer(image string) *kube.Objects {
 	return objs
 }
 
-func issues(s string) []error {
-	issue := []error{
-		fmt.Errorf(s),
+func issues(category string, message string) []kube.Diagnostic {
+	d := []kube.Diagnostic{
+		{Category: category, Message: message},
 	}
-	return issue
+	return d
 }

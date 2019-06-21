@@ -33,13 +33,13 @@ func (nc *podSelectorCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (nc *podSelectorCheck) Run(objects *kube.Objects) (warnings []error, errors []error, err error) {
-	var e []error
+func (nc *podSelectorCheck) Run(objects *kube.Objects) ([]kube.Diagnostic, error) {
+	var diagnostics []kube.Diagnostic
 	for _, pod := range objects.Pods.Items {
 		nodeSelectorMap := pod.Spec.NodeSelector
 		if _, ok := nodeSelectorMap[corev1.LabelHostname]; ok {
-			e = append(e, fmt.Errorf("pod '%s' in namespace '%s' uses the node name for node selector", pod.GetName(), pod.GetNamespace()))
+			diagnostics = append(diagnostics, kube.Diagnostic{Category: "error", Message: fmt.Sprintf("pod '%s' in namespace '%s' uses the node name for node selector", pod.GetName(), pod.GetNamespace())})
 		}
 	}
-	return nil, e, nil
+	return diagnostics, nil
 }

@@ -29,7 +29,7 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []error
+		expected []kube.Diagnostic
 	}{
 		{
 			name:     "no pods",
@@ -82,10 +82,9 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			w, e, err := privilegedContainerCheck.Run(scenario.arg)
+			d, err := privilegedContainerCheck.Run(scenario.arg)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, scenario.expected, w)
-			assert.Empty(t, e)
+			assert.ElementsMatch(t, scenario.expected, d)
 		})
 	}
 }
@@ -173,9 +172,9 @@ func initContainerPrivilegedNil() *kube.Objects {
 	return objs
 }
 
-func warnings() []error {
-	w := []error{
-		fmt.Errorf("[Best Practice] Privileged container 'bar' found in pod 'pod_foo', namespace 'k8s'."),
+func warnings() []kube.Diagnostic {
+	d := []kube.Diagnostic{
+		{Category: "warning", Message: fmt.Sprintf("[Best Practice] Privileged container 'bar' found in pod 'pod_foo', namespace 'k8s'.")},
 	}
-	return w
+	return d
 }

@@ -19,29 +19,25 @@ func init() {
 type defaultNamespaceCheck struct{}
 
 type alert struct {
-	warnings []error
-	mu       sync.Mutex
+	diagnostics []kube.Diagnostic
+	mu          sync.Mutex
 }
 
 // GetWarnings returns alert.warnings
-func (alert *alert) GetWarnings() []error {
-	return alert.warnings
+func (alert *alert) GetDiagnostics() []kube.Diagnostic {
+	return alert.diagnostics
 }
 
 // SetWarnings sets alert.warnings
-func (alert *alert) SetWarnings(w []error) {
-	alert.warnings = w
-}
-
-// AppendWarning appends a warning to the warnings slice
-func (alert *alert) AppendWarning(err error) {
-	alert.warnings = append(alert.warnings, err)
+func (alert *alert) SetDiagnostics(d []kube.Diagnostic) {
+	alert.diagnostics = d
 }
 
 // warn adds warnings for k8s objects that should not be in the default namespace
 func (alert *alert) warn(k8stype string, item metav1.ObjectMeta) {
+	d := kube.Diagnostic{Category: "warning", Message: fmt.Sprintf("%s '%s' is in the default namespace.", k8stype, item.GetName())}
 	alert.mu.Lock()
-	alert.AppendWarning(fmt.Errorf("%s '%s' is in the default namespace.", k8stype, item.GetName()))
+	alert.diagnostics = append(alert.diagnostics, d)
 	alert.mu.Unlock()
 }
 
@@ -127,7 +123,7 @@ func checkSA(items *corev1.ServiceAccountList, alert *alert) {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (nc *defaultNamespaceCheck) Run(objects *kube.Objects) (warnings []error, errors []error, err error) {
+func (nc *defaultNamespaceCheck) Run(objects *kube.Objects) ([]kube.Diagnostic, error) {
 	alert := &alert{}
 	var g errgroup.Group
 	g.Go(func() error {
@@ -165,5 +161,6 @@ func (nc *defaultNamespaceCheck) Run(objects *kube.Objects) (warnings []error, e
 		return nil
 	})
 
-	return alert.warnings, nil, g.Wait()
+	err := g.Wait()
+	return alert.GetDiagnostics(), err
 }

@@ -1,7 +1,6 @@
 package basic
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/kube"
@@ -20,7 +19,7 @@ func TestPodStateError(t *testing.T) {
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []error
+		expected []kube.Diagnostic
 	}{
 		{
 			name:     "no pods",
@@ -45,15 +44,15 @@ func TestPodStateError(t *testing.T) {
 		{
 			name: "pod with failed status",
 			arg:  status(corev1.PodFailed),
-			expected: []error{
-				fmt.Errorf("Pod 'pod_foo' in namespace 'k8s' has state: Failed. Pod state should be `Running`, `Pending` or `Succeeded`."),
+			expected: []kube.Diagnostic{
+				{Category: "error", Message: "Pod 'pod_foo' in namespace 'k8s' has state: Failed. Pod state should be `Running`, `Pending` or `Succeeded`."},
 			},
 		},
 		{
 			name: "pod with unknown status",
 			arg:  status(corev1.PodUnknown),
-			expected: []error{
-				fmt.Errorf("Pod 'pod_foo' in namespace 'k8s' has state: Unknown. Pod state should be `Running`, `Pending` or `Succeeded`."),
+			expected: []kube.Diagnostic{
+				{Category: "error", Message: "Pod 'pod_foo' in namespace 'k8s' has state: Unknown. Pod state should be `Running`, `Pending` or `Succeeded`."},
 			},
 		},
 	}
@@ -62,10 +61,9 @@ func TestPodStateError(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			w, e, err := podStatusCheck.Run(scenario.arg)
-			assert.ElementsMatch(t, scenario.expected, e)
-			assert.Empty(t, w)
-			assert.Nil(t, err)
+			d, err := podStatusCheck.Run(scenario.arg)
+			assert.NoError(t, err)
+			assert.ElementsMatch(t, scenario.expected, d)
 		})
 	}
 }
