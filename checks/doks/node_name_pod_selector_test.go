@@ -1,7 +1,6 @@
 package doks
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -29,7 +28,7 @@ func TestNodeNameError(t *testing.T) {
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []kube.Diagnostic
+		expected []checks.Diagnostic
 	}{
 		{
 			name:     "no node name selector",
@@ -39,7 +38,7 @@ func TestNodeNameError(t *testing.T) {
 		{
 			name:     "node name used in node selector",
 			arg:      invalidPod(),
-			expected: errors(),
+			expected: errors(invalidPod()),
 		},
 	}
 
@@ -74,9 +73,15 @@ func invalidPod() *kube.Objects {
 	return objs
 }
 
-func errors() []kube.Diagnostic {
-	diagnostics := []kube.Diagnostic{
-		{Category: "error", Message: fmt.Sprintf("pod 'pod_foo' in namespace 'k8s' uses the node name for node selector")},
+func errors(objs *kube.Objects) []checks.Diagnostic {
+	pod := objs.Pods.Items[0]
+	diagnostics := []checks.Diagnostic{
+		{
+			Severity: checks.Error,
+			Message:  "Avoid node name label for node selector in pod: pod_foo",
+			Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+			Owners:   pod.ObjectMeta.GetOwnerReferences(),
+		},
 	}
 	return diagnostics
 }

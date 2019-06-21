@@ -33,12 +33,18 @@ func (p *podStatusCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (p *podStatusCheck) Run(objects *kube.Objects) ([]kube.Diagnostic, error) {
-	var diagnostics []kube.Diagnostic
+func (p *podStatusCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+	var diagnostics []checks.Diagnostic
 
 	for _, pod := range objects.Pods.Items {
 		if corev1.PodFailed == pod.Status.Phase || corev1.PodUnknown == pod.Status.Phase {
-			diagnostics = append(diagnostics, kube.Diagnostic{Category: "error", Message: fmt.Sprintf("Pod '%s' in namespace '%s' has state: %s. Pod state should be `Running`, `Pending` or `Succeeded`.", pod.GetName(), pod.GetNamespace(), pod.Status.Phase)})
+			d := checks.Diagnostic{
+				Severity: checks.Warning,
+				Message:  fmt.Sprintf("Pod '%s' in namespace '%s' has state: %s. Pod state should be `Running`, `Pending` or `Succeeded`.", pod.GetName(), pod.GetNamespace(), pod.Status.Phase),
+				Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+				Owners:   pod.ObjectMeta.GetOwnerReferences(),
+			}
+			diagnostics = append(diagnostics, d)
 		}
 	}
 

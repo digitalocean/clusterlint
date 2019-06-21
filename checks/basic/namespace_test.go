@@ -1,7 +1,6 @@
 package basic
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -29,7 +28,7 @@ func TestNamespaceWarning(t *testing.T) {
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []kube.Diagnostic
+		expected []checks.Diagnostic
 	}{
 		{"no objects in cluster", empty(), nil},
 		{"user created objects in default namespace", userCreatedObjects(), errors()},
@@ -73,16 +72,59 @@ func userCreatedObjects() *kube.Objects {
 	return objs
 }
 
-func errors() []kube.Diagnostic {
-	const warning string = "warning"
-	d := []kube.Diagnostic{
-		{Category: warning, Message: fmt.Sprintf("Pod 'pod_foo' is in the default namespace.")},
-		{Category: warning, Message: fmt.Sprintf("Pod template 'template_foo' is in the default namespace.")},
-		{Category: warning, Message: fmt.Sprintf("Persistent Volume Claim 'pvc_foo' is in the default namespace.")},
-		{Category: warning, Message: fmt.Sprintf("Config Map 'cm_foo' is in the default namespace.")},
-		{Category: warning, Message: fmt.Sprintf("Service 'svc_foo' is in the default namespace.")},
-		{Category: warning, Message: fmt.Sprintf("Secret 'secret_foo' is in the default namespace.")},
-		{Category: warning, Message: fmt.Sprintf("Service Account 'sa_foo' is in the default namespace.")},
+func errors() []checks.Diagnostic {
+	objs := userCreatedObjects()
+	pod := objs.Pods.Items[0]
+	template := objs.PodTemplates.Items[0]
+	pvc := objs.PersistentVolumeClaims.Items[0]
+	cm := objs.ConfigMaps.Items[0]
+	service := objs.Services.Items[0]
+	secret := objs.Secrets.Items[0]
+	sa := objs.ServiceAccounts.Items[0]
+	d := []checks.Diagnostic{
+
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace for pod 'pod_foo'",
+			Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+			Owners:   pod.ObjectMeta.GetOwnerReferences(),
+		},
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace for pod template 'template_foo'",
+			Object:   kube.Object{TypeInfo: &template.TypeMeta, ObjectInfo: &template.ObjectMeta},
+			Owners:   template.ObjectMeta.GetOwnerReferences(),
+		},
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace for persistent volume claim 'pvc_foo'",
+			Object:   kube.Object{TypeInfo: &pvc.TypeMeta, ObjectInfo: &pvc.ObjectMeta},
+			Owners:   pvc.ObjectMeta.GetOwnerReferences(),
+		},
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace for config map 'cm_foo'",
+			Object:   kube.Object{TypeInfo: &cm.TypeMeta, ObjectInfo: &cm.ObjectMeta},
+			Owners:   cm.ObjectMeta.GetOwnerReferences(),
+		},
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace for service 'svc_foo'",
+			Object:   kube.Object{TypeInfo: &service.TypeMeta, ObjectInfo: &service.ObjectMeta},
+			Owners:   service.ObjectMeta.GetOwnerReferences(),
+		},
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace for secret 'secret_foo'",
+			Object:   kube.Object{TypeInfo: &secret.TypeMeta, ObjectInfo: &secret.ObjectMeta},
+			Owners:   secret.ObjectMeta.GetOwnerReferences(),
+		},
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace for service account 'sa_foo'",
+			Object:   kube.Object{TypeInfo: &sa.TypeMeta, ObjectInfo: &sa.ObjectMeta},
+			Owners:   sa.ObjectMeta.GetOwnerReferences(),
+		},
 	}
 	return d
 }

@@ -34,15 +34,13 @@ func (fq *fullyQualifiedImageCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (fq *fullyQualifiedImageCheck) Run(objects *kube.Objects) ([]kube.Diagnostic, error) {
-	var diagnostics []kube.Diagnostic
+func (fq *fullyQualifiedImageCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+	var diagnostics []checks.Diagnostic
 
 	for _, pod := range objects.Pods.Items {
-		podName := pod.GetName()
-		namespace := pod.GetNamespace()
-		d := checkImage(pod.Spec.Containers, podName, namespace)
+		d := checkImage(pod.Spec.Containers, pod)
 		diagnostics = append(diagnostics, d...)
-		d = checkImage(pod.Spec.InitContainers, podName, namespace)
+		d = checkImage(pod.Spec.InitContainers, pod)
 		diagnostics = append(diagnostics, d...)
 	}
 
@@ -51,17 +49,29 @@ func (fq *fullyQualifiedImageCheck) Run(objects *kube.Objects) ([]kube.Diagnosti
 
 // checkImage checks if the image name is fully qualified
 // Adds a warning if the container does not use a fully qualified image name
-func checkImage(containers []corev1.Container, podName string, namespace string) []kube.Diagnostic {
-	var d []kube.Diagnostic
+func checkImage(containers []corev1.Container, pod corev1.Pod) []checks.Diagnostic {
+	var diagnostics []checks.Diagnostic
 	for _, container := range containers {
 		value, err := reference.ParseAnyReference(container.Image)
 		if err != nil {
-			d = append(d, kube.Diagnostic{Category: "error", Message: fmt.Sprintf("Malformed image name for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace)})
+			d := checks.Diagnostic{
+				Severity: checks.Error,
+				Message:  fmt.Sprintf("Malformed image name for container '%s' in pod '%s'", container.Name, pod.GetName()),
+				Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+				Owners:   pod.ObjectMeta.GetOwnerReferences(),
+			}
+			diagnostics = append(diagnostics, d)
 		} else {
 			if value.String() != container.Image {
-				d = append(d, kube.Diagnostic{Category: "warning", Message: fmt.Sprintf("Use fully qualified image for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace)})
+				d := checks.Diagnostic{
+					Severity: checks.Warning,
+					Message:  fmt.Sprintf("Use fully qualified image for container '%s' in pod '%s'", container.Name, pod.GetName()),
+					Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+					Owners:   pod.ObjectMeta.GetOwnerReferences(),
+				}
+				diagnostics = append(diagnostics, d)
 			}
 		}
 	}
-	return d
+	return diagnostics
 }

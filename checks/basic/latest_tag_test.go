@@ -23,12 +23,13 @@ func TestLatestTagCheckRegistration(t *testing.T) {
 }
 
 func TestLatestTagWarning(t *testing.T) {
-	const message string = "[Best Practice] Use specific tags instead of latest for container 'bar' in pod 'pod_foo' in namespace 'k8s'"
-	const category string = "warning"
+	const message string = "Avoid using latest tag for container 'bar' in pod 'pod_foo'"
+	const severity checks.Severity = checks.Warning
+
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []kube.Diagnostic
+		expected []checks.Diagnostic
 	}{
 		{
 			name:     "no pods",
@@ -38,46 +39,46 @@ func TestLatestTagWarning(t *testing.T) {
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox:latest",
 			arg:      container("k8s.gcr.io/busybox:latest"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with container image - busybox:latest",
 			arg:      container("busybox:latest"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
 			arg:      container("k8s.gcr.io/busybox"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with container image - busybox",
 			arg:      container("busybox"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
-			name:     "pod with container image - private:5000/repo/busybox",
+			name:     "pod with container image - private:5000/busybox",
 			arg:      container("private:5000/repo/busybox"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
-			name:     "pod with container image - private:5000/repo/busybox:latest",
+			name:     "pod with container image - private:5000/busybox:latest",
 			arg:      container("private:5000/repo/busybox:latest"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
-			name:     "pod with container image - test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+			name:     "pod with container image - test:5000/repo@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      container("test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
 			expected: nil,
 		},
 		{
-			name:     "pod with container image - repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+			name:     "pod with container image - repo@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      container("repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
 			expected: nil,
 		},
 		{
-			name:     "pod with container image - test:5000/repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-			arg:      container("test:5000/repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
+			name:     "pod with container image - test:5000/repo:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+			arg:      container("test:5000/repo:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
 			expected: nil,
 		},
 		{
@@ -89,45 +90,45 @@ func TestLatestTagWarning(t *testing.T) {
 		{
 			name:     "pod with init container image - k8s.gcr.io/busybox:latest",
 			arg:      initContainer("k8s.gcr.io/busybox:latest"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with init container image - busybox:latest",
 			arg:      initContainer("busybox:latest"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with init container image - k8s.gcr.io/busybox",
 			arg:      initContainer("k8s.gcr.io/busybox"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with init container image - busybox",
 			arg:      initContainer("busybox"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
-			name:     "pod with container image - private:5000/repo/busybox",
+			name:     "pod with container image - private:5000/busybox",
 			arg:      container("private:5000/repo/busybox"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
-			name:     "pod with container image - private:5000/repo/busybox:latest",
+			name:     "pod with container image - private:5000/busybox:latest",
 			arg:      container("private:5000/repo/busybox:latest"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
-			name:     "pod with container image - test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+			name:     "pod with container image - test:5000/repo@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      initContainer("test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
 			expected: nil,
 		},
 		{
-			name:     "pod with container image - test:5000/repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+			name:     "pod with container image - test:5000/repo:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      initContainer("test:5000/repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
 			expected: nil,
 		},
 		{
-			name:     "pod with container image - repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+			name:     "pod with container image - repo@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      initContainer("repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
 			expected: nil,
 		},

@@ -3,6 +3,7 @@ package basic
 import (
 	"testing"
 
+	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -19,7 +20,7 @@ func TestPodStateError(t *testing.T) {
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []kube.Diagnostic
+		expected []checks.Diagnostic
 	}{
 		{
 			name:     "no pods",
@@ -44,15 +45,25 @@ func TestPodStateError(t *testing.T) {
 		{
 			name: "pod with failed status",
 			arg:  status(corev1.PodFailed),
-			expected: []kube.Diagnostic{
-				{Category: "error", Message: "Pod 'pod_foo' in namespace 'k8s' has state: Failed. Pod state should be `Running`, `Pending` or `Succeeded`."},
+			expected: []checks.Diagnostic{
+				{
+					Severity: checks.Warning,
+					Message:  "Pod 'pod_foo' in namespace 'k8s' has state: Failed. Pod state should be `Running`, `Pending` or `Succeeded`.",
+					Object:   kube.Object{TypeInfo: GetTypeMeta(), ObjectInfo: GetObjectMeta()},
+					Owners:   GetOwners(),
+				},
 			},
 		},
 		{
 			name: "pod with unknown status",
 			arg:  status(corev1.PodUnknown),
-			expected: []kube.Diagnostic{
-				{Category: "error", Message: "Pod 'pod_foo' in namespace 'k8s' has state: Unknown. Pod state should be `Running`, `Pending` or `Succeeded`."},
+			expected: []checks.Diagnostic{
+				{
+					Severity: checks.Warning,
+					Message:  "Pod 'pod_foo' in namespace 'k8s' has state: Unknown. Pod state should be `Running`, `Pending` or `Succeeded`.",
+					Object:   kube.Object{TypeInfo: GetTypeMeta(), ObjectInfo: GetObjectMeta()},
+					Owners:   GetOwners(),
+				},
 			},
 		},
 	}

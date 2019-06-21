@@ -19,23 +19,28 @@ func init() {
 type defaultNamespaceCheck struct{}
 
 type alert struct {
-	diagnostics []kube.Diagnostic
+	diagnostics []checks.Diagnostic
 	mu          sync.Mutex
 }
 
 // GetWarnings returns alert.warnings
-func (alert *alert) GetDiagnostics() []kube.Diagnostic {
+func (alert *alert) GetDiagnostics() []checks.Diagnostic {
 	return alert.diagnostics
 }
 
 // SetWarnings sets alert.warnings
-func (alert *alert) SetDiagnostics(d []kube.Diagnostic) {
+func (alert *alert) SetDiagnostics(d []checks.Diagnostic) {
 	alert.diagnostics = d
 }
 
 // warn adds warnings for k8s objects that should not be in the default namespace
-func (alert *alert) warn(k8stype string, item metav1.ObjectMeta) {
-	d := kube.Diagnostic{Category: "warning", Message: fmt.Sprintf("%s '%s' is in the default namespace.", k8stype, item.GetName())}
+func (alert *alert) warn(k8stype string, itemMeta metav1.ObjectMeta, itemType metav1.TypeMeta) {
+	d := checks.Diagnostic{
+		Severity: checks.Warning,
+		Message:  fmt.Sprintf("Avoid using the default namespace for %s '%s'", k8stype, itemMeta.GetName()),
+		Object:   kube.Object{TypeInfo: &itemType, ObjectInfo: &itemMeta},
+		Owners:   itemMeta.GetOwnerReferences(),
+	}
 	alert.mu.Lock()
 	alert.diagnostics = append(alert.diagnostics, d)
 	alert.mu.Unlock()
@@ -61,7 +66,7 @@ func (nc *defaultNamespaceCheck) Description() string {
 func checkPods(items *corev1.PodList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
-			alert.warn("Pod", item.ObjectMeta)
+			alert.warn("pod", item.ObjectMeta, item.TypeMeta)
 		}
 	}
 }
@@ -70,7 +75,7 @@ func checkPods(items *corev1.PodList, alert *alert) {
 func checkPodTemplates(items *corev1.PodTemplateList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
-			alert.warn("Pod template", item.ObjectMeta)
+			alert.warn("pod template", item.ObjectMeta, item.TypeMeta)
 		}
 	}
 }
@@ -79,7 +84,7 @@ func checkPodTemplates(items *corev1.PodTemplateList, alert *alert) {
 func checkPVCs(items *corev1.PersistentVolumeClaimList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
-			alert.warn("Persistent Volume Claim", item.ObjectMeta)
+			alert.warn("persistent volume claim", item.ObjectMeta, item.TypeMeta)
 		}
 	}
 }
@@ -88,7 +93,7 @@ func checkPVCs(items *corev1.PersistentVolumeClaimList, alert *alert) {
 func checkConfigMaps(items *corev1.ConfigMapList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
-			alert.warn("Config Map", item.ObjectMeta)
+			alert.warn("config map", item.ObjectMeta, item.TypeMeta)
 		}
 	}
 }
@@ -97,7 +102,7 @@ func checkConfigMaps(items *corev1.ConfigMapList, alert *alert) {
 func checkServices(items *corev1.ServiceList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() && item.GetName() != "kubernetes" {
-			alert.warn("Service", item.ObjectMeta)
+			alert.warn("service", item.ObjectMeta, item.TypeMeta)
 		}
 	}
 }
@@ -106,7 +111,7 @@ func checkServices(items *corev1.ServiceList, alert *alert) {
 func checkSecrets(items *corev1.SecretList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() && !strings.Contains(item.GetName(), "default-token-") {
-			alert.warn("Secret", item.ObjectMeta)
+			alert.warn("secret", item.ObjectMeta, item.TypeMeta)
 		}
 	}
 }
@@ -115,7 +120,7 @@ func checkSecrets(items *corev1.SecretList, alert *alert) {
 func checkSA(items *corev1.ServiceAccountList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() && item.GetName() != "default" {
-			alert.warn("Service Account", item.ObjectMeta)
+			alert.warn("service account", item.ObjectMeta, item.TypeMeta)
 		}
 	}
 }
@@ -123,7 +128,7 @@ func checkSA(items *corev1.ServiceAccountList, alert *alert) {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (nc *defaultNamespaceCheck) Run(objects *kube.Objects) ([]kube.Diagnostic, error) {
+func (nc *defaultNamespaceCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	alert := &alert{}
 	var g errgroup.Group
 	g.Go(func() error {

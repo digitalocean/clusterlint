@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
 	"os"
 	"path/filepath"
@@ -61,7 +61,7 @@ func main() {
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		fmt.Printf("failed: %v", err)
+		log.Printf("failed: %v", err)
 		os.Exit(1)
 	}
 }
@@ -72,7 +72,7 @@ func listChecks(c *cli.Context) error {
 	group := c.String("group")
 	allChecks := getChecks(group)
 	for _, check := range allChecks {
-		fmt.Printf("%s : %s\n", check.Name(), check.Description())
+		log.Printf("%s : %s\n", check.Name(), check.Description())
 	}
 
 	return nil
@@ -102,7 +102,7 @@ func runChecks(c *cli.Context) error {
 // runs all checks in the registry if group is not specified
 func runChecksForGroup(group string, objects *kube.Objects) error {
 	allChecks := getChecks(group)
-	var diagnostics []kube.Diagnostic
+	var diagnostics []checks.Diagnostic
 	var mu sync.Mutex
 	var g errgroup.Group
 
@@ -136,22 +136,20 @@ func runCheck(name string, objects *kube.Objects) error {
 
 	log.Println("Running check: ", name)
 	diagnostics, err := check.Run(objects)
-	showDiagnostics(diagnostics)
-
-	return err
+	if err != nil {
+		return err
+	}
+	return showDiagnostics(diagnostics)
 }
 
 // showErrorsAndWarnings displays all the errors and warnings returned by checks
-func showDiagnostics(diagnostics []kube.Diagnostic) {
-	for _, diagnostic := range diagnostics {
-		log.Printf("[%s] %s\n", diagnostic.Category, diagnostic.Message)
-		if len(diagnostic.Metadata) > 0 {
-			log.Println("Object Meta Information: ")
-			for key, value := range diagnostic.Metadata {
-				log.Printf("%s: %s\n", key, value)
-			}
-		}
+func showDiagnostics(diagnostics []checks.Diagnostic) error {
+	resp, err := json.Marshal(diagnostics)
+	if err != nil {
+		return err
 	}
+	log.Println(string(resp))
+	return nil
 }
 
 // getChecks retrieves all checks within given group

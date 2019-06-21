@@ -23,13 +23,13 @@ func TestFullyQualifiedImageCheckRegistration(t *testing.T) {
 }
 
 func TestFullyQualifiedImageWarning(t *testing.T) {
-	const message string = "Use fully qualified image for container 'bar' in pod 'pod_foo' in namespace 'k8s'"
-	const category string = "warning"
+	const message string = "Use fully qualified image for container 'bar' in pod 'pod_foo'"
+	const severity checks.Severity = checks.Warning
 
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []kube.Diagnostic
+		expected []checks.Diagnostic
 	}{
 		{
 			name:     "no pods",
@@ -44,7 +44,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox:latest",
 			arg:      container("busybox:latest"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
@@ -54,7 +54,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox",
 			arg:      container("busybox"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -64,7 +64,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      container("repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -74,7 +74,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      container("repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox:latest",
@@ -84,7 +84,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox:latest",
 			arg:      initContainer("busybox:latest"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
@@ -94,7 +94,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox",
 			arg:      initContainer("busybox"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -104,7 +104,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      initContainer("repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -114,7 +114,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      initContainer("repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 	}
 
@@ -130,23 +130,22 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 }
 
 func TestMalformedImageError(t *testing.T) {
-	const message string = "Malformed image name for container 'bar' in pod 'pod_foo' in namespace 'k8s'"
-	const category string = "error"
-
+	const message string = "Malformed image name for container 'bar' in pod 'pod_foo'"
+	const severity checks.Severity = checks.Error
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []kube.Diagnostic
+		expected []checks.Diagnostic
 	}{
 		{
 			name:     "container with image : test:5000/repo/image@sha256:digest",
 			arg:      container("test:5000/repo/image@sha256:digest"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 		{
 			name:     "init container with image : test:5000/repo/image@sha256:digest",
 			arg:      initContainer("test:5000/repo/image@sha256:digest"),
-			expected: issues(category, message),
+			expected: issues(severity, message),
 		},
 	}
 	fullyQualifiedImageCheck := fullyQualifiedImageCheck{}
