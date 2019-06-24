@@ -97,24 +97,6 @@ func checkConfigMaps(items *corev1.ConfigMapList, alert *alert) {
 	}
 }
 
-// checkQuotas checks if there are quotas in the default namespace
-func checkQuotas(items *corev1.ResourceQuotaList, alert *alert) {
-	for _, item := range items.Items {
-		if corev1.NamespaceDefault == item.GetNamespace() {
-			alert.warn("Resource Quota", item.ObjectMeta)
-		}
-	}
-}
-
-// checkLimits checks if there are limits in the default namespace
-func checkLimits(items *corev1.LimitRangeList, alert *alert) {
-	for _, item := range items.Items {
-		if corev1.NamespaceDefault == item.GetNamespace() {
-			alert.warn("Limit Range", item.ObjectMeta)
-		}
-	}
-}
-
 // checkServices checks if there are user created services in the default namespace
 func checkServices(items *corev1.ServiceList, alert *alert) {
 	for _, item := range items.Items {
@@ -165,16 +147,6 @@ func (nc *defaultNamespaceCheck) Run(objects *kube.Objects) (warnings []error, e
 
 	g.Go(func() error {
 		checkConfigMaps(objects.ConfigMaps, alert)
-		return nil
-	})
-
-	g.Go(func() error {
-		checkQuotas(objects.ResourceQuotas, alert)
-		return nil
-	})
-
-	g.Go(func() error {
-		checkLimits(objects.LimitRanges, alert)
 		return nil
 	})
 
