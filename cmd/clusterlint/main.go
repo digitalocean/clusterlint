@@ -55,6 +55,10 @@ func main() {
 					Name:  "name, n",
 					Usage: "run a specific check",
 				},
+				cli.StringFlag{
+					Name:  "output, o",
+					Usage: "Show output in string or json format. Default: string",
+				},
 			},
 			Action: runChecks,
 		},
@@ -81,6 +85,7 @@ func listChecks(c *cli.Context) error {
 func runChecks(c *cli.Context) error {
 	group := c.String("group")
 	name := c.String("name")
+	output := c.String("output")
 
 	client, err := kube.NewClient(c.GlobalString("kubeconfig"), c.GlobalString("context"))
 	if err != nil {
@@ -93,14 +98,14 @@ func runChecks(c *cli.Context) error {
 	}
 
 	if name == "" {
-		return runChecksForGroup(group, objects)
+		return runChecksForGroup(group, objects, output)
 	}
-	return runCheck(name, objects)
+	return runCheck(name, objects, output)
 }
 
 // runChecksForGroup runs all checks in the specified group if found
 // runs all checks in the registry if group is not specified
-func runChecksForGroup(group string, objects *kube.Objects) error {
+func runChecksForGroup(group string, objects *kube.Objects, output string) error {
 	allChecks := getChecks(group)
 	var diagnostics []checks.Diagnostic
 	var mu sync.Mutex
@@ -121,14 +126,14 @@ func runChecksForGroup(group string, objects *kube.Objects) error {
 		})
 	}
 	err := g.Wait()
-	showDiagnostics(diagnostics)
+	showDiagnostics(diagnostics, output)
 
 	return err
 }
 
 // runCheck runs a specific check identified by check.Name()
 // errors out if the check is not found in the registry
-func runCheck(name string, objects *kube.Objects) error {
+func runCheck(name string, objects *kube.Objects, output string) error {
 	check, err := checks.Get(name)
 	if err != nil {
 		return err
@@ -139,16 +144,23 @@ func runCheck(name string, objects *kube.Objects) error {
 	if err != nil {
 		return err
 	}
-	return showDiagnostics(diagnostics)
+	return showDiagnostics(diagnostics, output)
 }
 
 // showErrorsAndWarnings displays all the errors and warnings returned by checks
-func showDiagnostics(diagnostics []checks.Diagnostic) error {
-	resp, err := json.Marshal(diagnostics)
-	if err != nil {
-		return err
+func showDiagnostics(diagnostics []checks.Diagnostic, output string) error {
+	if "json" == output {
+		resp, err := json.Marshal(diagnostics)
+		if err != nil {
+			return err
+		}
+		log.Println(string(resp))
+	} else {
+		for _, diagnostic := range diagnostics {
+			log.Printf("%s\n", diagnostic)
+		}
 	}
-	log.Println(string(resp))
+
 	return nil
 }
 
