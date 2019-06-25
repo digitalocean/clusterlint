@@ -1,8 +1,8 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -55,6 +55,14 @@ func main() {
 					Name:  "name, n",
 					Usage: "run a specific check",
 				},
+				cli.StringFlag{
+					Name:  "output, o",
+					Usage: "output format [text|json]. Default: text",
+				},
+				cli.StringFlag{
+					Name:  "level, l",
+					Usage: "Filter output messages based on severity [error|warning|suggestion]. Default: all",
+				},
 			},
 			Action: runChecks,
 		},
@@ -93,63 +101,87 @@ func runChecks(c *cli.Context) error {
 	}
 
 	if name == "" {
-		return runChecksForGroup(group, objects)
+		return runChecksForGroup(group, objects, c)
 	}
-	return runCheck(name, objects)
+	return runCheck(name, objects, c)
 }
 
 // runChecksForGroup runs all checks in the specified group if found
 // runs all checks in the registry if group is not specified
-func runChecksForGroup(group string, objects *kube.Objects) error {
+func runChecksForGroup(group string, objects *kube.Objects, c *cli.Context) error {
 	allChecks := getChecks(group)
-	var warnings, errors []error
+	var diagnostics []checks.Diagnostic
 	var mu sync.Mutex
 	var g errgroup.Group
 
 	for _, check := range allChecks {
 		check := check
 		g.Go(func() error {
-			log.Println("Running check: ", check.Name())
-			w, e, err := check.Run(objects)
+			fmt.Println("Running check: ", check.Name())
+			d, err := check.Run(objects)
 			if err != nil {
 				return err
 			}
 			mu.Lock()
-			warnings = append(warnings, w...)
-			errors = append(errors, e...)
+			diagnostics = append(diagnostics, d...)
 			mu.Unlock()
 			return nil
 		})
 	}
 	err := g.Wait()
-	showErrorsAndWarnings(warnings, errors)
+	showDiagnostics(diagnostics, c)
 
 	return err
 }
 
 // runCheck runs a specific check identified by check.Name()
 // errors out if the check is not found in the registry
-func runCheck(name string, objects *kube.Objects) error {
+func runCheck(name string, objects *kube.Objects, c *cli.Context) error {
 	check, err := checks.Get(name)
 	if err != nil {
 		return err
 	}
 
-	log.Println("Running check: ", name)
-	warnings, errors, err := check.Run(objects)
-	showErrorsAndWarnings(warnings, errors)
-
-	return err
+	fmt.Println("Running check: ", name)
+	diagnostics, err := check.Run(objects)
+	if err != nil {
+		return err
+	}
+	return showDiagnostics(diagnostics, c)
 }
 
 // showErrorsAndWarnings displays all the errors and warnings returned by checks
-func showErrorsAndWarnings(warnings, errors []error) {
-	for _, warning := range warnings {
-		log.Println("Warning: ", warning.Error())
+func showDiagnostics(diagnostics []checks.Diagnostic, c *cli.Context) error {
+	output := c.String("output")
+	level := checks.Severity(c.String("level"))
+	filtered := filter(level, diagnostics)
+	switch output {
+	case "json":
+		err := json.NewEncoder(os.Stdout).Encode(filtered)
+		if err != nil {
+			return err
+		}
+	default:
+		for _, diagnostic := range filtered {
+			fmt.Printf("%s\n", diagnostic)
+		}
 	}
-	for _, err := range errors {
-		log.Println("Error: ", err.Error())
+
+	return nil
+}
+
+// filter uses level to filter diagnostics to show to user. If level is blank, returns all diagnostics
+func filter(level checks.Severity, diagnostics []checks.Diagnostic) []checks.Diagnostic {
+	if level == "" {
+		return diagnostics
 	}
+	var filtered []checks.Diagnostic
+	for _, d := range diagnostics {
+		if d.Severity == level {
+			filtered = append(filtered, d)
+		}
+	}
+	return filtered
 }
 
 // getChecks retrieves all checks within given group

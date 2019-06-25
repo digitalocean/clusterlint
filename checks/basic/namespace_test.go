@@ -1,7 +1,6 @@
 package basic
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -29,7 +28,7 @@ func TestNamespaceWarning(t *testing.T) {
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []error
+		expected []checks.Diagnostic
 	}{
 		{"no objects in cluster", empty(), nil},
 		{"user created objects in default namespace", userCreatedObjects(), errors()},
@@ -39,10 +38,9 @@ func TestNamespaceWarning(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			w, e, err := namespace.Run(scenario.arg)
+			d, err := namespace.Run(scenario.arg)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, scenario.expected, w)
-			assert.Empty(t, e)
+			assert.ElementsMatch(t, scenario.expected, d)
 		})
 	}
 }
@@ -74,15 +72,66 @@ func userCreatedObjects() *kube.Objects {
 	return objs
 }
 
-func errors() []error {
-	w := []error{
-		fmt.Errorf("Pod 'pod_foo' is in the default namespace."),
-		fmt.Errorf("Pod template 'template_foo' is in the default namespace."),
-		fmt.Errorf("Persistent Volume Claim 'pvc_foo' is in the default namespace."),
-		fmt.Errorf("Config Map 'cm_foo' is in the default namespace."),
-		fmt.Errorf("Service 'svc_foo' is in the default namespace."),
-		fmt.Errorf("Secret 'secret_foo' is in the default namespace."),
-		fmt.Errorf("Service Account 'sa_foo' is in the default namespace."),
+func errors() []checks.Diagnostic {
+	objs := userCreatedObjects()
+	pod := objs.Pods.Items[0]
+	template := objs.PodTemplates.Items[0]
+	pvc := objs.PersistentVolumeClaims.Items[0]
+	cm := objs.ConfigMaps.Items[0]
+	service := objs.Services.Items[0]
+	secret := objs.Secrets.Items[0]
+	sa := objs.ServiceAccounts.Items[0]
+	d := []checks.Diagnostic{
+
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace",
+			Kind:     checks.Pod,
+			Object:   &pod.ObjectMeta,
+			Owners:   pod.ObjectMeta.GetOwnerReferences(),
+		},
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace",
+			Kind:     checks.PodTemplate,
+			Object:   &template.ObjectMeta,
+			Owners:   template.ObjectMeta.GetOwnerReferences(),
+		},
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace",
+			Kind:     checks.PVC,
+			Object:   &pvc.ObjectMeta,
+			Owners:   pvc.ObjectMeta.GetOwnerReferences(),
+		},
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace",
+			Kind:     checks.ConfigMap,
+			Object:   &cm.ObjectMeta,
+			Owners:   cm.ObjectMeta.GetOwnerReferences(),
+		},
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace",
+			Kind:     checks.Service,
+			Object:   &service.ObjectMeta,
+			Owners:   service.ObjectMeta.GetOwnerReferences(),
+		},
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace",
+			Kind:     checks.Secret,
+			Object:   &secret.ObjectMeta,
+			Owners:   secret.ObjectMeta.GetOwnerReferences(),
+		},
+		{
+			Severity: checks.Warning,
+			Message:  "Avoid using the default namespace",
+			Kind:     checks.SA,
+			Object:   &sa.ObjectMeta,
+			Owners:   sa.ObjectMeta.GetOwnerReferences(),
+		},
 	}
-	return w
+	return d
 }

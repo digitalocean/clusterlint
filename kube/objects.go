@@ -25,6 +25,11 @@ type Objects struct {
 	LimitRanges            *corev1.LimitRangeList
 }
 
+type Object struct {
+	TypeInfo   *metav1.TypeMeta
+	ObjectInfo *metav1.ObjectMeta
+}
+
 // Client encapsulates a client for a Kubernetes cluster.
 type Client struct {
 	kubeClient kubernetes.Interface

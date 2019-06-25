@@ -30,6 +30,6 @@ func (nc *check) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (nc *check) Run(*kube.Objects) (warnings []error, errors []error, err error) {
-	return nil, nil, nil
+func (nc *check) Run(*kube.Objects) ([]checks.Diagnostic, error) {
+	return nil, nil
 }

@@ -1,7 +1,6 @@
 package security
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -29,7 +28,7 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects
-		expected []error
+		expected []checks.Diagnostic
 	}{
 		{
 			name:     "no pods",
@@ -39,7 +38,7 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 		{
 			name:     "pod with container in privileged mode",
 			arg:      container(true),
-			expected: warnings(),
+			expected: warnings(container(true)),
 		},
 		{
 			name:     "pod with container.SecurityContext = nil",
@@ -59,7 +58,7 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 		{
 			name:     "pod with init container in privileged mode",
 			arg:      initContainer(true),
-			expected: warnings(),
+			expected: warnings(initContainer(true)),
 		},
 		{
 			name:     "pod with initContainer.SecurityContext = nil",
@@ -82,10 +81,9 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			w, e, err := privilegedContainerCheck.Run(scenario.arg)
+			d, err := privilegedContainerCheck.Run(scenario.arg)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, scenario.expected, w)
-			assert.Empty(t, e)
+			assert.ElementsMatch(t, scenario.expected, d)
 		})
 	}
 }
@@ -95,6 +93,7 @@ func initPod() *kube.Objects {
 		Pods: &corev1.PodList{
 			Items: []corev1.Pod{
 				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
 					ObjectMeta: metav1.ObjectMeta{Name: "pod_foo", Namespace: "k8s"},
 				},
 			},
@@ -173,9 +172,16 @@ func initContainerPrivilegedNil() *kube.Objects {
 	return objs
 }
 
-func warnings() []error {
-	w := []error{
-		fmt.Errorf("[Best Practice] Privileged container 'bar' found in pod 'pod_foo', namespace 'k8s'."),
+func warnings(objs *kube.Objects) []checks.Diagnostic {
+	pod := objs.Pods.Items[0]
+	d := []checks.Diagnostic{
+		{
+			Severity: checks.Warning,
+			Message:  "Privileged container '%bar' found. Please ensure that the image is from a trusted source.",
+			Kind:     checks.Pod,
+			Object:   &pod.ObjectMeta,
+			Owners:   pod.ObjectMeta.GetOwnerReferences(),
+		},
 	}
-	return w
+	return d
 }

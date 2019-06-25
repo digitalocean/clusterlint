@@ -34,36 +34,46 @@ func (fq *fullyQualifiedImageCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (fq *fullyQualifiedImageCheck) Run(objects *kube.Objects) ([]error, []error, error) {
-	var warnings, errors []error
+func (fq *fullyQualifiedImageCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+	var diagnostics []checks.Diagnostic
 
 	for _, pod := range objects.Pods.Items {
-		podName := pod.GetName()
-		namespace := pod.GetNamespace()
-		w, e := checkImage(pod.Spec.Containers, podName, namespace)
-		warnings = append(warnings, w...)
-		errors = append(errors, e...)
-		w, e = checkImage(pod.Spec.InitContainers, podName, namespace)
-		warnings = append(warnings, w...)
-		errors = append(errors, e...)
+		d := checkImage(pod.Spec.Containers, pod)
+		diagnostics = append(diagnostics, d...)
+		d = checkImage(pod.Spec.InitContainers, pod)
+		diagnostics = append(diagnostics, d...)
 	}
 
-	return warnings, errors, nil
+	return diagnostics, nil
 }
 
 // checkImage checks if the image name is fully qualified
 // Adds a warning if the container does not use a fully qualified image name
-func checkImage(containers []corev1.Container, podName string, namespace string) ([]error, []error) {
-	var w, e []error
+func checkImage(containers []corev1.Container, pod corev1.Pod) []checks.Diagnostic {
+	var diagnostics []checks.Diagnostic
 	for _, container := range containers {
 		value, err := reference.ParseAnyReference(container.Image)
 		if err != nil {
-			e = append(e, fmt.Errorf("[Error] Malformed image name for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace))
+			d := checks.Diagnostic{
+				Severity: checks.Error,
+				Message:  fmt.Sprintf("Malformed image name for container '%s'", container.Name),
+				Kind:     checks.Pod,
+				Object:   &pod.ObjectMeta,
+				Owners:   pod.ObjectMeta.GetOwnerReferences(),
+			}
+			diagnostics = append(diagnostics, d)
 		} else {
 			if value.String() != container.Image {
-				w = append(w, fmt.Errorf("[Best Practice] Use fully qualified image for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace))
+				d := checks.Diagnostic{
+					Severity: checks.Warning,
+					Message:  fmt.Sprintf("Use fully qualified image for container '%s'", container.Name),
+					Kind:     checks.Pod,
+					Object:   &pod.ObjectMeta,
+					Owners:   pod.ObjectMeta.GetOwnerReferences(),
+				}
+				diagnostics = append(diagnostics, d)
 			}
 		}
 	}
-	return w, e
+	return diagnostics
 }

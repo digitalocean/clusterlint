@@ -35,28 +35,33 @@ func (l *latestTagCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (l *latestTagCheck) Run(objects *kube.Objects) (warnings []error, errors []error, err error) {
-	var w []error
+func (l *latestTagCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+	var diagnostics []checks.Diagnostic
 	for _, pod := range objects.Pods.Items {
-		podName := pod.GetName()
-		namespace := pod.GetNamespace()
-		w = append(w, checkTags(pod.Spec.Containers, podName, namespace)...)
-		w = append(w, checkTags(pod.Spec.InitContainers, podName, namespace)...)
+		diagnostics = append(diagnostics, checkTags(pod.Spec.Containers, pod)...)
+		diagnostics = append(diagnostics, checkTags(pod.Spec.InitContainers, pod)...)
 	}
 
-	return w, nil, nil
+	return diagnostics, nil
 }
 
 // checkTags checks if the image name conforms to pattern `image:latest` or `image`
 // Adds a warning if it finds any image that uses the latest tag
-func checkTags(containers []corev1.Container, podName string, namespace string) []error {
-	var w []error
+func checkTags(containers []corev1.Container, pod corev1.Pod) []checks.Diagnostic {
+	var diagnostics []checks.Diagnostic
 	for _, container := range containers {
 		namedRef, _ := reference.ParseNormalizedNamed(container.Image)
 		tagNameOnly := reference.TagNameOnly(namedRef)
 		if strings.HasSuffix(tagNameOnly.String(), ":latest") {
-			w = append(w, fmt.Errorf("[Best Practice] Use specific tags instead of latest for container '%s' in pod '%s' in namespace '%s'", container.Name, podName, namespace))
+			d := checks.Diagnostic{
+				Severity: checks.Warning,
+				Message:  fmt.Sprintf("Avoid using latest tag for container '%s'", container.Name),
+				Kind:     checks.Pod,
+				Object:   &pod.ObjectMeta,
+				Owners:   pod.ObjectMeta.GetOwnerReferences(),
+			}
+			diagnostics = append(diagnostics, d)
 		}
 	}
-	return w
+	return diagnostics
 }

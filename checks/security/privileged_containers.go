@@ -33,27 +33,32 @@ func (pc *privilegedContainerCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (pc *privilegedContainerCheck) Run(objects *kube.Objects) (warnings []error, errors []error, err error) {
-	var w []error
+func (pc *privilegedContainerCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+	var diagnostics []checks.Diagnostic
 
 	for _, pod := range objects.Pods.Items {
-		podName := pod.GetName()
-		namespace := pod.GetNamespace()
-		w = append(w, checkPrivileged(pod.Spec.Containers, podName, namespace)...)
-		w = append(w, checkPrivileged(pod.Spec.InitContainers, podName, namespace)...)
+		diagnostics = append(diagnostics, checkPrivileged(pod.Spec.Containers, pod)...)
+		diagnostics = append(diagnostics, checkPrivileged(pod.Spec.InitContainers, pod)...)
 	}
 
-	return w, nil, nil
+	return diagnostics, nil
 }
 
 // checkPrivileged checks if the container is running in privileged mode
 // Adds a warning if it finds any privileged container
-func checkPrivileged(containers []corev1.Container, podName string, namespace string) []error {
-	var w []error
+func checkPrivileged(containers []corev1.Container, pod corev1.Pod) []checks.Diagnostic {
+	var diagnostics []checks.Diagnostic
 	for _, container := range containers {
 		if container.SecurityContext != nil && container.SecurityContext.Privileged != nil && *container.SecurityContext.Privileged {
-			w = append(w, fmt.Errorf("[Best Practice] Privileged container '%s' found in pod '%s', namespace '%s'.", container.Name, podName, namespace))
+			d := checks.Diagnostic{
+				Severity: checks.Warning,
+				Message:  fmt.Sprintf("Privileged container '%s' found. Please ensure that the image is from a trusted source.", container.Name),
+				Kind:     checks.Pod,
+				Object:   &pod.ObjectMeta,
+				Owners:   pod.ObjectMeta.GetOwnerReferences(),
+			}
+			diagnostics = append(diagnostics, d)
 		}
 	}
-	return w
+	return diagnostics
 }
