@@ -16,6 +16,13 @@ func TestMeta(t *testing.T) {
 	assert.Equal(t, []string{"workload-health"}, podStatusCheck.Groups())
 }
 
+func TestPodStateCheckRegistration(t *testing.T) {
+	podStatusCheck := &podStatusCheck{}
+	check, err := checks.Get("pod-state")
+	assert.Equal(t, check, podStatusCheck)
+	assert.Nil(t, err)
+}
+
 func TestPodStateError(t *testing.T) {
 	scenarios := []struct {
 		name     string
