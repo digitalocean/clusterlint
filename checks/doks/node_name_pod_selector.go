@@ -41,7 +41,8 @@ func (nc *podSelectorCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, err
 			d := checks.Diagnostic{
 				Severity: checks.Error,
 				Message:  fmt.Sprintf("Avoid node name label for node selector in pod: %s", pod.GetName()),
-				Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+				Kind:     checks.Pod,
+				Object:   &pod.ObjectMeta,
 				Owners:   pod.ObjectMeta.GetOwnerReferences(),
 			}
 			diagnostics = append(diagnostics, d)

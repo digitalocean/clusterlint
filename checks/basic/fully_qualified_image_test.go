@@ -44,7 +44,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox:latest",
 			arg:      container("busybox:latest"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
@@ -54,7 +54,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox",
 			arg:      container("busybox"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -64,7 +64,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      container("repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -74,7 +74,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      container("repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox:latest",
@@ -84,7 +84,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox:latest",
 			arg:      initContainer("busybox:latest"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
@@ -94,7 +94,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox",
 			arg:      initContainer("busybox"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -104,7 +104,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      initContainer("repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -114,7 +114,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			arg:      initContainer("repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 	}
 
@@ -140,12 +140,12 @@ func TestMalformedImageError(t *testing.T) {
 		{
 			name:     "container with image : test:5000/repo/image@sha256:digest",
 			arg:      container("test:5000/repo/image@sha256:digest"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "init container with image : test:5000/repo/image@sha256:digest",
 			arg:      initContainer("test:5000/repo/image@sha256:digest"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 	}
 	fullyQualifiedImageCheck := fullyQualifiedImageCheck{}

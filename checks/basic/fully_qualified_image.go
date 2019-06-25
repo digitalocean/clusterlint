@@ -57,7 +57,8 @@ func checkImage(containers []corev1.Container, pod corev1.Pod) []checks.Diagnost
 			d := checks.Diagnostic{
 				Severity: checks.Error,
 				Message:  fmt.Sprintf("Malformed image name for container '%s' in pod '%s'", container.Name, pod.GetName()),
-				Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+				Kind:     checks.Pod,
+				Object:   &pod.ObjectMeta,
 				Owners:   pod.ObjectMeta.GetOwnerReferences(),
 			}
 			diagnostics = append(diagnostics, d)
@@ -66,7 +67,8 @@ func checkImage(containers []corev1.Container, pod corev1.Pod) []checks.Diagnost
 				d := checks.Diagnostic{
 					Severity: checks.Warning,
 					Message:  fmt.Sprintf("Use fully qualified image for container '%s' in pod '%s'", container.Name, pod.GetName()),
-					Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+					Kind:     checks.Pod,
+					Object:   &pod.ObjectMeta,
 					Owners:   pod.ObjectMeta.GetOwnerReferences(),
 				}
 				diagnostics = append(diagnostics, d)

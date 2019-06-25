@@ -39,32 +39,32 @@ func TestLatestTagWarning(t *testing.T) {
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox:latest",
 			arg:      container("k8s.gcr.io/busybox:latest"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - busybox:latest",
 			arg:      container("busybox:latest"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
 			arg:      container("k8s.gcr.io/busybox"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - busybox",
 			arg:      container("busybox"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - private:5000/busybox",
 			arg:      container("private:5000/repo/busybox"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - private:5000/busybox:latest",
 			arg:      container("private:5000/repo/busybox:latest"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - test:5000/repo@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -90,32 +90,32 @@ func TestLatestTagWarning(t *testing.T) {
 		{
 			name:     "pod with init container image - k8s.gcr.io/busybox:latest",
 			arg:      initContainer("k8s.gcr.io/busybox:latest"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with init container image - busybox:latest",
 			arg:      initContainer("busybox:latest"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with init container image - k8s.gcr.io/busybox",
 			arg:      initContainer("k8s.gcr.io/busybox"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with init container image - busybox",
 			arg:      initContainer("busybox"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - private:5000/busybox",
 			arg:      container("private:5000/repo/busybox"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - private:5000/busybox:latest",
 			arg:      container("private:5000/repo/busybox:latest"),
-			expected: issues(severity, message),
+			expected: issues(severity, message, checks.Pod),
 		},
 		{
 			name:     "pod with container image - test:5000/repo@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",

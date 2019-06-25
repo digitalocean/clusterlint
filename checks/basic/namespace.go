@@ -34,11 +34,12 @@ func (alert *alert) SetDiagnostics(d []checks.Diagnostic) {
 }
 
 // warn adds warnings for k8s objects that should not be in the default namespace
-func (alert *alert) warn(k8stype string, itemMeta metav1.ObjectMeta, itemType metav1.TypeMeta) {
+func (alert *alert) warn(k8stype checks.Kind, itemMeta metav1.ObjectMeta) {
 	d := checks.Diagnostic{
 		Severity: checks.Warning,
 		Message:  fmt.Sprintf("Avoid using the default namespace for %s '%s'", k8stype, itemMeta.GetName()),
-		Object:   kube.Object{TypeInfo: &itemType, ObjectInfo: &itemMeta},
+		Kind:     k8stype,
+		Object:   &itemMeta,
 		Owners:   itemMeta.GetOwnerReferences(),
 	}
 	alert.mu.Lock()
@@ -66,7 +67,7 @@ func (nc *defaultNamespaceCheck) Description() string {
 func checkPods(items *corev1.PodList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
-			alert.warn("pod", item.ObjectMeta, item.TypeMeta)
+			alert.warn(checks.Pod, item.ObjectMeta)
 		}
 	}
 }
@@ -75,7 +76,7 @@ func checkPods(items *corev1.PodList, alert *alert) {
 func checkPodTemplates(items *corev1.PodTemplateList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
-			alert.warn("pod template", item.ObjectMeta, item.TypeMeta)
+			alert.warn(checks.PodTemplate, item.ObjectMeta)
 		}
 	}
 }
@@ -84,7 +85,7 @@ func checkPodTemplates(items *corev1.PodTemplateList, alert *alert) {
 func checkPVCs(items *corev1.PersistentVolumeClaimList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
-			alert.warn("persistent volume claim", item.ObjectMeta, item.TypeMeta)
+			alert.warn(checks.PVC, item.ObjectMeta)
 		}
 	}
 }
@@ -93,7 +94,7 @@ func checkPVCs(items *corev1.PersistentVolumeClaimList, alert *alert) {
 func checkConfigMaps(items *corev1.ConfigMapList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
-			alert.warn("config map", item.ObjectMeta, item.TypeMeta)
+			alert.warn(checks.ConfigMap, item.ObjectMeta)
 		}
 	}
 }
@@ -102,7 +103,7 @@ func checkConfigMaps(items *corev1.ConfigMapList, alert *alert) {
 func checkServices(items *corev1.ServiceList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() && item.GetName() != "kubernetes" {
-			alert.warn("service", item.ObjectMeta, item.TypeMeta)
+			alert.warn(checks.Service, item.ObjectMeta)
 		}
 	}
 }
@@ -111,7 +112,7 @@ func checkServices(items *corev1.ServiceList, alert *alert) {
 func checkSecrets(items *corev1.SecretList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() && !strings.Contains(item.GetName(), "default-token-") {
-			alert.warn("secret", item.ObjectMeta, item.TypeMeta)
+			alert.warn(checks.Secret, item.ObjectMeta)
 		}
 	}
 }
@@ -120,7 +121,7 @@ func checkSecrets(items *corev1.SecretList, alert *alert) {
 func checkSA(items *corev1.ServiceAccountList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() && item.GetName() != "default" {
-			alert.warn("service account", item.ObjectMeta, item.TypeMeta)
+			alert.warn(checks.SA, item.ObjectMeta)
 		}
 	}
 }

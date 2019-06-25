@@ -53,7 +53,8 @@ func checkPrivileged(containers []corev1.Container, pod corev1.Pod) []checks.Dia
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
 				Message:  fmt.Sprintf("[Best Practice] Privileged container '%s' found in pod '%s'", container.Name, pod.GetName()),
-				Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+				Kind:     checks.Pod,
+				Object:   &pod.ObjectMeta,
 				Owners:   pod.ObjectMeta.GetOwnerReferences(),
 			}
 			diagnostics = append(diagnostics, d)

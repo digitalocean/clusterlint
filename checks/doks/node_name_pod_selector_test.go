@@ -79,7 +79,8 @@ func errors(objs *kube.Objects) []checks.Diagnostic {
 		{
 			Severity: checks.Error,
 			Message:  "Avoid node name label for node selector in pod: pod_foo",
-			Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+			Kind:     checks.Pod,
+			Object:   &pod.ObjectMeta,
 			Owners:   pod.ObjectMeta.GetOwnerReferences(),
 		},
 	}

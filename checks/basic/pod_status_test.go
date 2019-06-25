@@ -49,7 +49,8 @@ func TestPodStateError(t *testing.T) {
 				{
 					Severity: checks.Warning,
 					Message:  "Pod 'pod_foo' in namespace 'k8s' has state: Failed. Pod state should be `Running`, `Pending` or `Succeeded`.",
-					Object:   kube.Object{TypeInfo: GetTypeMeta(), ObjectInfo: GetObjectMeta()},
+					Kind:     checks.Pod,
+					Object:   GetObjectMeta(),
 					Owners:   GetOwners(),
 				},
 			},
@@ -61,7 +62,8 @@ func TestPodStateError(t *testing.T) {
 				{
 					Severity: checks.Warning,
 					Message:  "Pod 'pod_foo' in namespace 'k8s' has state: Unknown. Pod state should be `Running`, `Pending` or `Succeeded`.",
-					Object:   kube.Object{TypeInfo: GetTypeMeta(), ObjectInfo: GetObjectMeta()},
+					Kind:     checks.Pod,
+					Object:   GetObjectMeta(),
 					Owners:   GetOwners(),
 				},
 			},

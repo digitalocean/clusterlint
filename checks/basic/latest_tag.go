@@ -56,7 +56,8 @@ func checkTags(containers []corev1.Container, pod corev1.Pod) []checks.Diagnosti
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
 				Message:  fmt.Sprintf("Avoid using latest tag for container '%s' in pod '%s'", container.Name, pod.GetName()),
-				Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+				Kind:     checks.Pod,
+				Object:   &pod.ObjectMeta,
 				Owners:   pod.ObjectMeta.GetOwnerReferences(),
 			}
 			diagnostics = append(diagnostics, d)

@@ -21,11 +21,6 @@ func initPod() *kube.Objects {
 	return objs
 }
 
-func GetTypeMeta() *metav1.TypeMeta {
-	objs := initPod()
-	return &objs.Pods.Items[0].TypeMeta
-}
-
 func GetObjectMeta() *metav1.ObjectMeta {
 	objs := initPod()
 	return &objs.Pods.Items[0].ObjectMeta
@@ -60,12 +55,13 @@ func initContainer(image string) *kube.Objects {
 	return objs
 }
 
-func issues(severity checks.Severity, message string) []checks.Diagnostic {
+func issues(severity checks.Severity, message string, kind checks.Kind) []checks.Diagnostic {
 	d := []checks.Diagnostic{
 		{
 			Severity: severity,
 			Message:  message,
-			Object:   kube.Object{TypeInfo: GetTypeMeta(), ObjectInfo: GetObjectMeta()},
+			Kind:     kind,
+			Object:   GetObjectMeta(),
 			Owners:   GetOwners(),
 		},
 	}

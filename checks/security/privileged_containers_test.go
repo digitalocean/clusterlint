@@ -178,7 +178,8 @@ func warnings(objs *kube.Objects) []checks.Diagnostic {
 		{
 			Severity: checks.Warning,
 			Message:  "[Best Practice] Privileged container 'bar' found in pod 'pod_foo'",
-			Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+			Kind:     checks.Pod,
+			Object:   &pod.ObjectMeta,
 			Owners:   pod.ObjectMeta.GetOwnerReferences(),
 		},
 	}

@@ -41,7 +41,8 @@ func (p *podStatusCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error)
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
 				Message:  fmt.Sprintf("Pod '%s' in namespace '%s' has state: %s. Pod state should be `Running`, `Pending` or `Succeeded`.", pod.GetName(), pod.GetNamespace(), pod.Status.Phase),
-				Object:   kube.Object{TypeInfo: &pod.TypeMeta, ObjectInfo: &pod.ObjectMeta},
+				Kind:     checks.Pod,
+				Object:   &pod.ObjectMeta,
 				Owners:   pod.ObjectMeta.GetOwnerReferences(),
 			}
 			diagnostics = append(diagnostics, d)
