@@ -68,8 +68,9 @@ func userCreatedObjects() *kube.Objects {
 	objs.PodTemplates = &corev1.PodTemplateList{Items: []corev1.PodTemplate{{ObjectMeta: metav1.ObjectMeta{Name: "template_foo", Namespace: "default"}}}}
 	objs.PersistentVolumeClaims = &corev1.PersistentVolumeClaimList{Items: []corev1.PersistentVolumeClaim{{ObjectMeta: metav1.ObjectMeta{Name: "pvc_foo", Namespace: "default"}}}}
 	objs.ConfigMaps = &corev1.ConfigMapList{Items: []corev1.ConfigMap{{ObjectMeta: metav1.ObjectMeta{Name: "cm_foo", Namespace: "default"}}}}
-	objs.ResourceQuotas = &corev1.ResourceQuotaList{Items: []corev1.ResourceQuota{{ObjectMeta: metav1.ObjectMeta{Name: "quota_foo", Namespace: "default"}}}}
-	objs.LimitRanges = &corev1.LimitRangeList{Items: []corev1.LimitRange{{ObjectMeta: metav1.ObjectMeta{Name: "limit_foo", Namespace: "default"}}}}
+	objs.Services = &corev1.ServiceList{Items: []corev1.Service{{ObjectMeta: metav1.ObjectMeta{Name: "svc_foo", Namespace: "default"}}}}
+	objs.Secrets = &corev1.SecretList{Items: []corev1.Secret{{ObjectMeta: metav1.ObjectMeta{Name: "secret_foo", Namespace: "default"}}}}
+	objs.ServiceAccounts = &corev1.ServiceAccountList{Items: []corev1.ServiceAccount{{ObjectMeta: metav1.ObjectMeta{Name: "sa_foo", Namespace: "default"}}}}
 	return objs
 }
 
@@ -79,8 +80,9 @@ func errors() []error {
 		fmt.Errorf("Pod template 'template_foo' is in the default namespace."),
 		fmt.Errorf("Persistent Volume Claim 'pvc_foo' is in the default namespace."),
 		fmt.Errorf("Config Map 'cm_foo' is in the default namespace."),
-		fmt.Errorf("Resource Quota 'quota_foo' is in the default namespace."),
-		fmt.Errorf("Limit Range 'limit_foo' is in the default namespace."),
+		fmt.Errorf("Service 'svc_foo' is in the default namespace."),
+		fmt.Errorf("Secret 'secret_foo' is in the default namespace."),
+		fmt.Errorf("Service Account 'sa_foo' is in the default namespace."),
 	}
 	return w
 }
