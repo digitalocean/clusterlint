@@ -177,7 +177,7 @@ func warnings(objs *kube.Objects) []checks.Diagnostic {
 	d := []checks.Diagnostic{
 		{
 			Severity: checks.Warning,
-			Message:  "[Best Practice] Privileged container 'bar' found in pod 'pod_foo'",
+			Message:  "Privileged container '%bar' found. Please ensure that the image is from a trusted source.",
 			Kind:     checks.Pod,
 			Object:   &pod.ObjectMeta,
 			Owners:   pod.ObjectMeta.GetOwnerReferences(),

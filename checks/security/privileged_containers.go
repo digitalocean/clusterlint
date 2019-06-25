@@ -52,7 +52,7 @@ func checkPrivileged(containers []corev1.Container, pod corev1.Pod) []checks.Dia
 		if container.SecurityContext != nil && container.SecurityContext.Privileged != nil && *container.SecurityContext.Privileged {
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
-				Message:  fmt.Sprintf("[Best Practice] Privileged container '%s' found in pod '%s'", container.Name, pod.GetName()),
+				Message:  fmt.Sprintf("Privileged container '%s' found. Please ensure that the image is from a trusted source.", container.Name),
 				Kind:     checks.Pod,
 				Object:   &pod.ObjectMeta,
 				Owners:   pod.ObjectMeta.GetOwnerReferences(),

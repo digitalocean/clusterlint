@@ -23,8 +23,8 @@ func TestFullyQualifiedImageCheckRegistration(t *testing.T) {
 }
 
 func TestFullyQualifiedImageWarning(t *testing.T) {
-	const message string = "Use fully qualified image for container 'bar' in pod 'pod_foo'"
-	const severity checks.Severity = checks.Warning
+	const message = "Use fully qualified image for container 'bar'"
+	const severity = checks.Warning
 
 	scenarios := []struct {
 		name     string
@@ -130,8 +130,8 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 }
 
 func TestMalformedImageError(t *testing.T) {
-	const message string = "Malformed image name for container 'bar' in pod 'pod_foo'"
-	const severity checks.Severity = checks.Error
+	const message = "Malformed image name for container 'bar'"
+	const severity = checks.Error
 	scenarios := []struct {
 		name     string
 		arg      *kube.Objects

@@ -40,7 +40,7 @@ func (p *podStatusCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error)
 		if corev1.PodFailed == pod.Status.Phase || corev1.PodUnknown == pod.Status.Phase {
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
-				Message:  fmt.Sprintf("Pod '%s' in namespace '%s' has state: %s. Pod state should be `Running`, `Pending` or `Succeeded`.", pod.GetName(), pod.GetNamespace(), pod.Status.Phase),
+				Message:  fmt.Sprintf("Unhealthy pod. State: `%s`. Pod state should be `Running`, `Pending` or `Succeeded`.", pod.Status.Phase),
 				Kind:     checks.Pod,
 				Object:   &pod.ObjectMeta,
 				Owners:   pod.ObjectMeta.GetOwnerReferences(),

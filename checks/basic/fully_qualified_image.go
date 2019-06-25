@@ -56,7 +56,7 @@ func checkImage(containers []corev1.Container, pod corev1.Pod) []checks.Diagnost
 		if err != nil {
 			d := checks.Diagnostic{
 				Severity: checks.Error,
-				Message:  fmt.Sprintf("Malformed image name for container '%s' in pod '%s'", container.Name, pod.GetName()),
+				Message:  fmt.Sprintf("Malformed image name for container '%s'", container.Name),
 				Kind:     checks.Pod,
 				Object:   &pod.ObjectMeta,
 				Owners:   pod.ObjectMeta.GetOwnerReferences(),
@@ -66,7 +66,7 @@ func checkImage(containers []corev1.Container, pod corev1.Pod) []checks.Diagnost
 			if value.String() != container.Image {
 				d := checks.Diagnostic{
 					Severity: checks.Warning,
-					Message:  fmt.Sprintf("Use fully qualified image for container '%s' in pod '%s'", container.Name, pod.GetName()),
+					Message:  fmt.Sprintf("Use fully qualified image for container '%s'", container.Name),
 					Kind:     checks.Pod,
 					Object:   &pod.ObjectMeta,
 					Owners:   pod.ObjectMeta.GetOwnerReferences(),

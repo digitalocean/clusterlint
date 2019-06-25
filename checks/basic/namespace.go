@@ -1,7 +1,6 @@
 package basic
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -37,7 +36,7 @@ func (alert *alert) SetDiagnostics(d []checks.Diagnostic) {
 func (alert *alert) warn(k8stype checks.Kind, itemMeta metav1.ObjectMeta) {
 	d := checks.Diagnostic{
 		Severity: checks.Warning,
-		Message:  fmt.Sprintf("Avoid using the default namespace for %s '%s'", k8stype, itemMeta.GetName()),
+		Message:  "Avoid using the default namespace",
 		Kind:     k8stype,
 		Object:   &itemMeta,
 		Owners:   itemMeta.GetOwnerReferences(),

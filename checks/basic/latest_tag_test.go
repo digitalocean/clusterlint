@@ -23,8 +23,8 @@ func TestLatestTagCheckRegistration(t *testing.T) {
 }
 
 func TestLatestTagWarning(t *testing.T) {
-	const message string = "Avoid using latest tag for container 'bar' in pod 'pod_foo'"
-	const severity checks.Severity = checks.Warning
+	const message = "Avoid using latest tag for container 'bar'"
+	const severity = checks.Warning
 
 	scenarios := []struct {
 		name     string

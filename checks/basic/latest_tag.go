@@ -55,7 +55,7 @@ func checkTags(containers []corev1.Container, pod corev1.Pod) []checks.Diagnosti
 		if strings.HasSuffix(tagNameOnly.String(), ":latest") {
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
-				Message:  fmt.Sprintf("Avoid using latest tag for container '%s' in pod '%s'", container.Name, pod.GetName()),
+				Message:  fmt.Sprintf("Avoid using latest tag for container '%s'", container.Name),
 				Kind:     checks.Pod,
 				Object:   &pod.ObjectMeta,
 				Owners:   pod.ObjectMeta.GetOwnerReferences(),

@@ -48,7 +48,7 @@ func TestPodStateError(t *testing.T) {
 			expected: []checks.Diagnostic{
 				{
 					Severity: checks.Warning,
-					Message:  "Pod 'pod_foo' in namespace 'k8s' has state: Failed. Pod state should be `Running`, `Pending` or `Succeeded`.",
+					Message:  "Unhealthy pod. State: `Failed`. Pod state should be `Running`, `Pending` or `Succeeded`.",
 					Kind:     checks.Pod,
 					Object:   GetObjectMeta(),
 					Owners:   GetOwners(),
@@ -61,7 +61,7 @@ func TestPodStateError(t *testing.T) {
 			expected: []checks.Diagnostic{
 				{
 					Severity: checks.Warning,
-					Message:  "Pod 'pod_foo' in namespace 'k8s' has state: Unknown. Pod state should be `Running`, `Pending` or `Succeeded`.",
+					Message:  "Unhealthy pod. State: `Unknown`. Pod state should be `Running`, `Pending` or `Succeeded`.",
 					Kind:     checks.Pod,
 					Object:   GetObjectMeta(),
 					Owners:   GetOwners(),

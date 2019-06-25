@@ -1,8 +1,6 @@
 package doks
 
 import (
-	"fmt"
-
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 	corev1 "k8s.io/api/core/v1"
@@ -40,7 +38,7 @@ func (nc *podSelectorCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, err
 		if _, ok := nodeSelectorMap[corev1.LabelHostname]; ok {
 			d := checks.Diagnostic{
 				Severity: checks.Error,
-				Message:  fmt.Sprintf("Avoid node name label for node selector in pod: %s", pod.GetName()),
+				Message:  "Avoid node name label for node selector.",
 				Kind:     checks.Pod,
 				Object:   &pod.ObjectMeta,
 				Owners:   pod.ObjectMeta.GetOwnerReferences(),

@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -57,7 +57,11 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "output, o",
-					Usage: "Show output in string or json format. Default: string",
+					Usage: "output format [text|json]. Default: text",
+				},
+				cli.StringFlag{
+					Name:  "level, l",
+					Usage: "Filter output messages based on severity [error|warning|suggestion]. Default: all",
 				},
 			},
 			Action: runChecks,
@@ -65,7 +69,7 @@ func main() {
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Printf("failed: %v", err)
+		fmt.Printf("failed: %v", err)
 		os.Exit(1)
 	}
 }
@@ -76,7 +80,7 @@ func listChecks(c *cli.Context) error {
 	group := c.String("group")
 	allChecks := getChecks(group)
 	for _, check := range allChecks {
-		log.Printf("%s : %s\n", check.Name(), check.Description())
+		fmt.Printf("%s : %s\n", check.Name(), check.Description())
 	}
 
 	return nil
@@ -85,7 +89,6 @@ func listChecks(c *cli.Context) error {
 func runChecks(c *cli.Context) error {
 	group := c.String("group")
 	name := c.String("name")
-	output := c.String("output")
 
 	client, err := kube.NewClient(c.GlobalString("kubeconfig"), c.GlobalString("context"))
 	if err != nil {
@@ -98,14 +101,14 @@ func runChecks(c *cli.Context) error {
 	}
 
 	if name == "" {
-		return runChecksForGroup(group, objects, output)
+		return runChecksForGroup(group, objects, c)
 	}
-	return runCheck(name, objects, output)
+	return runCheck(name, objects, c)
 }
 
 // runChecksForGroup runs all checks in the specified group if found
 // runs all checks in the registry if group is not specified
-func runChecksForGroup(group string, objects *kube.Objects, output string) error {
+func runChecksForGroup(group string, objects *kube.Objects, c *cli.Context) error {
 	allChecks := getChecks(group)
 	var diagnostics []checks.Diagnostic
 	var mu sync.Mutex
@@ -114,7 +117,7 @@ func runChecksForGroup(group string, objects *kube.Objects, output string) error
 	for _, check := range allChecks {
 		check := check
 		g.Go(func() error {
-			log.Println("Running check: ", check.Name())
+			fmt.Println("Running check: ", check.Name())
 			d, err := check.Run(objects)
 			if err != nil {
 				return err
@@ -126,42 +129,59 @@ func runChecksForGroup(group string, objects *kube.Objects, output string) error
 		})
 	}
 	err := g.Wait()
-	showDiagnostics(diagnostics, output)
+	showDiagnostics(diagnostics, c)
 
 	return err
 }
 
 // runCheck runs a specific check identified by check.Name()
 // errors out if the check is not found in the registry
-func runCheck(name string, objects *kube.Objects, output string) error {
+func runCheck(name string, objects *kube.Objects, c *cli.Context) error {
 	check, err := checks.Get(name)
 	if err != nil {
 		return err
 	}
 
-	log.Println("Running check: ", name)
+	fmt.Println("Running check: ", name)
 	diagnostics, err := check.Run(objects)
 	if err != nil {
 		return err
 	}
-	return showDiagnostics(diagnostics, output)
+	return showDiagnostics(diagnostics, c)
 }
 
 // showErrorsAndWarnings displays all the errors and warnings returned by checks
-func showDiagnostics(diagnostics []checks.Diagnostic, output string) error {
-	if "json" == output {
-		resp, err := json.Marshal(diagnostics)
+func showDiagnostics(diagnostics []checks.Diagnostic, c *cli.Context) error {
+	output := c.String("output")
+	level := checks.Severity(c.String("level"))
+	filtered := filter(level, diagnostics)
+	switch output {
+	case "json":
+		err := json.NewEncoder(os.Stdout).Encode(filtered)
 		if err != nil {
 			return err
 		}
-		log.Println(string(resp))
-	} else {
-		for _, diagnostic := range diagnostics {
-			log.Printf("%s\n", diagnostic)
+	default:
+		for _, diagnostic := range filtered {
+			fmt.Printf("%s\n", diagnostic)
 		}
 	}
 
 	return nil
+}
+
+// filter uses level to filter diagnostics to show to user. If level is blank, returns all diagnostics
+func filter(level checks.Severity, diagnostics []checks.Diagnostic) []checks.Diagnostic {
+	if level == "" {
+		return diagnostics
+	}
+	var filtered []checks.Diagnostic
+	for _, d := range diagnostics {
+		if d.Severity == level {
+			filtered = append(filtered, d)
+		}
+	}
+	return filtered
 }
 
 // getChecks retrieves all checks within given group
