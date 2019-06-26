@@ -12,43 +12,43 @@ import (
 func TestHostpathCheckMeta(t *testing.T) {
 	hostPathCheck := hostPathCheck{}
 	assert.Equal(t, "hostpath-volume", hostPathCheck.Name())
-	assert.Equal(t, "Check if there are pods using hostpath volumes", hostPathCheck.Description())
 	assert.Equal(t, []string{"basic"}, hostPathCheck.Groups())
+	assert.NotEmpty(t, hostPathCheck.Description())
 }
 
 func TestHostpathCheckRegistration(t *testing.T) {
 	hostPathCheck := &hostPathCheck{}
 	check, err := checks.Get("hostpath-volume")
+	assert.NoError(t, err)
 	assert.Equal(t, check, hostPathCheck)
-	assert.Nil(t, err)
 }
 
 func TestHostpathVolumeError(t *testing.T) {
-	scenarios := []struct {
+	tests := []struct {
 		name     string
-		arg      *kube.Objects
+		objs     *kube.Objects
 		expected []checks.Diagnostic
 	}{
 		{
 			name:     "no pods",
-			arg:      initPod(),
+			objs:     initPod(),
 			expected: nil,
 		},
 		{
 			name:     "pod with no volumes",
-			arg:      container("docker.io/nginx:foo"),
+			objs:     container("docker.io/nginx:foo"),
 			expected: nil,
 		},
 		{
 			name: "pod with other volume",
-			arg: volume(corev1.VolumeSource{
+			objs: volume(corev1.VolumeSource{
 				GitRepo: &corev1.GitRepoVolumeSource{Repository: "boo"},
 			}),
 			expected: nil,
 		},
 		{
 			name: "pod with hostpath volume",
-			arg: volume(corev1.VolumeSource{
+			objs: volume(corev1.VolumeSource{
 				HostPath: &corev1.HostPathVolumeSource{Path: "/tmp"},
 			}),
 			expected: []checks.Diagnostic{
@@ -65,11 +65,11 @@ func TestHostpathVolumeError(t *testing.T) {
 
 	hostPathCheck := hostPathCheck{}
 
-	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
-			d, err := hostPathCheck.Run(scenario.arg)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			d, err := hostPathCheck.Run(test.objs)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, scenario.expected, d)
+			assert.ElementsMatch(t, test.expected, d)
 		})
 	}
 }

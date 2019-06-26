@@ -13,77 +13,77 @@ import (
 func TestPrivilegedContainersCheckMeta(t *testing.T) {
 	privilegedContainerCheck := privilegedContainerCheck{}
 	assert.Equal(t, "privileged-containers", privilegedContainerCheck.Name())
-	assert.Equal(t, "Checks if there are pods with containers in privileged mode", privilegedContainerCheck.Description())
 	assert.Equal(t, []string{"security"}, privilegedContainerCheck.Groups())
+	assert.NotEmpty(t, privilegedContainerCheck.Description())
 }
 
 func TestPrivilegedContainersCheckRegistration(t *testing.T) {
 	privilegedContainerCheck := &privilegedContainerCheck{}
 	check, err := checks.Get("privileged-containers")
+	assert.NoError(t, err)
 	assert.Equal(t, check, privilegedContainerCheck)
-	assert.Nil(t, err)
 }
 
 func TestPrivilegedContainerWarning(t *testing.T) {
-	scenarios := []struct {
+	tests := []struct {
 		name     string
-		arg      *kube.Objects
+		objs     *kube.Objects
 		expected []checks.Diagnostic
 	}{
 		{
 			name:     "no pods",
-			arg:      initPod(),
+			objs:     initPod(),
 			expected: nil,
 		},
 		{
 			name:     "pod with container in privileged mode",
-			arg:      container(true),
+			objs:     container(true),
 			expected: warnings(container(true)),
 		},
 		{
 			name:     "pod with container.SecurityContext = nil",
-			arg:      containerSecurityContextNil(),
+			objs:     containerSecurityContextNil(),
 			expected: nil,
 		},
 		{
 			name:     "pod with container.SecurityContext.Privileged = nil",
-			arg:      containerPrivilegedNil(),
+			objs:     containerPrivilegedNil(),
 			expected: nil,
 		},
 		{
 			name:     "pod with container in regular mode",
-			arg:      container(false),
+			objs:     container(false),
 			expected: nil,
 		},
 		{
 			name:     "pod with init container in privileged mode",
-			arg:      initContainer(true),
+			objs:     initContainer(true),
 			expected: warnings(initContainer(true)),
 		},
 		{
 			name:     "pod with initContainer.SecurityContext = nil",
-			arg:      initContainerSecurityContextNil(),
+			objs:     initContainerSecurityContextNil(),
 			expected: nil,
 		},
 		{
 			name:     "pod with initContainer.SecurityContext.Privileged = nil",
-			arg:      initContainerPrivilegedNil(),
+			objs:     initContainerPrivilegedNil(),
 			expected: nil,
 		},
 		{
 			name:     "pod with init container in regular mode",
-			arg:      initContainer(false),
+			objs:     initContainer(false),
 			expected: nil,
 		},
 	}
 
 	privilegedContainerCheck := privilegedContainerCheck{}
 
-	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
-			d, err := privilegedContainerCheck.Run(scenario.arg)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			d, err := privilegedContainerCheck.Run(test.objs)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, scenario.expected, d)
+			assert.ElementsMatch(t, test.expected, d)
 		})
 	}
 }
@@ -177,7 +177,7 @@ func warnings(objs *kube.Objects) []checks.Diagnostic {
 	d := []checks.Diagnostic{
 		{
 			Severity: checks.Warning,
-			Message:  "Privileged container '%bar' found. Please ensure that the image is from a trusted source.",
+			Message:  "Privileged container 'bar' found. Please ensure that the image is from a trusted source.",
 			Kind:     checks.Pod,
 			Object:   &pod.ObjectMeta,
 			Owners:   pod.ObjectMeta.GetOwnerReferences(),
