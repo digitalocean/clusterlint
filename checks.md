@@ -277,5 +277,20 @@ Description: This check reports all the persistent volume claims in the cluster 
 How to fix:
 
 ```bash
+<<<<<<< HEAD
 kubectl delete pvc <unused pvc>
+```
+
+###### Unused Config Maps
+
+Name: `unused-config-map`
+
+Group: `basic`
+
+Description: This check reports all the config maps in the cluster that are not referenced by pods in the respective namespaces. The cluster can be cleaned up based on this information and there will be fewer objects to manage.
+
+How to fix:
+
+```bash
+kubectl delete configmap <unused config map>
 ```
