@@ -252,3 +252,16 @@ spec:
       readOnly: true
 
 ```
+###### Unused Persistent Volume
+
+Name: `unused-pv`
+
+Group: `basic`
+
+Description: This check reports all the persistent volumes in the cluster that are not claimed by persistent volume claims in any namespace. The cluster can be cleaned up based on this information and there will be fewer objects to manage.
+
+How to fix:
+
+```bash
+kubectl delete pv <unused pv>
+```

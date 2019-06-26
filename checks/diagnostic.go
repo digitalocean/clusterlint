@@ -34,4 +34,5 @@ const (
 	Service     Kind     = "service"
 	Secret      Kind     = "secret"
 	SA          Kind     = "service account"
+	PV          Kind     = "persistent volume"
 )
