@@ -13,21 +13,21 @@ import (
 func TestNamespaceCheckMeta(t *testing.T) {
 	defaultNamespaceCheck := defaultNamespaceCheck{}
 	assert.Equal(t, "default-namespace", defaultNamespaceCheck.Name())
-	assert.Equal(t, "Checks if there are any user created k8s objects in the default namespace.", defaultNamespaceCheck.Description())
 	assert.Equal(t, []string{"basic"}, defaultNamespaceCheck.Groups())
+	assert.NotEmpty(t, defaultNamespaceCheck.Description())
 }
 
 func TestNamespaceCheckRegistration(t *testing.T) {
 	defaultNamespaceCheck := &defaultNamespaceCheck{}
 	check, err := checks.Get("default-namespace")
+	assert.NoError(t, err)
 	assert.Equal(t, check, defaultNamespaceCheck)
-	assert.Nil(t, err)
 }
 
 func TestNamespaceWarning(t *testing.T) {
-	scenarios := []struct {
+	tests := []struct {
 		name     string
-		arg      *kube.Objects
+		objs     *kube.Objects
 		expected []checks.Diagnostic
 	}{
 		{"no objects in cluster", empty(), nil},
@@ -36,11 +36,11 @@ func TestNamespaceWarning(t *testing.T) {
 
 	namespace := defaultNamespaceCheck{}
 
-	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
-			d, err := namespace.Run(scenario.arg)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			d, err := namespace.Run(test.objs)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, scenario.expected, d)
+			assert.ElementsMatch(t, test.expected, d)
 		})
 	}
 }

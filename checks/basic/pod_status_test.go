@@ -12,46 +12,46 @@ import (
 func TestMeta(t *testing.T) {
 	podStatusCheck := podStatusCheck{}
 	assert.Equal(t, "pod-state", podStatusCheck.Name())
-	assert.Equal(t, "Check if there are unhealthy pods in the cluster", podStatusCheck.Description())
 	assert.Equal(t, []string{"workload-health"}, podStatusCheck.Groups())
+	assert.NotEmpty(t, podStatusCheck.Description())
 }
 
 func TestPodStateCheckRegistration(t *testing.T) {
 	podStatusCheck := &podStatusCheck{}
 	check, err := checks.Get("pod-state")
+	assert.NoError(t, err)
 	assert.Equal(t, check, podStatusCheck)
-	assert.Nil(t, err)
 }
 
 func TestPodStateError(t *testing.T) {
-	scenarios := []struct {
+	tests := []struct {
 		name     string
-		arg      *kube.Objects
+		objs     *kube.Objects
 		expected []checks.Diagnostic
 	}{
 		{
 			name:     "no pods",
-			arg:      initPod(),
+			objs:     initPod(),
 			expected: nil,
 		},
 		{
 			name:     "pod with running status",
-			arg:      status(corev1.PodRunning),
+			objs:     status(corev1.PodRunning),
 			expected: nil,
 		},
 		{
 			name:     "pod with pending status",
-			arg:      status(corev1.PodPending),
+			objs:     status(corev1.PodPending),
 			expected: nil,
 		},
 		{
 			name:     "pod with succeeded status",
-			arg:      status(corev1.PodSucceeded),
+			objs:     status(corev1.PodSucceeded),
 			expected: nil,
 		},
 		{
 			name: "pod with failed status",
-			arg:  status(corev1.PodFailed),
+			objs: status(corev1.PodFailed),
 			expected: []checks.Diagnostic{
 				{
 					Severity: checks.Warning,
@@ -64,7 +64,7 @@ func TestPodStateError(t *testing.T) {
 		},
 		{
 			name: "pod with unknown status",
-			arg:  status(corev1.PodUnknown),
+			objs: status(corev1.PodUnknown),
 			expected: []checks.Diagnostic{
 				{
 					Severity: checks.Warning,
@@ -79,11 +79,11 @@ func TestPodStateError(t *testing.T) {
 
 	podStatusCheck := podStatusCheck{}
 
-	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
-			d, err := podStatusCheck.Run(scenario.arg)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			d, err := podStatusCheck.Run(test.objs)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, scenario.expected, d)
+			assert.ElementsMatch(t, test.expected, d)
 		})
 	}
 }

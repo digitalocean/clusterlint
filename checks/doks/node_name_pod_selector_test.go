@@ -13,42 +13,42 @@ import (
 func TestPodSelectorCheckMeta(t *testing.T) {
 	podSelectorCheck := podSelectorCheck{}
 	assert.Equal(t, "node-name-pod-selector", podSelectorCheck.Name())
-	assert.Equal(t, "Checks if there are pods which use kubernetes.io/hostname label in the node selector.", podSelectorCheck.Description())
 	assert.Equal(t, []string{"doks"}, podSelectorCheck.Groups())
+	assert.NotEmpty(t, podSelectorCheck.Description())
 }
 
 func TestPodSelectorCheckRegistration(t *testing.T) {
 	podSelectorCheck := &podSelectorCheck{}
 	check, err := checks.Get("node-name-pod-selector")
+	assert.NoError(t, err)
 	assert.Equal(t, check, podSelectorCheck)
-	assert.Nil(t, err)
 }
 
 func TestNodeNameError(t *testing.T) {
-	scenarios := []struct {
+	tests := []struct {
 		name     string
-		arg      *kube.Objects
+		objs     *kube.Objects
 		expected []checks.Diagnostic
 	}{
 		{
 			name:     "no node name selector",
-			arg:      empty(),
+			objs:     empty(),
 			expected: nil,
 		},
 		{
 			name:     "node name used in node selector",
-			arg:      invalidPod(),
+			objs:     invalidPod(),
 			expected: errors(invalidPod()),
 		},
 	}
 
 	podSelectorCheck := podSelectorCheck{}
 
-	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
-			d, err := podSelectorCheck.Run(scenario.arg)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			d, err := podSelectorCheck.Run(test.objs)
 			assert.NoError(t, err)
-			assert.ElementsMatch(t, scenario.expected, d)
+			assert.ElementsMatch(t, test.expected, d)
 		})
 	}
 }
