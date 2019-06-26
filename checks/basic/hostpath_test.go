@@ -54,7 +54,7 @@ func TestHostpathVolumeError(t *testing.T) {
 			expected: []checks.Diagnostic{
 				{
 					Severity: checks.Error,
-					Message:  "Avoid using hostpath for volume.",
+					Message:  "Avoid using hostpath for volume 'bar'.",
 					Kind:     checks.Pod,
 					Object:   GetObjectMeta(),
 					Owners:   GetOwners(),

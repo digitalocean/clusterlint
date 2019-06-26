@@ -1,6 +1,8 @@
 package basic
 
 import (
+	"fmt"
+
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 )
@@ -38,13 +40,12 @@ func (h *hostPathCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) 
 			if volume.VolumeSource.HostPath != nil {
 				d := checks.Diagnostic{
 					Severity: checks.Error,
-					Message:  "Avoid using hostpath for volume.",
+					Message:  fmt.Sprintf("Avoid using hostpath for volume '%s'.", volume.Name),
 					Kind:     checks.Pod,
 					Object:   &pod.ObjectMeta,
 					Owners:   pod.ObjectMeta.GetOwnerReferences(),
 				}
 				diagnostics = append(diagnostics, d)
-				break
 			}
 		}
 	}
