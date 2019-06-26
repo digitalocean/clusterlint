@@ -187,3 +187,68 @@ Group: `workload-health`
 Description: This check is done so users can find out if they have unhealthy pods in their cluster before upgrade. If there are suspicious failed pods, this check will indicate the same.
 
 This check is not run by default. Specify group name or check name in order to run this check.
+
+
+###### HostPath Volume
+
+Name: `hostpath-volume`
+
+Group: `basic`
+
+Description: Using hostPath volumes is best avoided because:
+
+- Pods with identical configuration (such as created from a podTemplate) may behave differently on different nodes due to different files on the nodes.
+- When Kubernetes adds resource-aware scheduling, as is planned, it will not be able to account for resources used by a hostPath
+the files or directories created on the underlying hosts are only writable by root.
+- You either need to run your process as root in a privileged Container or modify the file permissions on the host to be able to write to a hostPath volume
+
+For more details about hostpath, please refer to the Kubernetes [documentation](https://kubernetes.io/docs/concepts/storage/volumes/#hostpath)
+
+Example:
+
+```yaml
+# Don't do this
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pd
+spec:
+  containers:
+  - image: docker.io/nginx:1.17.0
+    name: test-container
+    volumeMounts:
+    - mountPath: /test-pd
+      name: test-volume
+  volumes:
+  - name: test-volume
+    hostPath:
+      path: /data
+      type: Directory
+
+```
+
+How to fix:
+
+```yaml
+# Use other volume sources. See https://kubernetes.io/docs/concepts/storage/volumes/
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pd
+spec:
+  containers:
+  - image: docker.io/nginx:1.17.0
+    name: test-container
+    volumeMounts:
+    - mountPath: /test-pd
+      name: test-volume
+  volumes:
+  - name: test-volume
+    cephfs:
+      monitors:
+        - 10.16.154.78:6789
+      user: admin
+      secretFile: "/etc/ceph/admin.secret"
+      readOnly: true
+
+```
