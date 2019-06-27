@@ -84,7 +84,7 @@ func checkPodTemplates(items *corev1.PodTemplateList, alert *alert) {
 func checkPVCs(items *corev1.PersistentVolumeClaimList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
-			alert.warn(checks.PVC, item.ObjectMeta)
+			alert.warn(checks.PersistentVolumeClaim, item.ObjectMeta)
 		}
 	}
 }
@@ -120,7 +120,7 @@ func checkSecrets(items *corev1.SecretList, alert *alert) {
 func checkSA(items *corev1.ServiceAccountList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() && item.GetName() != "default" {
-			alert.warn(checks.SA, item.ObjectMeta)
+			alert.warn(checks.ServiceAccount, item.ObjectMeta)
 		}
 	}
 }

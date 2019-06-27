@@ -39,7 +39,7 @@ func (pv *unusedPVCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error)
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
 				Message:  fmt.Sprintf("Unused Persistent Volume '%s'.", pv.GetName()),
-				Kind:     checks.PV,
+				Kind:     checks.PersistentVolume,
 				Object:   &pv.ObjectMeta,
 				Owners:   pv.ObjectMeta.GetOwnerReferences(),
 			}

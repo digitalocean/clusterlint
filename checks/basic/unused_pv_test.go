@@ -47,7 +47,7 @@ func TestUnusedPVWarning(t *testing.T) {
 				{
 					Severity: checks.Warning,
 					Message:  "Unused Persistent Volume 'pv_foo'.",
-					Kind:     checks.PV,
+					Kind:     checks.PersistentVolume,
 					Object:   &metav1.ObjectMeta{Name: "pv_foo"},
 					Owners:   GetOwners(),
 				},

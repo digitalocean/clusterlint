@@ -24,15 +24,15 @@ type Severity string
 type Kind string
 
 const (
-	Error       Severity = "error"
-	Warning     Severity = "warning"
-	Suggestion  Severity = "suggestion"
-	Pod         Kind     = "pod"
-	PodTemplate Kind     = "pod template"
-	PVC         Kind     = "persistent volume claim"
-	ConfigMap   Kind     = "config map"
-	Service     Kind     = "service"
-	Secret      Kind     = "secret"
-	SA          Kind     = "service account"
-	PV          Kind     = "persistent volume"
+	Error                 Severity = "error"
+	Warning               Severity = "warning"
+	Suggestion            Severity = "suggestion"
+	Pod                   Kind     = "pod"
+	PodTemplate           Kind     = "pod template"
+	PersistentVolumeClaim Kind     = "persistent volume claim"
+	ConfigMap             Kind     = "config map"
+	Service               Kind     = "service"
+	Secret                Kind     = "secret"
+	ServiceAccount        Kind     = "service account"
+	PersistentVolume      Kind     = "persistent volume"
 )
