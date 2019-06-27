@@ -293,3 +293,17 @@ How to fix:
 ```bash
 kubectl delete configmap <unused config map>
 ```
+
+###### Unused Secrets
+
+Name: `unused-secret`
+
+Group: `basic`
+
+Description: This check reports all the secret names in the cluster that are not referenced by pods in the respective namespaces. The cluster can be cleaned up based on this information.
+
+How to fix:
+
+```bash
+kubectl delete secret <unused secret name>
+```
