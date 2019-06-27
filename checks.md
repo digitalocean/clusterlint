@@ -265,3 +265,17 @@ How to fix:
 ```bash
 kubectl delete pv <unused pv>
 ```
+
+###### Unused Persistent Volume Claims
+
+Name: `unused-pvc`
+
+Group: `basic`
+
+Description: This check reports all the persistent volume claims in the cluster that are not referenced by pods in the respective namespaces. The cluster can be cleaned up based on this information and there will be fewer objects to manage.
+
+How to fix:
+
+```bash
+kubectl delete pvc <unused pvc>
+```
