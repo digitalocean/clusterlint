@@ -100,7 +100,7 @@ func errors() []checks.Diagnostic {
 		{
 			Severity: checks.Warning,
 			Message:  "Avoid using the default namespace",
-			Kind:     checks.PVC,
+			Kind:     checks.PersistentVolumeClaim,
 			Object:   &pvc.ObjectMeta,
 			Owners:   pvc.ObjectMeta.GetOwnerReferences(),
 		},
@@ -128,7 +128,7 @@ func errors() []checks.Diagnostic {
 		{
 			Severity: checks.Warning,
 			Message:  "Avoid using the default namespace",
-			Kind:     checks.SA,
+			Kind:     checks.ServiceAccount,
 			Object:   &sa.ObjectMeta,
 			Owners:   sa.ObjectMeta.GetOwnerReferences(),
 		},
