@@ -65,4 +65,8 @@ const (
 	ServiceAccount Kind = "service account"
 	// PersistentVolume identifies Kubernetes objects of kind `persistent volume`
 	PersistentVolume Kind = "persistent volume"
+	// ValidatingWebhookConfiguration identifies Kubernetes objects of kind `validating webhook configuration`
+	ValidatingWebhookConfiguration Kind = "validating webhook configuration"
+	// MutatingWebhookConfiguration identifies Kubernetes objects of kind `validating webhook configuration`
+	MutatingWebhookConfiguration Kind = "mutating webhook configuration"
 )
