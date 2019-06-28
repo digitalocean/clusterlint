@@ -33,11 +33,11 @@ func main() {
 			Usage: "list all checks in the registry",
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{
-					Name:  "g",
+					Name:  "g, groups",
 					Usage: "list all checks in groups `GROUP1, GROUP2`",
 				},
 				cli.StringSliceFlag{
-					Name:  "G",
+					Name:  "G, ignore-groups",
 					Usage: "list all checks not in groups `GROUP1, GROUP2`",
 				},
 			},
@@ -48,15 +48,19 @@ func main() {
 			Usage: "run all checks in the registry",
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{
-					Name:  "g",
+					Name:  "g, groups",
 					Usage: "run all checks in groups `GROUP1, GROUP2`",
 				},
 				cli.StringSliceFlag{
-					Name:  "G",
+					Name:  "G, ignore-groups",
 					Usage: "run all checks not in groups `GROUP1, GROUP2`",
 				},
-				cli.StringFlag{
-					Name:  "name, n",
+				cli.StringSliceFlag{
+					Name:  "c, checks",
+					Usage: "run a specific check",
+				},
+				cli.StringSliceFlag{
+					Name:  "C, ignore-checks",
 					Usage: "run a specific check",
 				},
 				cli.StringFlag{

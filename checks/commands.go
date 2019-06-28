@@ -14,7 +14,7 @@ import (
 // ListChecks lists the names and desc of all checks in the group if found
 // lists all checks in the registry if group is not specified
 func ListChecks(c *cli.Context) error {
-	allChecks, err := filter(c)
+	allChecks, err := filterGroups(c)
 	if err != nil {
 		return err
 	}
@@ -27,8 +27,6 @@ func ListChecks(c *cli.Context) error {
 
 // RunChecks runs all the checks based on the flags passed.
 func RunChecks(c *cli.Context) error {
-	name := c.String("name")
-
 	client, err := kube.NewClient(c.GlobalString("kubeconfig"), c.GlobalString("context"))
 	if err != nil {
 		return err
@@ -39,24 +37,26 @@ func RunChecks(c *cli.Context) error {
 		return err
 	}
 
-	if name == "" {
-		return runChecksForGroups(objects, c)
-	}
-	return runCheck(name, objects, c)
+	return runChecks(objects, c)
 }
 
-// runChecksForGroup runs all checks in the specified group if found
-// runs all checks in the registry if group is not specified
-func runChecksForGroups(objects *kube.Objects, c *cli.Context) error {
-	allChecks, err := filter(c)
+func runChecks(objects *kube.Objects, c *cli.Context) error {
+	all, err := filterGroups(c)
 	if err != nil {
 		return err
+	}
+	all, err = filterChecks(all, c)
+	if err != nil {
+		return err
+	}
+	if len(all) == 0 {
+		return fmt.Errorf("No checks to run. Are you sure that you provided the right names for groups and checks?")
 	}
 	var diagnostics []Diagnostic
 	var mu sync.Mutex
 	var g errgroup.Group
 
-	for _, check := range allChecks {
+	for _, check := range all {
 		check := check
 		g.Go(func() error {
 			fmt.Println("Running check: ", check.Name())
@@ -71,29 +71,12 @@ func runChecksForGroups(objects *kube.Objects, c *cli.Context) error {
 		})
 	}
 	err = g.Wait()
-	showDiagnostics(diagnostics, c)
+	write(diagnostics, c)
 
 	return err
 }
 
-// runCheck runs a specific check identified by check.Name()
-// errors out if the check is not found in the registry
-func runCheck(name string, objects *kube.Objects, c *cli.Context) error {
-	check, err := Get(name)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Running check: ", name)
-	diagnostics, err := check.Run(objects)
-	if err != nil {
-		return err
-	}
-	return showDiagnostics(diagnostics, c)
-}
-
-// showErrorsAndWarnings displays all the errors and warnings returned by checks
-func showDiagnostics(diagnostics []Diagnostic, c *cli.Context) error {
+func write(diagnostics []Diagnostic, c *cli.Context) error {
 	output := c.String("output")
 	level := Severity(c.String("level"))
 	filtered := filterSeverity(level, diagnostics)
@@ -112,7 +95,6 @@ func showDiagnostics(diagnostics []Diagnostic, c *cli.Context) error {
 	return nil
 }
 
-// filterSeverity uses level to filter diagnostics to show to user. If level is blank, returns all diagnostics
 func filterSeverity(level Severity, diagnostics []Diagnostic) []Diagnostic {
 	if level == "" {
 		return diagnostics
@@ -126,7 +108,7 @@ func filterSeverity(level Severity, diagnostics []Diagnostic) []Diagnostic {
 	return filtered
 }
 
-func filter(c *cli.Context) ([]Check, error) {
+func filterGroups(c *cli.Context) ([]Check, error) {
 	whitelist := c.StringSlice("g")
 	blacklist := c.StringSlice("G")
 	if len(whitelist) > 0 && len(blacklist) > 0 {
@@ -142,8 +124,36 @@ func filter(c *cli.Context) ([]Check, error) {
 	}
 }
 
-// getChecksInGroups retrieves all checks within specified set of groups
-// returns all checks in the registry if `groups` is unspecified
+func filterChecks(all []Check, c *cli.Context) ([]Check, error) {
+	whitelist := c.StringSlice("c")
+	blacklist := c.StringSlice("C")
+
+	if len(whitelist) > 0 && len(blacklist) > 0 {
+		return nil, fmt.Errorf("cannot specify both c and C flags")
+	}
+
+	var ret []Check
+
+	if len(whitelist) > 0 {
+		for _, c := range all {
+			if contains(whitelist, c.Name()) {
+				ret = append(ret, c)
+			}
+		}
+		return ret, nil
+	} else if len(blacklist) > 0 {
+		for _, c := range all {
+			if !contains(blacklist, c.Name()) {
+				ret = append(ret, c)
+			}
+		}
+		return ret, nil
+	} else {
+		return all, nil
+	}
+
+}
+
 func getChecksNotInGroups(groups []string) []Check {
 	allGroups := ListGroups()
 	var ret []Check
@@ -155,9 +165,9 @@ func getChecksNotInGroups(groups []string) []Check {
 	return ret
 }
 
-func contains(groups []string, group string) bool {
-	for _, g := range groups {
-		if g == group {
+func contains(list []string, name string) bool {
+	for _, l := range list {
+		if l == name {
 			return true
 		}
 	}
