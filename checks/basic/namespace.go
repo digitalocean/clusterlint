@@ -1,7 +1,6 @@
 package basic
 
 import (
-	"strings"
 	"sync"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -110,7 +109,7 @@ func checkServices(items *corev1.ServiceList, alert *alert) {
 // checkSecrets checks if there are user created secrets in the default namespace
 func checkSecrets(items *corev1.SecretList, alert *alert) {
 	for _, item := range items.Items {
-		if corev1.NamespaceDefault == item.GetNamespace() && !strings.Contains(item.GetName(), "default-token-") {
+		if corev1.NamespaceDefault == item.GetNamespace() && item.Type != corev1.SecretTypeServiceAccountToken {
 			alert.warn(checks.Secret, item.ObjectMeta)
 		}
 	}
