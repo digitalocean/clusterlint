@@ -19,7 +19,7 @@ func (pv *unusedPVCheck) Name() string {
 }
 
 // Groups returns a list of group names this check should be part of.
-func (pvh *unusedPVCheck) Groups() []string {
+func (pv *unusedPVCheck) Groups() []string {
 	return []string{"basic"}
 }
 

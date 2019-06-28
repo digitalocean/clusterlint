@@ -25,11 +25,6 @@ type Objects struct {
 	LimitRanges            *corev1.LimitRangeList
 }
 
-type Object struct {
-	TypeInfo   *metav1.TypeMeta
-	ObjectInfo *metav1.ObjectMeta
-}
-
 // Client encapsulates a client for a Kubernetes cluster.
 type Client struct {
 	kubeClient kubernetes.Interface
@@ -100,6 +95,9 @@ func (c *Client) FetchObjects() (*Objects, error) {
 	return objects, nil
 }
 
+// NewClient builds a kubernetes client to interact with the live cluster.
+// The kube config file path and the context must be specified for the client
+// If not specified, defaults are assumed - configPath: ~/.kube/config, configContext: current context
 func NewClient(configPath, configContext string) (*Client, error) {
 	var config *rest.Config
 	var err error
