@@ -85,6 +85,8 @@ func GetGroup(name string) []Check {
 	return ret
 }
 
+// Get retrieves the specified check from the registry,
+// throws an error if not found
 func Get(name string) (Check, error) {
 	registry.mu.RLock()
 	defer registry.mu.RUnlock()
