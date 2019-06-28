@@ -85,6 +85,21 @@ func GetGroup(name string) []Check {
 	return ret
 }
 
+// GetGroups returns checks that belong to any of the specified group.
+func GetGroups(groups []string) []Check {
+	registry.mu.RLock()
+	defer registry.mu.RUnlock()
+	var ret []Check
+	for _, group := range groups {
+		if checks, ok := registry.groups[group]; ok {
+			ret = append(ret, checks...)
+		}
+		// else do we log an error?
+	}
+
+	return ret
+}
+
 // Get retrieves the specified check from the registry,
 // throws an error if not found
 func Get(name string) (Check, error) {

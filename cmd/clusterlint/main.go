@@ -36,12 +36,16 @@ func main() {
 			Name:  "list",
 			Usage: "list all checks in the registry",
 			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "group, g",
-					Usage: "list all checks in group `GROUP`",
+				cli.StringSliceFlag{
+					Name:  "g",
+					Usage: "list all checks in groups `GROUP1, GROUP2`",
+				},
+				cli.StringSliceFlag{
+					Name:  "G",
+					Usage: "list all checks not in groups `GROUP1, GROUP2`",
 				},
 			},
-			Action: listChecks,
+			Action: checks.ListChecks,
 		},
 		{
 			Name:  "run",
@@ -72,18 +76,6 @@ func main() {
 		fmt.Printf("failed: %v", err)
 		os.Exit(1)
 	}
-}
-
-// listChecks lists the names and desc of all checks in the group if found
-// lists all checks in the registry if group is not specified
-func listChecks(c *cli.Context) error {
-	group := c.String("group")
-	allChecks := getChecks(group)
-	for _, check := range allChecks {
-		fmt.Printf("%s : %s\n", check.Name(), check.Description())
-	}
-
-	return nil
 }
 
 func runChecks(c *cli.Context) error {
@@ -185,7 +177,7 @@ func filter(level checks.Severity, diagnostics []checks.Diagnostic) []checks.Dia
 }
 
 // getChecks retrieves all checks within given group
-// returns all checks in the registry if group in unspecified
+// returns all checks in the registry if group is unspecified
 func getChecks(group string) []checks.Check {
 	if group == "" {
 		return checks.List()
