@@ -86,18 +86,20 @@ func GetGroup(name string) []Check {
 }
 
 // GetGroups returns checks that belong to any of the specified group.
-func GetGroups(groups []string) []Check {
+func GetGroups(groups []string) ([]Check, error) {
 	registry.mu.RLock()
 	defer registry.mu.RUnlock()
 	var ret []Check
 	for _, group := range groups {
 		if checks, ok := registry.groups[group]; ok {
 			ret = append(ret, checks...)
+		} else {
+			return nil, fmt.Errorf("Group %s not found", group)
 		}
-		// else do we log an error?
+
 	}
 
-	return ret
+	return ret, nil
 }
 
 // Get retrieves the specified check from the registry,

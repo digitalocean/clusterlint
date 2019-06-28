@@ -52,7 +52,8 @@ func (c CheckFilter) filterGroups() ([]Check, error) {
 	}
 
 	if len(c.IncludeGroups) > 0 {
-		return GetGroups(c.IncludeGroups), nil
+		groups, err := GetGroups(c.IncludeGroups)
+		return groups, err
 	} else if len(c.ExcludeGroups) > 0 {
 		return c.getChecksNotInGroups(c.ExcludeGroups), nil
 	} else {
