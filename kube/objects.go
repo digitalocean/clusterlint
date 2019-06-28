@@ -37,8 +37,6 @@ type Client struct {
 
 // FetchObjects returns the objects from a Kubernetes cluster.
 func (c *Client) FetchObjects() (*Objects, error) {
-	const all = ""
-
 	client := c.kubeClient.CoreV1()
 	opts := metav1.ListOptions{}
 	objects := &Objects{}
@@ -58,39 +56,39 @@ func (c *Client) FetchObjects() (*Objects, error) {
 		return
 	})
 	g.Go(func() (err error) {
-		objects.Pods, err = client.Pods(all).List(opts)
+		objects.Pods, err = client.Pods(corev1.NamespaceAll).List(opts)
 		return
 	})
 	g.Go(func() (err error) {
-		objects.PodTemplates, err = client.PodTemplates(all).List(opts)
+		objects.PodTemplates, err = client.PodTemplates(corev1.NamespaceAll).List(opts)
 		return
 	})
 	g.Go(func() (err error) {
-		objects.PersistentVolumeClaims, err = client.PersistentVolumeClaims(all).List(opts)
+		objects.PersistentVolumeClaims, err = client.PersistentVolumeClaims(corev1.NamespaceAll).List(opts)
 		return
 	})
 	g.Go(func() (err error) {
-		objects.ConfigMaps, err = client.ConfigMaps(all).List(opts)
+		objects.ConfigMaps, err = client.ConfigMaps(corev1.NamespaceAll).List(opts)
 		return
 	})
 	g.Go(func() (err error) {
-		objects.Secrets, err = client.Secrets(all).List(opts)
+		objects.Secrets, err = client.Secrets(corev1.NamespaceAll).List(opts)
 		return
 	})
 	g.Go(func() (err error) {
-		objects.Services, err = client.Services(all).List(opts)
+		objects.Services, err = client.Services(corev1.NamespaceAll).List(opts)
 		return
 	})
 	g.Go(func() (err error) {
-		objects.ServiceAccounts, err = client.ServiceAccounts(all).List(opts)
+		objects.ServiceAccounts, err = client.ServiceAccounts(corev1.NamespaceAll).List(opts)
 		return
 	})
 	g.Go(func() (err error) {
-		objects.ResourceQuotas, err = client.ResourceQuotas(all).List(opts)
+		objects.ResourceQuotas, err = client.ResourceQuotas(corev1.NamespaceAll).List(opts)
 		return
 	})
 	g.Go(func() (err error) {
-		objects.LimitRanges, err = client.LimitRanges(all).List(opts)
+		objects.LimitRanges, err = client.LimitRanges(corev1.NamespaceAll).List(opts)
 		return
 	})
 
