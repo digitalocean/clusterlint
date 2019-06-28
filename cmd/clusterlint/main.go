@@ -1,12 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/digitalocean/clusterlint/checks"
+	"github.com/digitalocean/clusterlint/kube"
 	"github.com/urfave/cli"
+	"golang.org/x/sync/errgroup"
 
 	// Side-effect import to get all the checks registered.
 	_ "github.com/digitalocean/clusterlint/checks/all"
@@ -41,7 +45,7 @@ func main() {
 					Usage: "list all checks not in groups `GROUP1, GROUP2`",
 				},
 			},
-			Action: checks.ListChecks,
+			Action: listChecks,
 		},
 		{
 			Name:  "run",
@@ -72,7 +76,7 @@ func main() {
 					Usage: "Filter output messages based on severity [error|warning|suggestion]. Default: all",
 				},
 			},
-			Action: checks.RunChecks,
+			Action: runChecks,
 		},
 	}
 	err := app.Run(os.Args)
@@ -80,4 +84,108 @@ func main() {
 		fmt.Printf("failed: %v", err)
 		os.Exit(1)
 	}
+}
+
+// listChecks lists the names and desc of all checks in the group if found
+// lists all checks in the registry if group is not specified
+func listChecks(c *cli.Context) error {
+	filter := checks.CheckFilter{
+		IncludeGroups: c.StringSlice("g"),
+		ExcludeGroups: c.StringSlice("G"),
+	}
+	allChecks, err := filter.FilterChecks()
+	if err != nil {
+		return err
+	}
+	for _, check := range allChecks {
+		fmt.Printf("%s : %s\n", check.Name(), check.Description())
+	}
+
+	return nil
+}
+
+// runChecks runs all the checks based on the flags passed.
+func runChecks(c *cli.Context) error {
+	client, err := kube.NewClient(c.GlobalString("kubeconfig"), c.GlobalString("context"))
+	if err != nil {
+		return err
+	}
+
+	objects, err := client.FetchObjects()
+	if err != nil {
+		return err
+	}
+
+	return run(objects, c)
+}
+
+func run(objects *kube.Objects, c *cli.Context) error {
+	filter := checks.CheckFilter{
+		IncludeGroups: c.StringSlice("g"),
+		ExcludeGroups: c.StringSlice("G"),
+		IncludeChecks: c.StringSlice("c"),
+		ExcludeChecks: c.StringSlice("C"),
+	}
+
+	all, err := filter.FilterChecks()
+	if err != nil {
+		return err
+	}
+	if len(all) == 0 {
+		return fmt.Errorf("No checks to run. Are you sure that you provided the right names for groups and checks?")
+	}
+	var diagnostics []checks.Diagnostic
+	var mu sync.Mutex
+	var g errgroup.Group
+
+	for _, check := range all {
+		check := check
+		g.Go(func() error {
+			fmt.Println("Running check: ", check.Name())
+			d, err := check.Run(objects)
+			if err != nil {
+				return err
+			}
+			mu.Lock()
+			diagnostics = append(diagnostics, d...)
+			mu.Unlock()
+			return nil
+		})
+	}
+	err = g.Wait()
+	write(diagnostics, c)
+
+	return err
+}
+
+func write(diagnostics []checks.Diagnostic, c *cli.Context) error {
+	output := c.String("output")
+	level := checks.Severity(c.String("level"))
+	filtered := filterSeverity(level, diagnostics)
+	switch output {
+	case "json":
+		err := json.NewEncoder(os.Stdout).Encode(filtered)
+		if err != nil {
+			return err
+		}
+	default:
+		for _, diagnostic := range filtered {
+			fmt.Printf("%s\n", diagnostic)
+		}
+	}
+
+	return nil
+}
+
+func filterSeverity(level checks.Severity, diagnostics []checks.Diagnostic) []checks.Diagnostic {
+	if level == "" {
+		return diagnostics
+	}
+	var ret []checks.Diagnostic
+	for _, d := range diagnostics {
+		if d.Severity == level {
+			ret = append(ret, d)
+		}
+	}
+	return ret
 }
