@@ -12,12 +12,24 @@ type CheckFilter struct {
 	ExcludeChecks []string
 }
 
+// NewCheckFilter is a constructor to initialize an instance of CheckFilter
+func NewCheckFilter(includeGroups, excludeGroups, includeChecks, excludeChecks []string) (CheckFilter, error) {
+	if len(includeGroups) > 0 && len(excludeChecks) > 0 {
+		return CheckFilter{}, fmt.Errorf("cannot specify both include and exclude group conditions")
+	}
+	if len(includeChecks) > 0 && len(excludeChecks) > 0 {
+		return CheckFilter{}, fmt.Errorf("cannot specify both include and exclude check conditions")
+	}
+	return CheckFilter{
+		IncludeGroups: includeGroups,
+		ExcludeGroups: excludeGroups,
+		IncludeChecks: includeChecks,
+		ExcludeChecks: excludeChecks,
+	}, nil
+}
+
 // FilterChecks filters all to return set of checks based on the CheckFilter
 func (c CheckFilter) FilterChecks() ([]Check, error) {
-	if len(c.IncludeChecks) > 0 && len(c.ExcludeChecks) > 0 {
-		return nil, fmt.Errorf("cannot specify both c and C flags")
-	}
-
 	all, err := c.filterGroups()
 
 	if err != nil {
@@ -28,51 +40,50 @@ func (c CheckFilter) FilterChecks() ([]Check, error) {
 
 	if len(c.IncludeChecks) > 0 {
 		for _, check := range all {
-			if c.contains(c.IncludeChecks, check.Name()) {
+			if contains(c.IncludeChecks, check.Name()) {
 				ret = append(ret, check)
 			}
 		}
 		return ret, nil
-	} else if len(c.ExcludeChecks) > 0 {
-		for _, check := range all {
-			if !c.contains(c.ExcludeChecks, check.Name()) {
-				ret = append(ret, check)
-			}
-		}
-		return ret, nil
-	} else {
-		return all, nil
 	}
 
+	if len(c.ExcludeChecks) > 0 {
+		for _, check := range all {
+			if !contains(c.ExcludeChecks, check.Name()) {
+				ret = append(ret, check)
+			}
+		}
+		return ret, nil
+	}
+
+	return all, nil
 }
 
 func (c CheckFilter) filterGroups() ([]Check, error) {
-	if len(c.IncludeGroups) > 0 && len(c.ExcludeGroups) > 0 {
-		return nil, fmt.Errorf("cannot specify both g and G flags")
-	}
-
 	if len(c.IncludeGroups) > 0 {
 		groups, err := GetGroups(c.IncludeGroups)
 		return groups, err
-	} else if len(c.ExcludeGroups) > 0 {
-		return c.getChecksNotInGroups(c.ExcludeGroups), nil
-	} else {
-		return List(), nil
 	}
+
+	if len(c.ExcludeGroups) > 0 {
+		return getChecksNotInGroups(c.ExcludeGroups), nil
+	}
+
+	return List(), nil
 }
 
-func (c CheckFilter) getChecksNotInGroups(groups []string) []Check {
+func getChecksNotInGroups(groups []string) []Check {
 	allGroups := ListGroups()
 	var ret []Check
 	for _, group := range allGroups {
-		if !c.contains(groups, group) {
+		if !contains(groups, group) {
 			ret = append(ret, GetGroup(group)...)
 		}
 	}
 	return ret
 }
 
-func (c CheckFilter) contains(list []string, name string) bool {
+func contains(list []string, name string) bool {
 	for _, l := range list {
 		if l == name {
 			return true

@@ -89,14 +89,15 @@ func main() {
 // listChecks lists the names and desc of all checks in the group if found
 // lists all checks in the registry if group is not specified
 func listChecks(c *cli.Context) error {
-	filter := checks.CheckFilter{
-		IncludeGroups: c.StringSlice("g"),
-		ExcludeGroups: c.StringSlice("G"),
+	filter, err := checks.NewCheckFilter(c.StringSlice("g"), c.StringSlice("G"), nil, nil)
+	if err != nil {
+		return err
 	}
 	allChecks, err := filter.FilterChecks()
 	if err != nil {
 		return err
 	}
+
 	for _, check := range allChecks {
 		fmt.Printf("%s : %s\n", check.Name(), check.Description())
 	}
@@ -120,11 +121,9 @@ func runChecks(c *cli.Context) error {
 }
 
 func run(objects *kube.Objects, c *cli.Context) error {
-	filter := checks.CheckFilter{
-		IncludeGroups: c.StringSlice("g"),
-		ExcludeGroups: c.StringSlice("G"),
-		IncludeChecks: c.StringSlice("c"),
-		ExcludeChecks: c.StringSlice("C"),
+	filter, err := checks.NewCheckFilter(c.StringSlice("g"), c.StringSlice("G"), c.StringSlice("c"), c.StringSlice("C"))
+	if err != nil {
+		return err
 	}
 
 	all, err := filter.FilterChecks()
