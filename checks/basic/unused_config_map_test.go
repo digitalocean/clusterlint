@@ -34,7 +34,7 @@ func TestUnusedConfigMapWarning(t *testing.T) {
 	}{
 		{
 			name:     "no config maps",
-			objs:     &kube.Objects{Pods: &corev1.PodList{}, ConfigMaps: &corev1.ConfigMapList{}},
+			objs:     &kube.Objects{Nodes: &corev1.NodeList{}, Pods: &corev1.PodList{}, ConfigMaps: &corev1.ConfigMapList{}},
 			expected: nil,
 		},
 		{
@@ -43,8 +43,18 @@ func TestUnusedConfigMapWarning(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name:     "environment variable references to config map",
+			name:     "environment variable references config map",
 			objs:     configMapEnvSource(),
+			expected: nil,
+		},
+		{
+			name:     "projected volume references config map",
+			objs:     projectedVolume(),
+			expected: nil,
+		},
+		{
+			name:     "node config source references config map",
+			objs:     nodeConfigSource(),
 			expected: nil,
 		},
 		{
@@ -75,6 +85,14 @@ func TestUnusedConfigMapWarning(t *testing.T) {
 
 func initConfigMap() *kube.Objects {
 	objs := &kube.Objects{
+		Nodes: &corev1.NodeList{
+			Items: []corev1.Node{
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Node", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "node_foo"},
+				},
+			},
+		},
 		Pods: &corev1.PodList{
 			Items: []corev1.Pod{
 				{
@@ -95,6 +113,19 @@ func initConfigMap() *kube.Objects {
 	return objs
 }
 
+func nodeConfigSource() *kube.Objects {
+	objs := initConfigMap()
+	objs.Nodes.Items[0].Spec = corev1.NodeSpec{
+		ConfigSource: &corev1.NodeConfigSource{
+			ConfigMap: &corev1.ConfigMapNodeConfigSource{
+				Name:      "cm_foo",
+				Namespace: cmNamespace,
+			},
+		},
+	}
+	return objs
+}
+
 func configMapVolume() *kube.Objects {
 	objs := initConfigMap()
 	objs.Pods.Items[0].Spec = corev1.PodSpec{
@@ -104,6 +135,28 @@ func configMapVolume() *kube.Objects {
 				VolumeSource: corev1.VolumeSource{
 					ConfigMap: &corev1.ConfigMapVolumeSource{
 						LocalObjectReference: corev1.LocalObjectReference{Name: "cm_foo"},
+					},
+				},
+			}},
+	}
+	return objs
+}
+
+func projectedVolume() *kube.Objects {
+	objs := initConfigMap()
+	objs.Pods.Items[0].Spec = corev1.PodSpec{
+		Volumes: []corev1.Volume{
+			{
+				Name: "bar",
+				VolumeSource: corev1.VolumeSource{
+					Projected: &corev1.ProjectedVolumeSource{
+						Sources: []corev1.VolumeProjection{
+							{
+								ConfigMap: &corev1.ConfigMapProjection{
+									LocalObjectReference: corev1.LocalObjectReference{Name: "cm_foo"},
+								},
+							},
+						},
 					},
 				},
 			}},

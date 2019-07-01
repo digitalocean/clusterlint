@@ -277,7 +277,6 @@ Description: This check reports all the persistent volume claims in the cluster 
 How to fix:
 
 ```bash
-<<<<<<< HEAD
 kubectl delete pvc <unused pvc>
 ```
 
