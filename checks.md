@@ -178,6 +178,82 @@ spec:
     doks.digitalocean.com/node-pool: pool-y25ag12r1
 ```
 
+###### Admission Controller Webhook
+
+Name: `admission-controller-webhook`
+
+Group: `doks`
+
+Description: When admission controllers are configured with webhook with `Fail` failure policy, it prevents managed components like cilium, kube-proxy, coredns from starting on a new node during an upgrade. This will result in cluster upgrade failing.
+
+Example:
+
+```yaml
+# Don't do this
+
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: sample-webhook.adamwg.com
+webhooks:
+- name: sample-webhook.adamwg.com
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    resources:
+    - pods
+    scope: "Namespaced"
+  clientConfig:
+    service:
+      namespace: kube-system
+      name: webhook-server
+      path: /pods
+  admissionReviewVersions:
+  - v1beta1
+  timeoutSeconds: 1
+  failurePolicy: Fail
+```
+
+How to fix:
+
+```yaml
+# Exclude objects in the `kube-system` namespace by explicitly specifying a namespaceSelector or objectSelector
+
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: sample-webhook.adamwg.com
+webhooks:
+- name: sample-webhook.adamwg.com
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    resources:
+    - pods
+    scope: "Namespaced"
+  clientConfig:
+    service:
+      namespace: kube-system
+      name: webhook-server
+      path: /pods
+  admissionReviewVersions:
+  - v1beta1
+  timeoutSeconds: 1
+  failurePolicy: Fail
+  namespaceSelector:
+    matchExpressions:
+      - key: "doks.digitalocean.com/webhook"
+        operator: "Exists"
+```
+
 ###### Pod State
 
 Name: `pod-state`
