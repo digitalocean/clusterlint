@@ -41,14 +41,13 @@ func (s *unusedSecretCheck) Description() string {
 // error value indicating that the check failed to run.
 func (s *unusedSecretCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
-	used := make(map[identifier]bool)
-	err := checkReferences(objects, &used)
+	used, err := checkReferences(objects)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, secret := range filter(objects.Secrets.Items) {
-		if _, ok := used[identifier{Name: secret.GetName(), Namespace: secret.GetNamespace()}]; !ok {
+		if _, ok := used[kube.Identifier{Name: secret.GetName(), Namespace: secret.GetNamespace()}]; !ok {
 			secret := secret
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
@@ -64,7 +63,9 @@ func (s *unusedSecretCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, err
 }
 
 //checkReferences checks each pod for config map references in volumes and environment variables
-func checkReferences(objects *kube.Objects, used *map[identifier]bool) error {
+func checkReferences(objects *kube.Objects) (map[kube.Identifier]struct{}, error) {
+	used := make(map[kube.Identifier]struct{})
+	var empty struct{}
 	var mu sync.Mutex
 	var g errgroup.Group
 	for _, pod := range objects.Pods.Items {
@@ -75,36 +76,51 @@ func checkReferences(objects *kube.Objects, used *map[identifier]bool) error {
 				s := volume.VolumeSource.Secret
 				if s != nil {
 					mu.Lock()
-					(*used)[identifier{Name: s.SecretName, Namespace: namespace}] = true
+					used[kube.Identifier{Name: s.SecretName, Namespace: namespace}] = empty
 					mu.Unlock()
+				}
+				if volume.VolumeSource.Projected != nil {
+					for _, source := range volume.VolumeSource.Projected.Sources {
+						s := source.Secret
+						if s != nil {
+							mu.Lock()
+							used[kube.Identifier{Name: s.LocalObjectReference.Name, Namespace: namespace}] = empty
+							mu.Unlock()
+						}
+					}
 				}
 			}
 			for _, imageSecret := range pod.Spec.ImagePullSecrets {
 				mu.Lock()
-				(*used)[identifier{Name: imageSecret.Name, Namespace: namespace}] = true
+				used[kube.Identifier{Name: imageSecret.Name, Namespace: namespace}] = empty
 				mu.Unlock()
 			}
-			checkEnvVars(pod.Spec.Containers, used, namespace, &mu)
-			checkEnvVars(pod.Spec.InitContainers, used, namespace, &mu)
+			identifiers := envVarsSecretRefs(pod.Spec.Containers, namespace)
+			identifiers = append(identifiers, checkEnvVars(pod.Spec.InitContainers, namespace)...)
+			mu.Lock()
+			for _, i := range identifiers {
+				used[i] = empty
+			}
+			mu.Unlock()
 
 			return nil
 		})
 	}
 
-	return g.Wait()
+	return used, g.Wait()
 }
 
-// checkEnvVars checks for config map references in container environment variables
-func checkEnvVars(containers []corev1.Container, used *map[identifier]bool, namespace string, mu *sync.Mutex) {
+// envVarsSecretRefs checks for config map references in container environment variables
+func envVarsSecretRefs(containers []corev1.Container, namespace string) []kube.Identifier {
+	var refs []kube.Identifier
 	for _, container := range containers {
 		for _, env := range container.EnvFrom {
 			if env.SecretRef != nil {
-				mu.Lock()
-				(*used)[identifier{Name: env.SecretRef.LocalObjectReference.Name, Namespace: namespace}] = true
-				mu.Unlock()
+				refs = append(refs, kube.Identifier{Name: env.SecretRef.LocalObjectReference.Name, Namespace: namespace})
 			}
 		}
 	}
+	return refs
 }
 
 // filter returns Secrets that are not of type `kubernetes.io/service-account-token`

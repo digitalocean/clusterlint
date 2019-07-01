@@ -10,8 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const cmNamespace = "k8s"
-
 func TestUnusedSecretCheckMeta(t *testing.T) {
 	unusedSecretCheck := unusedSecretCheck{}
 	assert.Equal(t, "unused-secret", unusedSecretCheck.Name())
@@ -50,6 +48,11 @@ func TestUnusedSecretWarning(t *testing.T) {
 		{
 			name:     "pod with image pull secrets",
 			objs:     imagePullSecrets(),
+			expected: nil,
+		},
+		{
+			name:     "projected volume references secret",
+			objs:     secretProjection(),
 			expected: nil,
 		},
 		{
@@ -109,6 +112,30 @@ func secretVolume() *kube.Objects {
 				VolumeSource: corev1.VolumeSource{
 					Secret: &corev1.SecretVolumeSource{
 						SecretName: "secret_foo",
+					},
+				},
+			}},
+	}
+	return objs
+}
+
+func secretProjection() *kube.Objects {
+	objs := initSecret()
+	objs.Pods.Items[0].Spec = corev1.PodSpec{
+		Volumes: []corev1.Volume{
+			{
+				Name: "bar",
+				VolumeSource: corev1.VolumeSource{
+					Projected: &corev1.ProjectedVolumeSource{
+						Sources: []corev1.VolumeProjection{
+							{
+								Secret: &corev1.SecretProjection{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "secret_foo",
+									},
+								},
+							},
+						},
 					},
 				},
 			}},
