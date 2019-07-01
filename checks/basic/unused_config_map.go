@@ -15,11 +15,6 @@ func init() {
 
 type unusedCMCheck struct{}
 
-type identifier struct {
-	Name      string
-	Namespace string
-}
-
 // Name returns a unique name for this check.
 func (c *unusedCMCheck) Name() string {
 	return "unused-config-map"
@@ -42,13 +37,22 @@ func (c *unusedCMCheck) Description() string {
 func (c *unusedCMCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
 
-	used, err := checkReferences(objects)
+	used, err := checkPodReferences(objects)
 	if err != nil {
 		return nil, err
 	}
 
+	nodeRefs, err := checkNodeReferences(objects)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range nodeRefs {
+		used[k] = v
+	}
+
 	for _, cm := range objects.ConfigMaps.Items {
-		if _, ok := used[identifier{Name: cm.GetName(), Namespace: cm.GetNamespace()}]; !ok {
+		if _, ok := used[kube.Identifier{Name: cm.GetName(), Namespace: cm.GetNamespace()}]; !ok {
 			cm := cm
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
@@ -63,9 +67,28 @@ func (c *unusedCMCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) 
 	return diagnostics, nil
 }
 
-//checkReferences checks each pod for config map references in volumes and environment variables
-func checkReferences(objects *kube.Objects) (map[identifier]bool, error) {
-	used := make(map[identifier]bool)
+func checkNodeReferences(objects *kube.Objects) (map[kube.Identifier]bool, error) {
+	used := make(map[kube.Identifier]bool)
+	var mu sync.Mutex
+	var g errgroup.Group
+	for _, node := range objects.Nodes.Items {
+		node := node
+		g.Go(func() error {
+			source := node.Spec.ConfigSource
+			if source != nil {
+				mu.Lock()
+				used[kube.Identifier{Name: source.ConfigMap.Name, Namespace: source.ConfigMap.Namespace}] = true
+				mu.Unlock()
+			}
+			return nil
+		})
+	}
+	return used, g.Wait()
+}
+
+//checkPodReferences checks each pod for config map references in volumes and environment variables
+func checkPodReferences(objects *kube.Objects) (map[kube.Identifier]bool, error) {
+	used := make(map[kube.Identifier]bool)
 	var mu sync.Mutex
 	var g errgroup.Group
 	for _, pod := range objects.Pods.Items {
@@ -76,8 +99,18 @@ func checkReferences(objects *kube.Objects) (map[identifier]bool, error) {
 				cm := volume.VolumeSource.ConfigMap
 				if cm != nil {
 					mu.Lock()
-					used[identifier{Name: cm.LocalObjectReference.Name, Namespace: namespace}] = true
+					used[kube.Identifier{Name: cm.LocalObjectReference.Name, Namespace: namespace}] = true
 					mu.Unlock()
+				}
+				if volume.VolumeSource.Projected != nil {
+					for _, source := range volume.VolumeSource.Projected.Sources {
+						cm := source.ConfigMap
+						if cm != nil {
+							mu.Lock()
+							used[kube.Identifier{Name: cm.LocalObjectReference.Name, Namespace: namespace}] = true
+							mu.Unlock()
+						}
+					}
 				}
 			}
 			identifiers := checkEnvVars(pod.Spec.Containers, namespace)
@@ -96,12 +129,12 @@ func checkReferences(objects *kube.Objects) (map[identifier]bool, error) {
 }
 
 // checkEnvVars checks for config map references in container environment variables
-func checkEnvVars(containers []corev1.Container, namespace string) []identifier {
-	var refs []identifier
+func checkEnvVars(containers []corev1.Container, namespace string) []kube.Identifier {
+	var refs []kube.Identifier
 	for _, container := range containers {
 		for _, env := range container.EnvFrom {
 			if env.ConfigMapRef != nil {
-				refs = append(refs, identifier{Name: env.ConfigMapRef.LocalObjectReference.Name, Namespace: namespace})
+				refs = append(refs, kube.Identifier{Name: env.ConfigMapRef.LocalObjectReference.Name, Namespace: namespace})
 			}
 		}
 	}

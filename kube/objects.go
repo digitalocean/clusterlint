@@ -9,6 +9,12 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+//Identifier is used to identify a specific namspace scoped object.
+type Identifier struct {
+	Name      string
+	Namespace string
+}
+
 // Objects encapsulates all the objects from a Kubernetes cluster.
 type Objects struct {
 	Nodes                  *corev1.NodeList

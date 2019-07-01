@@ -27,28 +27,23 @@ func (c *unusedClaimCheck) Description() string {
 	return "Check if there are unused persistent volume claims in the cluster"
 }
 
-type identifier struct {
-	Name      string
-	Namespace string
-}
-
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
 func (c *unusedClaimCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
-	used := make(map[identifier]bool)
+	used := make(map[kube.Identifier]bool)
 	for _, pod := range objects.Pods.Items {
 		for _, volume := range pod.Spec.Volumes {
 			claim := volume.VolumeSource.PersistentVolumeClaim
 			if claim != nil {
-				used[identifier{Name: claim.ClaimName, Namespace: pod.GetNamespace()}] = true
+				used[kube.Identifier{Name: claim.ClaimName, Namespace: pod.GetNamespace()}] = true
 			}
 		}
 	}
 
 	for _, claim := range objects.PersistentVolumeClaims.Items {
-		if _, ok := used[identifier{Name: claim.GetName(), Namespace: claim.GetNamespace()}]; !ok {
+		if _, ok := used[kube.Identifier{Name: claim.GetName(), Namespace: claim.GetNamespace()}]; !ok {
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
 				Message:  "Unused persistent volume claim",
