@@ -6,6 +6,7 @@ workflow "Pull Request" {
     "vet",
     "lint",
     "test",
+    "check-licenses",
   ]
 }
 
@@ -31,4 +32,9 @@ action "test" {
     GOFLAGS = "-mod=vendor"
   }
   runs = ["go", "test", "-race", "-cover", "./..."]
+}
+
+action "check-licenses" {
+  uses = "docker://golang:1.12.6"
+  runs = ["./script/check-licenses.sh"]
 }
