@@ -18,6 +18,7 @@ package kube
 
 import (
 	"golang.org/x/sync/errgroup"
+	ar "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -33,18 +34,21 @@ type Identifier struct {
 
 // Objects encapsulates all the objects from a Kubernetes cluster.
 type Objects struct {
-	Nodes                  *corev1.NodeList
-	PersistentVolumes      *corev1.PersistentVolumeList
-	ComponentStatuses      *corev1.ComponentStatusList
-	Pods                   *corev1.PodList
-	PodTemplates           *corev1.PodTemplateList
-	PersistentVolumeClaims *corev1.PersistentVolumeClaimList
-	ConfigMaps             *corev1.ConfigMapList
-	Services               *corev1.ServiceList
-	Secrets                *corev1.SecretList
-	ServiceAccounts        *corev1.ServiceAccountList
-	ResourceQuotas         *corev1.ResourceQuotaList
-	LimitRanges            *corev1.LimitRangeList
+	Nodes                           *corev1.NodeList
+	PersistentVolumes               *corev1.PersistentVolumeList
+	ComponentStatuses               *corev1.ComponentStatusList
+	SystemNamespace                 *corev1.Namespace
+	Pods                            *corev1.PodList
+	PodTemplates                    *corev1.PodTemplateList
+	PersistentVolumeClaims          *corev1.PersistentVolumeClaimList
+	ConfigMaps                      *corev1.ConfigMapList
+	Services                        *corev1.ServiceList
+	Secrets                         *corev1.SecretList
+	ServiceAccounts                 *corev1.ServiceAccountList
+	ResourceQuotas                  *corev1.ResourceQuotaList
+	LimitRanges                     *corev1.LimitRangeList
+	MutatingWebhookConfigurations   *ar.MutatingWebhookConfigurationList
+	ValidatingWebhookConfigurations *ar.ValidatingWebhookConfigurationList
 }
 
 // Client encapsulates a client for a Kubernetes cluster.
@@ -55,6 +59,7 @@ type Client struct {
 // FetchObjects returns the objects from a Kubernetes cluster.
 func (c *Client) FetchObjects() (*Objects, error) {
 	client := c.kubeClient.CoreV1()
+	admissionControllerClient := c.kubeClient.AdmissionregistrationV1beta1()
 	opts := metav1.ListOptions{}
 	objects := &Objects{}
 
@@ -106,6 +111,18 @@ func (c *Client) FetchObjects() (*Objects, error) {
 	})
 	g.Go(func() (err error) {
 		objects.LimitRanges, err = client.LimitRanges(corev1.NamespaceAll).List(opts)
+		return
+	})
+	g.Go(func() (err error) {
+		objects.SystemNamespace, err = client.Namespaces().Get(metav1.NamespaceSystem, metav1.GetOptions{})
+		return
+	})
+	g.Go(func() (err error) {
+		objects.MutatingWebhookConfigurations, err = admissionControllerClient.MutatingWebhookConfigurations().List(opts)
+		return
+	})
+	g.Go(func() (err error) {
+		objects.ValidatingWebhookConfigurations, err = admissionControllerClient.ValidatingWebhookConfigurations().List(opts)
 		return
 	})
 

@@ -20,6 +20,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
@@ -27,6 +29,13 @@ func TestFetchObjects(t *testing.T) {
 	api := &Client{
 		kubeClient: fake.NewSimpleClientset(),
 	}
+
+	api.kubeClient.CoreV1().Namespaces().Create(&corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "kube-system",
+			Labels: map[string]string{"doks_key": "bar"}},
+	})
 
 	actual, err := api.FetchObjects()
 	assert.NoError(t, err)
@@ -43,4 +52,7 @@ func TestFetchObjects(t *testing.T) {
 	assert.NotNil(t, actual.ServiceAccounts)
 	assert.NotNil(t, actual.ResourceQuotas)
 	assert.NotNil(t, actual.LimitRanges)
+	assert.NotNil(t, actual.ValidatingWebhookConfigurations)
+	assert.NotNil(t, actual.MutatingWebhookConfigurations)
+	assert.NotNil(t, actual.SystemNamespace)
 }
