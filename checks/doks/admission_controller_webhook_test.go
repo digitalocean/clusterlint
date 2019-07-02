@@ -1,3 +1,19 @@
+/*
+Copyright 2019 DigitalOcean
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package doks
 
 import (
@@ -43,6 +59,11 @@ func TestWebhookError(t *testing.T) {
 		{
 			name:     "failure policy is ignore",
 			objs:     initObjects(ar.Ignore),
+			expected: nil,
+		},
+		{
+			name:     "webook does not use service",
+			objs:     webhookURL(),
 			expected: nil,
 		},
 		{
@@ -133,6 +154,12 @@ func initObjects(failurePolicyType ar.FailurePolicyType) *kube.Objects {
 							Name:              "mw_foo",
 							FailurePolicy:     &failurePolicyType,
 							NamespaceSelector: &metav1.LabelSelector{},
+							ClientConfig: ar.WebhookClientConfig{
+								Service: &ar.ServiceReference{
+									Name:      "some-svc",
+									Namespace: "k8s",
+								},
+							},
 						},
 					},
 				},
@@ -150,11 +177,29 @@ func initObjects(failurePolicyType ar.FailurePolicyType) *kube.Objects {
 							Name:              "vw_foo",
 							FailurePolicy:     &failurePolicyType,
 							NamespaceSelector: &metav1.LabelSelector{},
+							ClientConfig: ar.WebhookClientConfig{
+								Service: &ar.ServiceReference{
+									Name:      "some-svc",
+									Namespace: "k8s",
+								},
+							},
 						},
 					},
 				},
 			},
 		},
+	}
+	return objs
+}
+
+func webhookURL() *kube.Objects {
+	var url = "https://example.com/webhook/action"
+	objs := initObjects(ar.Fail)
+	objs.ValidatingWebhookConfigurations.Items[0].Webhooks[0].ClientConfig = ar.WebhookClientConfig{
+		URL: &url,
+	}
+	objs.MutatingWebhookConfigurations.Items[0].Webhooks[0].ClientConfig = ar.WebhookClientConfig{
+		URL: &url,
 	}
 	return objs
 }

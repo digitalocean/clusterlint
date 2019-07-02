@@ -1,3 +1,19 @@
+/*
+Copyright 2019 DigitalOcean
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package doks
 
 import (
@@ -38,7 +54,9 @@ func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 
 	for _, config := range objects.ValidatingWebhookConfigurations.Items {
 		for _, validatingWebhook := range config.Webhooks {
-			if *validatingWebhook.FailurePolicy == ar.Fail && doesSelectorIncludeKubeSystem(validatingWebhook.NamespaceSelector, objects.SystemNamespace) {
+			if *validatingWebhook.FailurePolicy == ar.Fail &&
+				validatingWebhook.ClientConfig.Service != nil &&
+				selectorMatchesNamespace(validatingWebhook.NamespaceSelector, objects.SystemNamespace) {
 				d := checks.Diagnostic{
 					Severity: checks.Error,
 					Message:  "Webhook matches objects in the kube-system namespace. This can cause problems when upgrading the cluster.",
@@ -53,7 +71,9 @@ func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 
 	for _, config := range objects.MutatingWebhookConfigurations.Items {
 		for _, mutatingWebhook := range config.Webhooks {
-			if *mutatingWebhook.FailurePolicy == ar.Fail && doesSelectorIncludeKubeSystem(mutatingWebhook.NamespaceSelector, objects.SystemNamespace) {
+			if *mutatingWebhook.FailurePolicy == ar.Fail &&
+				mutatingWebhook.ClientConfig.Service != nil &&
+				selectorMatchesNamespace(mutatingWebhook.NamespaceSelector, objects.SystemNamespace) {
 				d := checks.Diagnostic{
 					Severity: checks.Error,
 					Message:  "Webhook matches objects in the kube-system namespace. This can cause problems when upgrading the cluster.",
@@ -68,16 +88,15 @@ func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	return diagnostics, nil
 }
 
-func doesSelectorIncludeKubeSystem(selector *metav1.LabelSelector, namespace *corev1.Namespace) bool {
+func selectorMatchesNamespace(selector *metav1.LabelSelector, namespace *corev1.Namespace) bool {
 	if selector.Size() == 0 {
 		return true
 	}
 	labels := namespace.GetLabels()
 	for key, value := range selector.MatchLabels {
-		if v, ok := labels[key]; ok && v == value {
-			continue
+		if v, ok := labels[key]; !ok || v != value {
+			return false
 		}
-		return false
 	}
 	for _, lbr := range selector.MatchExpressions {
 		if !match(labels, lbr) {

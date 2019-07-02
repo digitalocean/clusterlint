@@ -194,9 +194,9 @@ Example:
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: sample-webhook.adamwg.com
+  name: sample-webhook.example.com
 webhooks:
-- name: sample-webhook.adamwg.com
+- name: sample-webhook.example.com
   rules:
   - apiGroups:
     - ""
@@ -226,9 +226,9 @@ How to fix:
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: sample-webhook.adamwg.com
+  name: sample-webhook.example.com
 webhooks:
-- name: sample-webhook.adamwg.com
+- name: sample-webhook.example.com
   rules:
   - apiGroups:
     - ""
