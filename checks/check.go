@@ -23,7 +23,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const checkAnnotation string = "clusterlint.disable.checks"
+const checkAnnotation = "clusterlint.digitalocean.com/disabled-checks"
+const separator = ","
 
 // Check is a check that can run on Kubernetes objects.
 type Check interface {
@@ -42,10 +43,14 @@ type Check interface {
 	Run(*kube.Objects) ([]Diagnostic, error)
 }
 
-func IsEnabled(name string, item metav1.ObjectMeta) bool {
+// IsEnabled inspects the object annotations to see if a check is disabled
+func IsEnabled(name string, item *metav1.ObjectMeta) bool {
 	annotations := item.GetAnnotations()
-	if value, ok := annotations[checkAnnotation]; ok && strings.Contains(value, name) {
-		return false
+	if value, ok := annotations[checkAnnotation]; ok {
+		disabledChecks := strings.Split(value, separator)
+		if contains(disabledChecks, name) {
+			return false
+		}
 	}
 	return true
 }

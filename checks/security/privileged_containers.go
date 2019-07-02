@@ -53,8 +53,8 @@ func (pc *privilegedContainerCheck) Run(objects *kube.Objects) ([]checks.Diagnos
 	var diagnostics []checks.Diagnostic
 
 	for _, pod := range objects.Pods.Items {
-		diagnostics = append(diagnostics, checkPrivileged(pod.Spec.Containers, pod)...)
-		diagnostics = append(diagnostics, checkPrivileged(pod.Spec.InitContainers, pod)...)
+		diagnostics = append(diagnostics, pc.checkPrivileged(pod.Spec.Containers, pod)...)
+		diagnostics = append(diagnostics, pc.checkPrivileged(pod.Spec.InitContainers, pod)...)
 	}
 
 	return diagnostics, nil
@@ -62,11 +62,12 @@ func (pc *privilegedContainerCheck) Run(objects *kube.Objects) ([]checks.Diagnos
 
 // checkPrivileged checks if the container is running in privileged mode
 // Adds a warning if it finds any privileged container
-func checkPrivileged(containers []corev1.Container, pod corev1.Pod) []checks.Diagnostic {
+func (pc *privilegedContainerCheck) checkPrivileged(containers []corev1.Container, pod corev1.Pod) []checks.Diagnostic {
 	var diagnostics []checks.Diagnostic
 	for _, container := range containers {
 		if container.SecurityContext != nil && container.SecurityContext.Privileged != nil && *container.SecurityContext.Privileged {
 			d := checks.Diagnostic{
+				Check:    pc.Name(),
 				Severity: checks.Warning,
 				Message:  fmt.Sprintf("Privileged container '%s' found. Please ensure that the image is from a trusted source.", container.Name),
 				Kind:     checks.Pod,

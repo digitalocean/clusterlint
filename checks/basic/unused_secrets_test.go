@@ -41,6 +41,8 @@ func TestUnusedSecretCheckRegistration(t *testing.T) {
 }
 
 func TestUnusedSecretWarning(t *testing.T) {
+	unusedSecretCheck := unusedSecretCheck{}
+
 	tests := []struct {
 		name     string
 		objs     *kube.Objects
@@ -76,6 +78,7 @@ func TestUnusedSecretWarning(t *testing.T) {
 			objs: initSecret(),
 			expected: []checks.Diagnostic{
 				{
+					Check:    unusedSecretCheck.Name(),
 					Severity: checks.Warning,
 					Message:  "Unused secret",
 					Kind:     checks.Secret,
@@ -85,8 +88,6 @@ func TestUnusedSecretWarning(t *testing.T) {
 			},
 		},
 	}
-
-	unusedSecretCheck := unusedSecretCheck{}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

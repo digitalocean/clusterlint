@@ -41,6 +41,7 @@ func TestFullyQualifiedImageCheckRegistration(t *testing.T) {
 func TestFullyQualifiedImageWarning(t *testing.T) {
 	const message = "Use fully qualified image for container 'bar'"
 	const severity = checks.Warning
+	const name = "fully-qualified-image"
 
 	tests := []struct {
 		name     string
@@ -60,7 +61,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox:latest",
 			objs:     container("busybox:latest"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
@@ -70,7 +71,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox",
 			objs:     container("busybox"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -80,7 +81,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			objs:     container("repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -90,7 +91,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			objs:     container("repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox:latest",
@@ -100,7 +101,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox:latest",
 			objs:     initContainer("busybox:latest"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
@@ -110,7 +111,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - busybox",
 			objs:     initContainer("busybox"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -120,7 +121,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			objs:     initContainer("repo/image@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - test:5000/repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -130,7 +131,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 		{
 			name:     "pod with container image - repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			objs:     initContainer("repo/image:ignore-tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 	}
 
@@ -148,6 +149,8 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 func TestMalformedImageError(t *testing.T) {
 	const message = "Malformed image name for container 'bar'"
 	const severity = checks.Error
+	const name = "fully-qualified-image"
+
 	tests := []struct {
 		name     string
 		objs     *kube.Objects
@@ -156,12 +159,12 @@ func TestMalformedImageError(t *testing.T) {
 		{
 			name:     "container with image : test:5000/repo/image@sha256:digest",
 			objs:     container("test:5000/repo/image@sha256:digest"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "init container with image : test:5000/repo/image@sha256:digest",
 			objs:     initContainer("test:5000/repo/image@sha256:digest"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 	}
 	fullyQualifiedImageCheck := fullyQualifiedImageCheck{}

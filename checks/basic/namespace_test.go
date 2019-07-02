@@ -41,16 +41,16 @@ func TestNamespaceCheckRegistration(t *testing.T) {
 }
 
 func TestNamespaceWarning(t *testing.T) {
+	namespace := defaultNamespaceCheck{}
+
 	tests := []struct {
 		name     string
 		objs     *kube.Objects
 		expected []checks.Diagnostic
 	}{
 		{"no objects in cluster", empty(), nil},
-		{"user created objects in default namespace", userCreatedObjects(), errors()},
+		{"user created objects in default namespace", userCreatedObjects(), errors(namespace)},
 	}
-
-	namespace := defaultNamespaceCheck{}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -88,7 +88,7 @@ func userCreatedObjects() *kube.Objects {
 	return objs
 }
 
-func errors() []checks.Diagnostic {
+func errors(n defaultNamespaceCheck) []checks.Diagnostic {
 	objs := userCreatedObjects()
 	pod := objs.Pods.Items[0]
 	template := objs.PodTemplates.Items[0]
@@ -100,6 +100,7 @@ func errors() []checks.Diagnostic {
 	d := []checks.Diagnostic{
 
 		{
+			Check:    n.Name(),
 			Severity: checks.Warning,
 			Message:  "Avoid using the default namespace",
 			Kind:     checks.Pod,
@@ -107,6 +108,7 @@ func errors() []checks.Diagnostic {
 			Owners:   pod.ObjectMeta.GetOwnerReferences(),
 		},
 		{
+			Check:    n.Name(),
 			Severity: checks.Warning,
 			Message:  "Avoid using the default namespace",
 			Kind:     checks.PodTemplate,
@@ -114,6 +116,7 @@ func errors() []checks.Diagnostic {
 			Owners:   template.ObjectMeta.GetOwnerReferences(),
 		},
 		{
+			Check:    n.Name(),
 			Severity: checks.Warning,
 			Message:  "Avoid using the default namespace",
 			Kind:     checks.PersistentVolumeClaim,
@@ -121,6 +124,7 @@ func errors() []checks.Diagnostic {
 			Owners:   pvc.ObjectMeta.GetOwnerReferences(),
 		},
 		{
+			Check:    n.Name(),
 			Severity: checks.Warning,
 			Message:  "Avoid using the default namespace",
 			Kind:     checks.ConfigMap,
@@ -128,6 +132,7 @@ func errors() []checks.Diagnostic {
 			Owners:   cm.ObjectMeta.GetOwnerReferences(),
 		},
 		{
+			Check:    n.Name(),
 			Severity: checks.Warning,
 			Message:  "Avoid using the default namespace",
 			Kind:     checks.Service,
@@ -135,6 +140,7 @@ func errors() []checks.Diagnostic {
 			Owners:   service.ObjectMeta.GetOwnerReferences(),
 		},
 		{
+			Check:    n.Name(),
 			Severity: checks.Warning,
 			Message:  "Avoid using the default namespace",
 			Kind:     checks.Secret,
@@ -142,6 +148,7 @@ func errors() []checks.Diagnostic {
 			Owners:   secret.ObjectMeta.GetOwnerReferences(),
 		},
 		{
+			Check:    n.Name(),
 			Severity: checks.Warning,
 			Message:  "Avoid using the default namespace",
 			Kind:     checks.ServiceAccount,

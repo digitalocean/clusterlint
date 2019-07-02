@@ -40,6 +40,7 @@ func TestPodStateCheckRegistration(t *testing.T) {
 }
 
 func TestPodStateError(t *testing.T) {
+	podStatusCheck := podStatusCheck{}
 	tests := []struct {
 		name     string
 		objs     *kube.Objects
@@ -70,6 +71,7 @@ func TestPodStateError(t *testing.T) {
 			objs: status(corev1.PodFailed),
 			expected: []checks.Diagnostic{
 				{
+					Check:    podStatusCheck.Name(),
 					Severity: checks.Warning,
 					Message:  "Unhealthy pod. State: `Failed`. Pod state should be `Running`, `Pending` or `Succeeded`.",
 					Kind:     checks.Pod,
@@ -83,6 +85,7 @@ func TestPodStateError(t *testing.T) {
 			objs: status(corev1.PodUnknown),
 			expected: []checks.Diagnostic{
 				{
+					Check:    podStatusCheck.Name(),
 					Severity: checks.Warning,
 					Message:  "Unhealthy pod. State: `Unknown`. Pod state should be `Running`, `Pending` or `Succeeded`.",
 					Kind:     checks.Pod,
@@ -92,8 +95,6 @@ func TestPodStateError(t *testing.T) {
 			},
 		},
 	}
-
-	podStatusCheck := podStatusCheck{}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

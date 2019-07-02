@@ -69,6 +69,7 @@ func TestHostpathVolumeError(t *testing.T) {
 			}),
 			expected: []checks.Diagnostic{
 				{
+					Check:    "hostpath-volume",
 					Severity: checks.Error,
 					Message:  "Avoid using hostpath for volume 'bar'.",
 					Kind:     checks.Pod,

@@ -98,12 +98,3 @@ func getChecksNotInGroups(groups []string) []Check {
 	}
 	return ret
 }
-
-func contains(list []string, name string) bool {
-	for _, l := range list {
-		if l == name {
-			return true
-		}
-	}
-	return false
-}

@@ -54,9 +54,9 @@ func (fq *fullyQualifiedImageCheck) Run(objects *kube.Objects) ([]checks.Diagnos
 	var diagnostics []checks.Diagnostic
 
 	for _, pod := range objects.Pods.Items {
-		d := checkImage(pod.Spec.Containers, pod)
+		d := fq.checkImage(pod.Spec.Containers, pod)
 		diagnostics = append(diagnostics, d...)
-		d = checkImage(pod.Spec.InitContainers, pod)
+		d = fq.checkImage(pod.Spec.InitContainers, pod)
 		diagnostics = append(diagnostics, d...)
 	}
 
@@ -65,12 +65,13 @@ func (fq *fullyQualifiedImageCheck) Run(objects *kube.Objects) ([]checks.Diagnos
 
 // checkImage checks if the image name is fully qualified
 // Adds a warning if the container does not use a fully qualified image name
-func checkImage(containers []corev1.Container, pod corev1.Pod) []checks.Diagnostic {
+func (fq *fullyQualifiedImageCheck) checkImage(containers []corev1.Container, pod corev1.Pod) []checks.Diagnostic {
 	var diagnostics []checks.Diagnostic
 	for _, container := range containers {
 		value, err := reference.ParseAnyReference(container.Image)
 		if err != nil {
 			d := checks.Diagnostic{
+				Check:    fq.Name(),
 				Severity: checks.Error,
 				Message:  fmt.Sprintf("Malformed image name for container '%s'", container.Name),
 				Kind:     checks.Pod,
@@ -81,6 +82,7 @@ func checkImage(containers []corev1.Container, pod corev1.Pod) []checks.Diagnost
 		} else {
 			if value.String() != container.Image {
 				d := checks.Diagnostic{
+					Check:    fq.Name(),
 					Severity: checks.Warning,
 					Message:  fmt.Sprintf("Use fully qualified image for container '%s'", container.Name),
 					Kind:     checks.Pod,

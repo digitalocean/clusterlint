@@ -41,6 +41,8 @@ func TestPrivilegedContainersCheckRegistration(t *testing.T) {
 }
 
 func TestPrivilegedContainerWarning(t *testing.T) {
+	privilegedContainerCheck := privilegedContainerCheck{}
+
 	tests := []struct {
 		name     string
 		objs     *kube.Objects
@@ -54,7 +56,7 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 		{
 			name:     "pod with container in privileged mode",
 			objs:     container(true),
-			expected: warnings(container(true)),
+			expected: warnings(container(true), privilegedContainerCheck.Name()),
 		},
 		{
 			name:     "pod with container.SecurityContext = nil",
@@ -74,7 +76,7 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 		{
 			name:     "pod with init container in privileged mode",
 			objs:     initContainer(true),
-			expected: warnings(initContainer(true)),
+			expected: warnings(initContainer(true), privilegedContainerCheck.Name()),
 		},
 		{
 			name:     "pod with initContainer.SecurityContext = nil",
@@ -92,8 +94,6 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 			expected: nil,
 		},
 	}
-
-	privilegedContainerCheck := privilegedContainerCheck{}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -188,10 +188,11 @@ func initContainerPrivilegedNil() *kube.Objects {
 	return objs
 }
 
-func warnings(objs *kube.Objects) []checks.Diagnostic {
+func warnings(objs *kube.Objects, name string) []checks.Diagnostic {
 	pod := objs.Pods.Items[0]
 	d := []checks.Diagnostic{
 		{
+			Check:    name,
 			Severity: checks.Warning,
 			Message:  "Privileged container 'bar' found. Please ensure that the image is from a trusted source.",
 			Kind:     checks.Pod,

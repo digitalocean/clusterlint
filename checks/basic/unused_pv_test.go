@@ -41,6 +41,8 @@ func TestUnusedPVCheckRegistration(t *testing.T) {
 }
 
 func TestUnusedPVWarning(t *testing.T) {
+	unusedPVCheck := unusedPVCheck{}
+
 	tests := []struct {
 		name     string
 		objs     *kube.Objects
@@ -61,6 +63,7 @@ func TestUnusedPVWarning(t *testing.T) {
 			objs: unused(),
 			expected: []checks.Diagnostic{
 				{
+					Check:    unusedPVCheck.Name(),
 					Severity: checks.Warning,
 					Message:  "Unused Persistent Volume 'pv_foo'.",
 					Kind:     checks.PersistentVolume,
@@ -70,8 +73,6 @@ func TestUnusedPVWarning(t *testing.T) {
 			},
 		},
 	}
-
-	unusedPVCheck := unusedPVCheck{}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

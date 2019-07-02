@@ -41,6 +41,7 @@ func TestLatestTagCheckRegistration(t *testing.T) {
 func TestLatestTagWarning(t *testing.T) {
 	const message = "Avoid using latest tag for container 'bar'"
 	const severity = checks.Warning
+	const name = "latest-tag"
 
 	tests := []struct {
 		name     string
@@ -55,32 +56,32 @@ func TestLatestTagWarning(t *testing.T) {
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox:latest",
 			objs:     container("k8s.gcr.io/busybox:latest"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - busybox:latest",
 			objs:     container("busybox:latest"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - k8s.gcr.io/busybox",
 			objs:     container("k8s.gcr.io/busybox"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - busybox",
 			objs:     container("busybox"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - private:5000/busybox",
 			objs:     container("private:5000/repo/busybox"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - private:5000/busybox:latest",
 			objs:     container("private:5000/repo/busybox:latest"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - test:5000/repo@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -106,32 +107,32 @@ func TestLatestTagWarning(t *testing.T) {
 		{
 			name:     "pod with init container image - k8s.gcr.io/busybox:latest",
 			objs:     initContainer("k8s.gcr.io/busybox:latest"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with init container image - busybox:latest",
 			objs:     initContainer("busybox:latest"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with init container image - k8s.gcr.io/busybox",
 			objs:     initContainer("k8s.gcr.io/busybox"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with init container image - busybox",
 			objs:     initContainer("busybox"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - private:5000/busybox",
 			objs:     container("private:5000/repo/busybox"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - private:5000/busybox:latest",
 			objs:     container("private:5000/repo/busybox:latest"),
-			expected: issues(severity, message, checks.Pod),
+			expected: issues(severity, message, checks.Pod, name),
 		},
 		{
 			name:     "pod with container image - test:5000/repo@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
