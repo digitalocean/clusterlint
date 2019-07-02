@@ -43,6 +43,8 @@ func TestUnusedConfigMapCheckRegistration(t *testing.T) {
 }
 
 func TestUnusedConfigMapWarning(t *testing.T) {
+	unusedCMCheck := unusedCMCheck{}
+
 	tests := []struct {
 		name     string
 		objs     *kube.Objects
@@ -78,6 +80,7 @@ func TestUnusedConfigMapWarning(t *testing.T) {
 			objs: initConfigMap(),
 			expected: []checks.Diagnostic{
 				{
+					Check:    unusedCMCheck.Name(),
 					Severity: checks.Warning,
 					Message:  "Unused config map",
 					Kind:     checks.ConfigMap,
@@ -87,8 +90,6 @@ func TestUnusedConfigMapWarning(t *testing.T) {
 			},
 		},
 	}
-
-	unusedCMCheck := unusedCMCheck{}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

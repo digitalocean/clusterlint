@@ -50,6 +50,7 @@ func (alert *alert) SetDiagnostics(d []checks.Diagnostic) {
 // warn adds warnings for k8s objects that should not be in the default namespace
 func (alert *alert) warn(k8stype checks.Kind, itemMeta metav1.ObjectMeta) {
 	d := checks.Diagnostic{
+		Check:    "default-namespace",
 		Severity: checks.Warning,
 		Message:  "Avoid using the default namespace",
 		Kind:     k8stype,
@@ -78,7 +79,7 @@ func (nc *defaultNamespaceCheck) Description() string {
 }
 
 // checkPods checks if there are pods in the default namespace
-func checkPods(items *corev1.PodList, alert *alert) {
+func (nc *defaultNamespaceCheck) checkPods(items *corev1.PodList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
 			alert.warn(checks.Pod, item.ObjectMeta)
@@ -87,7 +88,7 @@ func checkPods(items *corev1.PodList, alert *alert) {
 }
 
 // checkPodTemplates checks if there are pod templates in the default namespace
-func checkPodTemplates(items *corev1.PodTemplateList, alert *alert) {
+func (nc *defaultNamespaceCheck) checkPodTemplates(items *corev1.PodTemplateList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
 			alert.warn(checks.PodTemplate, item.ObjectMeta)
@@ -96,7 +97,7 @@ func checkPodTemplates(items *corev1.PodTemplateList, alert *alert) {
 }
 
 // checkPVCs checks if there are pvcs in the default namespace
-func checkPVCs(items *corev1.PersistentVolumeClaimList, alert *alert) {
+func (nc *defaultNamespaceCheck) checkPVCs(items *corev1.PersistentVolumeClaimList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
 			alert.warn(checks.PersistentVolumeClaim, item.ObjectMeta)
@@ -105,7 +106,7 @@ func checkPVCs(items *corev1.PersistentVolumeClaimList, alert *alert) {
 }
 
 // checkConfigMaps checks if there are config maps in the default namespace
-func checkConfigMaps(items *corev1.ConfigMapList, alert *alert) {
+func (nc *defaultNamespaceCheck) checkConfigMaps(items *corev1.ConfigMapList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() {
 			alert.warn(checks.ConfigMap, item.ObjectMeta)
@@ -114,7 +115,7 @@ func checkConfigMaps(items *corev1.ConfigMapList, alert *alert) {
 }
 
 // checkServices checks if there are user created services in the default namespace
-func checkServices(items *corev1.ServiceList, alert *alert) {
+func (nc *defaultNamespaceCheck) checkServices(items *corev1.ServiceList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() && item.GetName() != "kubernetes" {
 			alert.warn(checks.Service, item.ObjectMeta)
@@ -123,7 +124,7 @@ func checkServices(items *corev1.ServiceList, alert *alert) {
 }
 
 // checkSecrets checks if there are user created secrets in the default namespace
-func checkSecrets(items *corev1.SecretList, alert *alert) {
+func (nc *defaultNamespaceCheck) checkSecrets(items *corev1.SecretList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() && item.Type != corev1.SecretTypeServiceAccountToken {
 			alert.warn(checks.Secret, item.ObjectMeta)
@@ -132,7 +133,7 @@ func checkSecrets(items *corev1.SecretList, alert *alert) {
 }
 
 // checkSA checks if there are user created SAs in the default namespace
-func checkSA(items *corev1.ServiceAccountList, alert *alert) {
+func (nc *defaultNamespaceCheck) checkSA(items *corev1.ServiceAccountList, alert *alert) {
 	for _, item := range items.Items {
 		if corev1.NamespaceDefault == item.GetNamespace() && item.GetName() != "default" {
 			alert.warn(checks.ServiceAccount, item.ObjectMeta)
@@ -147,37 +148,37 @@ func (nc *defaultNamespaceCheck) Run(objects *kube.Objects) ([]checks.Diagnostic
 	alert := &alert{}
 	var g errgroup.Group
 	g.Go(func() error {
-		checkPods(objects.Pods, alert)
+		nc.checkPods(objects.Pods, alert)
 		return nil
 	})
 
 	g.Go(func() error {
-		checkPodTemplates(objects.PodTemplates, alert)
+		nc.checkPodTemplates(objects.PodTemplates, alert)
 		return nil
 	})
 
 	g.Go(func() error {
-		checkPVCs(objects.PersistentVolumeClaims, alert)
+		nc.checkPVCs(objects.PersistentVolumeClaims, alert)
 		return nil
 	})
 
 	g.Go(func() error {
-		checkConfigMaps(objects.ConfigMaps, alert)
+		nc.checkConfigMaps(objects.ConfigMaps, alert)
 		return nil
 	})
 
 	g.Go(func() error {
-		checkServices(objects.Services, alert)
+		nc.checkServices(objects.Services, alert)
 		return nil
 	})
 
 	g.Go(func() error {
-		checkSecrets(objects.Secrets, alert)
+		nc.checkSecrets(objects.Secrets, alert)
 		return nil
 	})
 
 	g.Go(func() error {
-		checkSA(objects.ServiceAccounts, alert)
+		nc.checkSA(objects.ServiceAccounts, alert)
 		return nil
 	})
 

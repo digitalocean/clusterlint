@@ -71,9 +71,10 @@ func initContainer(image string) *kube.Objects {
 	return objs
 }
 
-func issues(severity checks.Severity, message string, kind checks.Kind) []checks.Diagnostic {
+func issues(severity checks.Severity, message string, kind checks.Kind, check string) []checks.Diagnostic {
 	d := []checks.Diagnostic{
 		{
+			Check:    check,
 			Severity: severity,
 			Message:  message,
 			Kind:     kind,

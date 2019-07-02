@@ -55,6 +55,7 @@ func (h *hostPathCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) 
 			pod := pod
 			if volume.VolumeSource.HostPath != nil {
 				d := checks.Diagnostic{
+					Check:    h.Name(),
 					Severity: checks.Error,
 					Message:  fmt.Sprintf("Avoid using hostpath for volume '%s'.", volume.Name),
 					Kind:     checks.Pod,

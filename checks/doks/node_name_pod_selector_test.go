@@ -41,6 +41,8 @@ func TestPodSelectorCheckRegistration(t *testing.T) {
 }
 
 func TestNodeNameError(t *testing.T) {
+	podSelectorCheck := podSelectorCheck{}
+
 	tests := []struct {
 		name     string
 		objs     *kube.Objects
@@ -54,11 +56,9 @@ func TestNodeNameError(t *testing.T) {
 		{
 			name:     "node name used in node selector",
 			objs:     invalidPod(),
-			expected: errors(invalidPod()),
+			expected: errors(invalidPod(), podSelectorCheck.Name()),
 		},
 	}
-
-	podSelectorCheck := podSelectorCheck{}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -89,10 +89,11 @@ func invalidPod() *kube.Objects {
 	return objs
 }
 
-func errors(objs *kube.Objects) []checks.Diagnostic {
+func errors(objs *kube.Objects, name string) []checks.Diagnostic {
 	pod := objs.Pods.Items[0]
 	diagnostics := []checks.Diagnostic{
 		{
+			Check:    name,
 			Severity: checks.Error,
 			Message:  "Avoid node name label for node selector.",
 			Kind:     checks.Pod,

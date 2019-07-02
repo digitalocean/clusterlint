@@ -54,8 +54,8 @@ func (l *latestTagCheck) Description() string {
 func (l *latestTagCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
 	for _, pod := range objects.Pods.Items {
-		diagnostics = append(diagnostics, checkTags(pod.Spec.Containers, pod)...)
-		diagnostics = append(diagnostics, checkTags(pod.Spec.InitContainers, pod)...)
+		diagnostics = append(diagnostics, l.checkTags(pod.Spec.Containers, pod)...)
+		diagnostics = append(diagnostics, l.checkTags(pod.Spec.InitContainers, pod)...)
 	}
 
 	return diagnostics, nil
@@ -63,13 +63,14 @@ func (l *latestTagCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error)
 
 // checkTags checks if the image name conforms to pattern `image:latest` or `image`
 // Adds a warning if it finds any image that uses the latest tag
-func checkTags(containers []corev1.Container, pod corev1.Pod) []checks.Diagnostic {
+func (l *latestTagCheck) checkTags(containers []corev1.Container, pod corev1.Pod) []checks.Diagnostic {
 	var diagnostics []checks.Diagnostic
 	for _, container := range containers {
 		namedRef, _ := reference.ParseNormalizedNamed(container.Image)
 		tagNameOnly := reference.TagNameOnly(namedRef)
 		if strings.HasSuffix(tagNameOnly.String(), ":latest") {
 			d := checks.Diagnostic{
+				Check:    l.Name(),
 				Severity: checks.Warning,
 				Message:  fmt.Sprintf("Avoid using latest tag for container '%s'", container.Name),
 				Kind:     checks.Pod,

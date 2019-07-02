@@ -176,7 +176,8 @@ func run(objects *kube.Objects, c *cli.Context) error {
 func write(diagnostics []checks.Diagnostic, c *cli.Context) error {
 	output := c.String("output")
 	level := checks.Severity(c.String("level"))
-	filtered := filterSeverity(level, diagnostics)
+	filtered := filterEnabled(diagnostics)
+	filtered = filterSeverity(level, filtered)
 	switch output {
 	case "json":
 		err := json.NewEncoder(os.Stdout).Encode(filtered)
@@ -190,6 +191,16 @@ func write(diagnostics []checks.Diagnostic, c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func filterEnabled(diagnostics []checks.Diagnostic) []checks.Diagnostic {
+	var ret []checks.Diagnostic
+	for _, d := range diagnostics {
+		if checks.IsEnabled(d.Check, d.Object) {
+			ret = append(ret, d)
+		}
+	}
+	return ret
 }
 
 func filterSeverity(level checks.Severity, diagnostics []checks.Diagnostic) []checks.Diagnostic {

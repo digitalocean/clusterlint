@@ -41,6 +41,8 @@ func TestUnusedPVCCheckRegistration(t *testing.T) {
 }
 
 func TestUnusedPVCWarning(t *testing.T) {
+	unusedClaimCheck := unusedClaimCheck{}
+
 	tests := []struct {
 		name     string
 		objs     *kube.Objects
@@ -65,6 +67,7 @@ func TestUnusedPVCWarning(t *testing.T) {
 			objs: initPVC(),
 			expected: []checks.Diagnostic{
 				{
+					Check:    unusedClaimCheck.Name(),
 					Severity: checks.Warning,
 					Message:  "Unused persistent volume claim",
 					Kind:     checks.PersistentVolumeClaim,
@@ -74,8 +77,6 @@ func TestUnusedPVCWarning(t *testing.T) {
 			},
 		},
 	}
-
-	unusedClaimCheck := unusedClaimCheck{}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

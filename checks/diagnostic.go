@@ -24,6 +24,7 @@ import (
 
 // Diagnostic encapsulates the information each check returns.
 type Diagnostic struct {
+	Check    string
 	Severity Severity
 	Message  string
 	Kind     Kind

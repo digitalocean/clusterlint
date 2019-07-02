@@ -16,7 +16,15 @@ limitations under the License.
 
 package checks
 
-import "github.com/digitalocean/clusterlint/kube"
+import (
+	"strings"
+
+	"github.com/digitalocean/clusterlint/kube"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const checkAnnotation = "clusterlint.digitalocean.com/disabled-checks"
+const separator = ","
 
 // Check is a check that can run on Kubernetes objects.
 type Check interface {
@@ -33,4 +41,16 @@ type Check interface {
 	// warnings (low-priority problems) and errors (high-priority problems) as
 	// well as an error value indicating that the check failed to run.
 	Run(*kube.Objects) ([]Diagnostic, error)
+}
+
+// IsEnabled inspects the object annotations to see if a check is disabled
+func IsEnabled(name string, item *metav1.ObjectMeta) bool {
+	annotations := item.GetAnnotations()
+	if value, ok := annotations[checkAnnotation]; ok {
+		disabledChecks := strings.Split(value, separator)
+		if contains(disabledChecks, name) {
+			return false
+		}
+	}
+	return true
 }
