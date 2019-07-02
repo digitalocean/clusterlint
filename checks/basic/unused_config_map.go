@@ -67,8 +67,9 @@ func (c *unusedCMCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) 
 	return diagnostics, nil
 }
 
-func checkNodeReferences(objects *kube.Objects) (map[kube.Identifier]bool, error) {
-	used := make(map[kube.Identifier]bool)
+func checkNodeReferences(objects *kube.Objects) (map[kube.Identifier]struct{}, error) {
+	used := make(map[kube.Identifier]struct{})
+	var empty struct{}
 	var mu sync.Mutex
 	var g errgroup.Group
 	for _, node := range objects.Nodes.Items {
@@ -77,7 +78,7 @@ func checkNodeReferences(objects *kube.Objects) (map[kube.Identifier]bool, error
 			source := node.Spec.ConfigSource
 			if source != nil {
 				mu.Lock()
-				used[kube.Identifier{Name: source.ConfigMap.Name, Namespace: source.ConfigMap.Namespace}] = true
+				used[kube.Identifier{Name: source.ConfigMap.Name, Namespace: source.ConfigMap.Namespace}] = empty
 				mu.Unlock()
 			}
 			return nil
@@ -87,8 +88,9 @@ func checkNodeReferences(objects *kube.Objects) (map[kube.Identifier]bool, error
 }
 
 //checkPodReferences checks each pod for config map references in volumes and environment variables
-func checkPodReferences(objects *kube.Objects) (map[kube.Identifier]bool, error) {
-	used := make(map[kube.Identifier]bool)
+func checkPodReferences(objects *kube.Objects) (map[kube.Identifier]struct{}, error) {
+	used := make(map[kube.Identifier]struct{})
+	var empty struct{}
 	var mu sync.Mutex
 	var g errgroup.Group
 	for _, pod := range objects.Pods.Items {
@@ -99,7 +101,7 @@ func checkPodReferences(objects *kube.Objects) (map[kube.Identifier]bool, error)
 				cm := volume.VolumeSource.ConfigMap
 				if cm != nil {
 					mu.Lock()
-					used[kube.Identifier{Name: cm.LocalObjectReference.Name, Namespace: namespace}] = true
+					used[kube.Identifier{Name: cm.LocalObjectReference.Name, Namespace: namespace}] = empty
 					mu.Unlock()
 				}
 				if volume.VolumeSource.Projected != nil {
@@ -107,7 +109,7 @@ func checkPodReferences(objects *kube.Objects) (map[kube.Identifier]bool, error)
 						cm := source.ConfigMap
 						if cm != nil {
 							mu.Lock()
-							used[kube.Identifier{Name: cm.LocalObjectReference.Name, Namespace: namespace}] = true
+							used[kube.Identifier{Name: cm.LocalObjectReference.Name, Namespace: namespace}] = empty
 							mu.Unlock()
 						}
 					}
@@ -117,7 +119,7 @@ func checkPodReferences(objects *kube.Objects) (map[kube.Identifier]bool, error)
 			identifiers = append(identifiers, checkEnvVars(pod.Spec.InitContainers, namespace)...)
 			mu.Lock()
 			for _, i := range identifiers {
-				used[i] = true
+				used[i] = empty
 			}
 			mu.Unlock()
 

@@ -32,12 +32,13 @@ func (c *unusedClaimCheck) Description() string {
 // error value indicating that the check failed to run.
 func (c *unusedClaimCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
-	used := make(map[kube.Identifier]bool)
+	used := make(map[kube.Identifier]struct{})
+	var empty struct{}
 	for _, pod := range objects.Pods.Items {
 		for _, volume := range pod.Spec.Volumes {
 			claim := volume.VolumeSource.PersistentVolumeClaim
 			if claim != nil {
-				used[kube.Identifier{Name: claim.ClaimName, Namespace: pod.GetNamespace()}] = true
+				used[kube.Identifier{Name: claim.ClaimName, Namespace: pod.GetNamespace()}] = empty
 			}
 		}
 	}
