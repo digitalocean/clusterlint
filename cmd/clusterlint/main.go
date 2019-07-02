@@ -25,6 +25,7 @@ import (
 
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
+	"github.com/fatih/color"
 	"github.com/urfave/cli"
 	"golang.org/x/sync/errgroup"
 
@@ -90,6 +91,10 @@ func main() {
 				cli.StringFlag{
 					Name:  "level, l",
 					Usage: "Filter output messages based on severity [error|warning|suggestion]. Default: all",
+				},
+				cli.BoolFlag{
+					Name:  "no-color",
+					Usage: "Disable color output",
 				},
 			},
 			Action: runChecks,
@@ -184,8 +189,23 @@ func write(diagnostics []checks.Diagnostic, c *cli.Context) error {
 			return err
 		}
 	default:
-		for _, diagnostic := range filtered {
-			fmt.Printf("%s\n", diagnostic)
+		if c.Bool("no-color") {
+			color.NoColor = true
+		}
+		e := color.New(color.FgRed)
+		w := color.New(color.FgYellow)
+		s := color.New(color.FgBlue)
+		for _, d := range filtered {
+			switch d.Severity {
+			case checks.Error:
+				e.Println(d)
+			case checks.Warning:
+				w.Println(d)
+			case checks.Suggestion:
+				s.Println(d)
+			default:
+				fmt.Printf("%s\n", d)
+			}
 		}
 	}
 
