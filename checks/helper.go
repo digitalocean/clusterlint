@@ -18,7 +18,8 @@ package checks
 
 import "strings"
 
-func contains(list []string, name string) bool {
+// Contains checks if a string is present in the given slice
+func Contains(list []string, name string) bool {
 	for _, l := range list {
 		if strings.TrimSpace(l) == name {
 			return true

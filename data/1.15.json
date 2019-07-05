@@ -1,0 +1,94 @@
+{
+  "core/v1": {
+    "supported_resources": [
+      "pod",
+      "pod_template",
+      "persistent_volume",
+      "persistent_volume_claim",
+      "config_map",
+      "service",
+      "secret",
+      "service_account"
+    ],
+    "deprecated_resources": []
+  },
+  "apps/v1": {
+    "supported_resources": [
+      "daemon_set",
+      "deployment",
+      "stateful_set"
+    ],
+    "deprecated_resources": []
+  },
+  "apps/v1beta1": {
+    "supported_resources": [
+      "deployment",
+      "stateful_set"
+    ],
+    "deprecated_resources": [
+      "deployment"
+    ]
+  },
+  "apps/v1beta2": {
+    "supported_resources": [
+      "daemon_set",
+      "deployment",
+      "stateful_set"
+    ],
+    "deprecated_resources": [
+      "daemon_set",
+      "deployment"
+    ]
+  },
+  "extensions/v1beta1": {
+    "supported_resources": [
+      "daemon_set",
+      "deployment",
+      "ingress"
+    ],
+    "deprecated_resources": [
+      "daemon_set",
+      "deployment",
+      "ingress"
+    ]
+  },
+  "rbac.authorization.k8s.io/v1": {
+    "supported_resources": [
+      "cluster_role",
+      "cluster_role_binding",
+      "role",
+      "role_binding"
+    ]
+  },
+  "rbac.authorization.k8s.io/v1alpha1": {
+    "supported_resources": [
+      "cluster_role",
+      "cluster_role_binding",
+      "role",
+      "role_binding"
+    ]
+  },
+  "rbac.authorization.k8s.io/v1beta1": {
+    "supported_resources": [
+      "cluster_role",
+      "cluster_role_binding",
+      "role",
+      "role_binding"
+    ]
+  },
+  "batch/v1": {
+    "supported_resources": [
+      "job"
+    ]
+  },
+  "batch/v1beta1": {
+    "supported_resources": [
+      "cron_job"
+    ]
+  },
+  "batch/v2alpha1": {
+    "supported_resources": [
+      "cron_job"
+    ]
+  }
+}

@@ -68,6 +68,10 @@ func main() {
 			Name:  "run",
 			Usage: "run all checks in the registry",
 			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "target-version, v",
+					Usage: "run version upgradability checks to see if api versions are supported in the `target-version`",
+				},
 				cli.StringSliceFlag{
 					Name:  "g, groups",
 					Usage: "run all checks in groups `GROUP1, GROUP2`",
@@ -138,10 +142,10 @@ func runChecks(c *cli.Context) error {
 		return err
 	}
 
-	return run(objects, c)
+	return run(c, objects, client)
 }
 
-func run(objects *kube.Objects, c *cli.Context) error {
+func run(c *cli.Context, objects *kube.Objects, client *kube.Client) error {
 	filter, err := checks.NewCheckFilter(c.StringSlice("g"), c.StringSlice("G"), c.StringSlice("c"), c.StringSlice("C"))
 	if err != nil {
 		return err
@@ -154,6 +158,8 @@ func run(objects *kube.Objects, c *cli.Context) error {
 	if len(all) == 0 {
 		return fmt.Errorf("No checks to run. Are you sure that you provided the right names for groups and checks?")
 	}
+	targetVersion := c.String("target-version")
+	data := checks.CheckData{Objects: objects, TargetVersion: targetVersion, Client: client}
 	var diagnostics []checks.Diagnostic
 	var mu sync.Mutex
 	var g errgroup.Group
@@ -162,7 +168,7 @@ func run(objects *kube.Objects, c *cli.Context) error {
 		check := check
 		g.Go(func() error {
 			fmt.Println("Running check: ", check.Name())
-			d, err := check.Run(objects)
+			d, err := check.Run(&data)
 			if err != nil {
 				return err
 			}

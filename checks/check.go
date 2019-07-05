@@ -40,7 +40,18 @@ type Check interface {
 	// Run runs this check on a set of Kubernetes objects. It can return
 	// warnings (low-priority problems) and errors (high-priority problems) as
 	// well as an error value indicating that the check failed to run.
-	Run(*kube.Objects) ([]Diagnostic, error)
+	Run(*CheckData) ([]Diagnostic, error)
+}
+
+// CheckData encapsulates the data needed to execute a check
+type CheckData struct {
+	// Objects holds all the configs of Kubernetes objects
+	// fetched from the live cluster
+	Objects *kube.Objects
+	// TargetVersion is used for version upgradability checks
+	TargetVersion string
+	// Client is used for version upgradability checks
+	Client *kube.Client
 }
 
 // IsEnabled inspects the object annotations to see if a check is disabled
@@ -48,7 +59,7 @@ func IsEnabled(name string, item *metav1.ObjectMeta) bool {
 	annotations := item.GetAnnotations()
 	if value, ok := annotations[checkAnnotation]; ok {
 		disabledChecks := strings.Split(value, separator)
-		if contains(disabledChecks, name) {
+		if Contains(disabledChecks, name) {
 			return false
 		}
 	}

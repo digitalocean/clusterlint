@@ -20,7 +20,6 @@ import (
 	"sync"
 
 	"github.com/digitalocean/clusterlint/checks"
-	"github.com/digitalocean/clusterlint/kube"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -144,7 +143,8 @@ func (nc *defaultNamespaceCheck) checkSA(items *corev1.ServiceAccountList, alert
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (nc *defaultNamespaceCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (nc *defaultNamespaceCheck) Run(data *checks.CheckData) ([]checks.Diagnostic, error) {
+	objects := data.Objects
 	alert := &alert{}
 	var g errgroup.Group
 	g.Go(func() error {

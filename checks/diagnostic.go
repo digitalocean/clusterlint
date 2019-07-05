@@ -53,21 +53,29 @@ const (
 	// Pod identifies Kubernetes objects of kind `pod`
 	Pod Kind = "pod"
 	// PodTemplate identifies Kubernetes objects of kind `pod template`
-	PodTemplate Kind = "pod template"
+	PodTemplate Kind = "pod_template"
 	// PersistentVolumeClaim identifies Kubernetes objects of kind `persistent volume claim`
-	PersistentVolumeClaim Kind = "persistent volume claim"
+	PersistentVolumeClaim Kind = "persistent_volume_claim"
 	// ConfigMap identifies Kubernetes objects of kind `config map`
-	ConfigMap Kind = "config map"
+	ConfigMap Kind = "config_map"
 	// Service identifies Kubernetes objects of kind `service`
 	Service Kind = "service"
 	// Secret identifies Kubernetes objects of kind `secret`
 	Secret Kind = "secret"
 	// ServiceAccount identifies Kubernetes objects of kind `service account`
-	ServiceAccount Kind = "service account"
+	ServiceAccount Kind = "service_account"
 	// PersistentVolume identifies Kubernetes objects of kind `persistent volume`
-	PersistentVolume Kind = "persistent volume"
+	PersistentVolume Kind = "persistent_volume"
 	// ValidatingWebhookConfiguration identifies Kubernetes objects of kind `validating webhook configuration`
-	ValidatingWebhookConfiguration Kind = "validating webhook configuration"
+	ValidatingWebhookConfiguration Kind = "validating_webhook_configuration"
 	// MutatingWebhookConfiguration identifies Kubernetes objects of kind `mutating webhook configuration`
-	MutatingWebhookConfiguration Kind = "mutating webhook configuration"
+	MutatingWebhookConfiguration Kind = "mutating_webhook_configuration"
+	// Deployment identifies Kubernetes objects of kind `deployment`
+	Deployment Kind = "deployment"
+	// DaemonSet identifies Kubernetes objects of kind `daemon_set`
+	DaemonSet Kind = "daemon_set"
+	// StatefulSet identifies Kubernetes objects of kind `stateful_set`
+	StatefulSet Kind = "stateful_set"
+	// Ingress  identifies Kubernetes objects of kind `ingress`
+	Ingress Kind = "ingress"
 )

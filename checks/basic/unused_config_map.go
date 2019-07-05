@@ -50,7 +50,8 @@ func (c *unusedCMCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (c *unusedCMCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (c *unusedCMCheck) Run(data *checks.CheckData) ([]checks.Diagnostic, error) {
+	objects := data.Objects
 	var diagnostics []checks.Diagnostic
 
 	used, err := checkPodReferences(objects)

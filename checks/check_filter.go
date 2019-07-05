@@ -56,7 +56,7 @@ func (c CheckFilter) FilterChecks() ([]Check, error) {
 
 	if len(c.IncludeChecks) > 0 {
 		for _, check := range all {
-			if contains(c.IncludeChecks, check.Name()) {
+			if Contains(c.IncludeChecks, check.Name()) {
 				ret = append(ret, check)
 			}
 		}
@@ -65,7 +65,7 @@ func (c CheckFilter) FilterChecks() ([]Check, error) {
 
 	if len(c.ExcludeChecks) > 0 {
 		for _, check := range all {
-			if !contains(c.ExcludeChecks, check.Name()) {
+			if !Contains(c.ExcludeChecks, check.Name()) {
 				ret = append(ret, check)
 			}
 		}
@@ -92,7 +92,7 @@ func getChecksNotInGroups(groups []string) []Check {
 	allGroups := ListGroups()
 	var ret []Check
 	for _, group := range allGroups {
-		if !contains(groups, group) {
+		if !Contains(groups, group) {
 			ret = append(ret, GetGroup(group)...)
 		}
 	}

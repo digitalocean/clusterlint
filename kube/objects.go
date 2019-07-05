@@ -56,6 +56,29 @@ type Client struct {
 	kubeClient kubernetes.Interface
 }
 
+// Get return the built kubeClient.
+func (c *Client) Get() kubernetes.Interface {
+	return c.kubeClient
+}
+
+// GetGroupClients returns the rest clients to use for each group
+func (c *Client) GetGroupClients() map[string]rest.Interface {
+	groupClients := map[string]rest.Interface{
+		"core/v1":                            c.kubeClient.CoreV1().RESTClient(),
+		"apps/v1":                            c.kubeClient.AppsV1().RESTClient(),
+		"apps/v1beta1":                       c.kubeClient.AppsV1beta1().RESTClient(),
+		"apps/v1beta2":                       c.kubeClient.AppsV1beta2().RESTClient(),
+		"extensions/v1beta1":                 c.kubeClient.ExtensionsV1beta1().RESTClient(),
+		"rbac.authorization.k8s.io/v1":       c.kubeClient.RbacV1().RESTClient(),
+		"rbac.authorization.k8s.io/v1alpha1": c.kubeClient.RbacV1beta1().RESTClient(),
+		"rbac.authorization.k8s.io/v1beta1":  c.kubeClient.RbacV1alpha1().RESTClient(),
+		"batch/v1":                           c.kubeClient.BatchV1().RESTClient(),
+		"batch/v1beta1":                      c.kubeClient.BatchV1beta1().RESTClient(),
+		"batch/v2alpha1":                     c.kubeClient.BatchV2alpha1().RESTClient(),
+	}
+	return groupClients
+}
+
 // FetchObjects returns the objects from a Kubernetes cluster.
 func (c *Client) FetchObjects() (*Objects, error) {
 	client := c.kubeClient.CoreV1()

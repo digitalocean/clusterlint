@@ -18,7 +18,6 @@ package doks
 
 import (
 	"github.com/digitalocean/clusterlint/checks"
-	"github.com/digitalocean/clusterlint/kube"
 	ar "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,7 +48,8 @@ func (w *webhookCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (w *webhookCheck) Run(data *checks.CheckData) ([]checks.Diagnostic, error) {
+	objects := data.Objects
 	var diagnostics []checks.Diagnostic
 
 	for _, config := range objects.ValidatingWebhookConfigurations.Items {
