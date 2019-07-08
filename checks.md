@@ -383,3 +383,46 @@ How to fix:
 ```bash
 kubectl delete secret <unused secret name>
 ```
+
+###### Resource Requests and Limits
+
+Name: `resource-requirements`
+
+Group: `basic`
+
+Description: When Containers have resource requests specified, the scheduler can make better decisions about which nodes to place Pods on. And when Containers have their limits specified, contention for resources on a node can be handled in a specified manner.
+
+Example:
+
+```yaml
+# Don't do this
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test
+spec:
+  containers:
+  - image: docker.io/nginx:1.17.0
+    name: test-container
+
+```
+
+How to fix:
+
+```yaml
+# Specify resource requests and limits
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pd
+spec:
+  containers:
+  - image: docker.io/nginx:1.17.0
+    name: test-container
+    resources:
+      limits:
+        cpu: 102m
+      requests:
+        cpu: 102m
+
+```
