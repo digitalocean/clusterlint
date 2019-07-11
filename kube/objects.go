@@ -164,3 +164,23 @@ func NewClient(configPath, configContext string) (*Client, error) {
 		kubeClient: client,
 	}, nil
 }
+
+// BuildClient builds a kubernetes client from the yaml to interact with the live cluster.
+func BuildClient(yaml []byte) (*Client, error) {
+	var config *rest.Config
+	var err error
+
+	config, err = clientcmd.RESTConfigFromKubeConfig(yaml)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Client{
+		kubeClient: client,
+	}, nil
+}
