@@ -17,7 +17,7 @@ limitations under the License.
 package checks
 
 import (
-	"fmt"
+	"errors"
 	"sync"
 
 	"github.com/digitalocean/clusterlint/kube"
@@ -25,7 +25,7 @@ import (
 )
 
 // Run applies the filters and runs the resultant check list in parallel
-func Run(client *kube.Client, checkFilter CheckFilter, severity Severity) ([]Diagnostic, error) {
+func Run(client *kube.Client, checkFilter CheckFilter, diagnosticFilter DiagnosticFilter) ([]Diagnostic, error) {
 	objects, err := client.FetchObjects()
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func Run(client *kube.Client, checkFilter CheckFilter, severity Severity) ([]Dia
 		return nil, err
 	}
 	if len(all) == 0 {
-		return nil, fmt.Errorf("No checks to run. Are you sure that you provided the right names for groups and checks?")
+		return nil, errors.New("No checks to run. Are you sure that you provided the right names for groups and checks?")
 	}
 	var diagnostics []Diagnostic
 	var mu sync.Mutex
@@ -45,7 +45,6 @@ func Run(client *kube.Client, checkFilter CheckFilter, severity Severity) ([]Dia
 	for _, check := range all {
 		check := check
 		g.Go(func() error {
-			fmt.Println("Running check: ", check.Name())
 			d, err := check.Run(objects)
 			if err != nil {
 				return err
@@ -61,7 +60,7 @@ func Run(client *kube.Client, checkFilter CheckFilter, severity Severity) ([]Dia
 		return nil, err
 	}
 	diagnostics = filterEnabled(diagnostics)
-	diagnostics = filterSeverity(severity, diagnostics)
+	diagnostics = filterSeverity(diagnosticFilter.Severity, diagnostics)
 	return diagnostics, err
 }
 

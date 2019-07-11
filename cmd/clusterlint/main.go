@@ -136,8 +136,9 @@ func runChecks(c *cli.Context) error {
 		return err
 	}
 
-	level := checks.Severity(c.String("level"))
-	diagnostics, err := checks.Run(client, filter, level)
+	diagnosticFilter := checks.DiagnosticFilter{Severity: checks.Severity(c.String("level"))}
+
+	diagnostics, err := checks.Run(client, filter, diagnosticFilter)
 
 	write(diagnostics, c)
 
