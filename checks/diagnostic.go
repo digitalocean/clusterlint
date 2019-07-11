@@ -37,6 +37,11 @@ func (d Diagnostic) String() string {
 		d.Kind, d.Object.Name, d.Message)
 }
 
+// DiagnosticFilter indicates conditions to filter diagnostics on
+type DiagnosticFilter struct {
+	Severity Severity
+}
+
 // Severity identifies the level of priority for each diagnostic.
 type Severity string
 

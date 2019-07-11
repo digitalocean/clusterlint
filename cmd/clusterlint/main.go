@@ -21,13 +21,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 	"github.com/fatih/color"
 	"github.com/urfave/cli"
-	"golang.org/x/sync/errgroup"
 
 	// Side-effect import to get all the checks registered.
 	_ "github.com/digitalocean/clusterlint/checks/all"
@@ -133,46 +131,15 @@ func runChecks(c *cli.Context) error {
 		return err
 	}
 
-	objects, err := client.FetchObjects()
-	if err != nil {
-		return err
-	}
-
-	return run(objects, c)
-}
-
-func run(objects *kube.Objects, c *cli.Context) error {
 	filter, err := checks.NewCheckFilter(c.StringSlice("g"), c.StringSlice("G"), c.StringSlice("c"), c.StringSlice("C"))
 	if err != nil {
 		return err
 	}
 
-	all, err := filter.FilterChecks()
-	if err != nil {
-		return err
-	}
-	if len(all) == 0 {
-		return fmt.Errorf("No checks to run. Are you sure that you provided the right names for groups and checks?")
-	}
-	var diagnostics []checks.Diagnostic
-	var mu sync.Mutex
-	var g errgroup.Group
+	diagnosticFilter := checks.DiagnosticFilter{Severity: checks.Severity(c.String("level"))}
 
-	for _, check := range all {
-		check := check
-		g.Go(func() error {
-			fmt.Println("Running check: ", check.Name())
-			d, err := check.Run(objects)
-			if err != nil {
-				return err
-			}
-			mu.Lock()
-			diagnostics = append(diagnostics, d...)
-			mu.Unlock()
-			return nil
-		})
-	}
-	err = g.Wait()
+	diagnostics, err := checks.Run(client, filter, diagnosticFilter)
+
 	write(diagnostics, c)
 
 	return err
@@ -180,12 +147,10 @@ func run(objects *kube.Objects, c *cli.Context) error {
 
 func write(diagnostics []checks.Diagnostic, c *cli.Context) error {
 	output := c.String("output")
-	level := checks.Severity(c.String("level"))
-	filtered := filterEnabled(diagnostics)
-	filtered = filterSeverity(level, filtered)
+
 	switch output {
 	case "json":
-		err := json.NewEncoder(os.Stdout).Encode(filtered)
+		err := json.NewEncoder(os.Stdout).Encode(diagnostics)
 		if err != nil {
 			return err
 		}
@@ -196,7 +161,7 @@ func write(diagnostics []checks.Diagnostic, c *cli.Context) error {
 		e := color.New(color.FgRed)
 		w := color.New(color.FgYellow)
 		s := color.New(color.FgBlue)
-		for _, d := range filtered {
+		for _, d := range diagnostics {
 			switch d.Severity {
 			case checks.Error:
 				e.Println(d)
@@ -211,27 +176,4 @@ func write(diagnostics []checks.Diagnostic, c *cli.Context) error {
 	}
 
 	return nil
-}
-
-func filterEnabled(diagnostics []checks.Diagnostic) []checks.Diagnostic {
-	var ret []checks.Diagnostic
-	for _, d := range diagnostics {
-		if checks.IsEnabled(d.Check, d.Object) {
-			ret = append(ret, d)
-		}
-	}
-	return ret
-}
-
-func filterSeverity(level checks.Severity, diagnostics []checks.Diagnostic) []checks.Diagnostic {
-	if level == "" {
-		return diagnostics
-	}
-	var ret []checks.Diagnostic
-	for _, d := range diagnostics {
-		if d.Severity == level {
-			ret = append(ret, d)
-		}
-	}
-	return ret
 }
