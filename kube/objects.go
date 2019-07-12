@@ -53,13 +53,13 @@ type Objects struct {
 
 // Client encapsulates a client for a Kubernetes cluster.
 type Client struct {
-	kubeClient kubernetes.Interface
+	KubeClient kubernetes.Interface
 }
 
 // FetchObjects returns the objects from a Kubernetes cluster.
 func (c *Client) FetchObjects() (*Objects, error) {
-	client := c.kubeClient.CoreV1()
-	admissionControllerClient := c.kubeClient.AdmissionregistrationV1beta1()
+	client := c.KubeClient.CoreV1()
+	admissionControllerClient := c.KubeClient.AdmissionregistrationV1beta1()
 	opts := metav1.ListOptions{}
 	objects := &Objects{}
 
@@ -161,7 +161,7 @@ func NewClient(configPath, configContext string) (*Client, error) {
 	}
 
 	return &Client{
-		kubeClient: client,
+		KubeClient: client,
 	}, nil
 }
 
@@ -181,6 +181,6 @@ func BuildClient(yaml []byte) (*Client, error) {
 	}
 
 	return &Client{
-		kubeClient: client,
+		KubeClient: client,
 	}, nil
 }
