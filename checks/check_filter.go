@@ -30,7 +30,7 @@ type CheckFilter struct {
 
 // NewCheckFilter is a constructor to initialize an instance of CheckFilter
 func NewCheckFilter(includeGroups, excludeGroups, includeChecks, excludeChecks []string) (CheckFilter, error) {
-	if len(includeGroups) > 0 && len(excludeChecks) > 0 {
+	if len(includeGroups) > 0 && len(excludeGroups) > 0 {
 		return CheckFilter{}, fmt.Errorf("cannot specify both include and exclude group conditions")
 	}
 	if len(includeChecks) > 0 && len(excludeChecks) > 0 {
