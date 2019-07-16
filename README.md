@@ -24,7 +24,7 @@ clusterlint run [options]  // run all or specific checks
 
 ## Contributing
 
-Contributions are welcome, in the form of either issues or pull requests. Plesae
+Contributions are welcome, in the form of either issues or pull requests. Please
 see the [contribution guidelines](CONTRIBUTING.md) for details.
 
 ## License
