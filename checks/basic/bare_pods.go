@@ -45,9 +45,7 @@ func (b *barePodCheck) Description() string {
 	return "Check if there are bare pods in the cluster"
 }
 
-// Run runs this check on a set of Kubernetes objects. It can return warnings
-// (low-priority problems) and errors (high-priority problems) as well as an
-// error value indicating that the check failed to run.
+// Run runs this check on a set of Kubernetes objects.
 func (b *barePodCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
 	for _, pod := range objects.Pods.Items {
@@ -57,7 +55,7 @@ func (b *barePodCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 			d := checks.Diagnostic{
 				Check:    b.Name(),
 				Severity: checks.Error,
-				Message:  fmt.Sprintf("Avoid using bare pods in clusters"),
+				Message:  "Avoid using bare pods in clusters",
 				Kind:     checks.Pod,
 				Object:   &pod.ObjectMeta,
 				Owners:   pod.ObjectMeta.GetOwnerReferences(),
