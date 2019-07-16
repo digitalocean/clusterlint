@@ -426,3 +426,56 @@ spec:
         cpu: 102m
 
 ```
+
+###### Bare Pods
+
+Name:         `bare-pods`
+
+Group:        `basic`
+
+Description:  When the node that a Pod is running on reboots or fails, the pod is terminated and will not be restarted. However, a Job will create new Pods to replace terminated ones. For this reason, we recommend that you use a Job, Deployment or StatefulSet rather than a bare Pod, even if your application requires only a single Pod.
+
+
+Example:
+
+```yaml
+# Don't do this
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+  namespace: test
+  labels:
+    name: mypod
+spec:
+  containers:
+  - name: mypod
+    image: nginx:1.17.0
+
+```
+
+How to fix:
+
+```yaml
+# Configure pods as part of a deployment, job, statefulset
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  namespace: test
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.7.9
+```

@@ -37,6 +37,24 @@ func initPod() *kube.Objects {
 	return objs
 }
 
+func initMultiplePods() *kube.Objects {
+	objs := &kube.Objects{
+		Pods: &corev1.PodList{
+			Items: []corev1.Pod{
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "pod_1", Namespace: "k8s"},
+				},
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "pod_2", Namespace: "k8s"},
+				},
+			},
+		},
+	}
+	return objs
+}
+
 func GetObjectMeta() *metav1.ObjectMeta {
 	objs := initPod()
 	return &objs.Pods.Items[0].ObjectMeta
