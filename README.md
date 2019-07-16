@@ -1,5 +1,7 @@
 # Clusterlint
 
+[![CircleCI](https://circleci.com/gh/digitalocean/clusterlint.svg?style=svg)](https://circleci.com/gh/digitalocean/clusterlint)
+
 Linter to check k8s API objects from a live cluster.
 
 ### Background
