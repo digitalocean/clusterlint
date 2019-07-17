@@ -17,6 +17,7 @@ limitations under the License.
 package kube
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,7 +38,7 @@ func TestFetchObjects(t *testing.T) {
 			Labels: map[string]string{"doks_key": "bar"}},
 	})
 
-	actual, err := api.FetchObjects()
+	actual, err := api.FetchObjects(context.Background())
 	assert.NoError(t, err)
 
 	assert.NotNil(t, actual.Nodes)

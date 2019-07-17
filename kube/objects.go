@@ -17,6 +17,7 @@ limitations under the License.
 package kube
 
 import (
+	"context"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -27,6 +28,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
+
+const defaultTimeout = "30s"
 
 //Identifier is used to identify a specific namspace scoped object.
 type Identifier struct {
@@ -59,7 +62,8 @@ type Client struct {
 }
 
 // FetchObjects returns the objects from a Kubernetes cluster.
-func (c *Client) FetchObjects() (*Objects, error) {
+// ctx is currently unused during API calls. More info: https://github.com/kubernetes/community/pull/1166
+func (c *Client) FetchObjects(ctx context.Context) (*Objects, error) {
 	client := c.KubeClient.CoreV1()
 	admissionControllerClient := c.KubeClient.AdmissionregistrationV1beta1()
 	opts := metav1.ListOptions{}
@@ -140,7 +144,7 @@ func (c *Client) FetchObjects() (*Objects, error) {
 // The kube config file path or the kubeconfig yaml must be specified
 // If not specified, defaults are assumed - configPath: ~/.kube/config, configContext: current context
 func NewClient(opts ...Option) (*Client, error) {
-	timeout, _ := time.ParseDuration("30s")
+	timeout, _ := time.ParseDuration(defaultTimeout)
 	defOpts := &options{
 		timeout: timeout,
 	}

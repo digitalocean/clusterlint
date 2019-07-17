@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -34,7 +35,7 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "clusterlint"
-	app.Usage = "Linter for k8sobjects from a live cluster"
+	app.Usage = "Linter for k8s objects from a live cluster"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "kubeconfig",
@@ -142,7 +143,7 @@ func runChecks(c *cli.Context) error {
 
 	diagnosticFilter := checks.DiagnosticFilter{Severity: checks.Severity(c.String("level"))}
 
-	diagnostics, err := checks.Run(client, filter, diagnosticFilter)
+	diagnostics, err := checks.Run(context.Background(), client, filter, diagnosticFilter)
 
 	write(diagnostics, c)
 

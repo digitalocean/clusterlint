@@ -17,6 +17,7 @@ limitations under the License.
 package checks
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -25,8 +26,8 @@ import (
 )
 
 // Run applies the filters and runs the resultant check list in parallel
-func Run(client *kube.Client, checkFilter CheckFilter, diagnosticFilter DiagnosticFilter) ([]Diagnostic, error) {
-	objects, err := client.FetchObjects()
+func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diagnosticFilter DiagnosticFilter) ([]Diagnostic, error) {
+	objects, err := client.FetchObjects(ctx)
 	if err != nil {
 		return nil, err
 	}
