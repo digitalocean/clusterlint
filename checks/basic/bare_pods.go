@@ -17,8 +17,6 @@ limitations under the License.
 package basic
 
 import (
-	"fmt"
-
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 )
@@ -50,7 +48,6 @@ func (b *barePodCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
 	for _, pod := range objects.Pods.Items {
 		pod := pod
-		fmt.Println(pod.ObjectMeta.OwnerReferences)
 		if len(pod.ObjectMeta.OwnerReferences) == 0 {
 			d := checks.Diagnostic{
 				Check:    b.Name(),

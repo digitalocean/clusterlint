@@ -45,6 +45,10 @@ func main() {
 			Name:  "context",
 			Usage: "context for the kubernetes client. default: current context",
 		},
+		cli.StringFlag{
+			Name:  "timeout",
+			Usage: "configure timeout for the kubernetes client. default: 30s",
+		},
 	}
 	app.Commands = []cli.Command{
 		{
@@ -126,7 +130,7 @@ func listChecks(c *cli.Context) error {
 
 // runChecks runs all the checks based on the flags passed.
 func runChecks(c *cli.Context) error {
-	client, err := kube.NewClient(c.GlobalString("kubeconfig"), c.GlobalString("context"))
+	client, err := kube.NewClient(kube.WithConfigFile(c.GlobalString("kubeconfig")), kube.WithKubeContext(c.GlobalString("context")), kube.WithTimeout(c.GlobalString("timeout")))
 	if err != nil {
 		return err
 	}
