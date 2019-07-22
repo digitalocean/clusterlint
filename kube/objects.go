@@ -18,7 +18,7 @@ package kube
 
 import (
 	"context"
-	"time"
+	"errors"
 
 	"golang.org/x/sync/errgroup"
 	ar "k8s.io/api/admissionregistration/v1beta1"
@@ -28,8 +28,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
-
-const defaultTimeout = "30s"
 
 //Identifier is used to identify a specific namspace scoped object.
 type Identifier struct {
@@ -144,10 +142,7 @@ func (c *Client) FetchObjects(ctx context.Context) (*Objects, error) {
 // The kube config file path or the kubeconfig yaml must be specified
 // If not specified, defaults are assumed - configPath: ~/.kube/config, configContext: current context
 func NewClient(opts ...Option) (*Client, error) {
-	timeout, _ := time.ParseDuration(defaultTimeout)
-	defOpts := &options{
-		timeout: timeout,
-	}
+	defOpts := &options{}
 
 	for _, opt := range opts {
 		if err := opt(defOpts); err != nil {
@@ -157,18 +152,24 @@ func NewClient(opts ...Option) (*Client, error) {
 
 	var config *rest.Config
 	var err error
-	if defOpts.path != "" {
+	if defOpts.yaml != nil && defOpts.path != "" {
+		return nil, errors.New("cannot specify both yaml and kubeconfg file path")
+	}
+
+	if defOpts.yaml != nil {
+		config, err = clientcmd.RESTConfigFromKubeConfig(defOpts.yaml)
+	} else if defOpts.path != "" {
 		if defOpts.kubeContext != "" {
 			config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 				&clientcmd.ClientConfigLoadingRules{ExplicitPath: defOpts.path},
 				&clientcmd.ConfigOverrides{
 					CurrentContext: defOpts.kubeContext,
 				}).ClientConfig()
-		} else if defOpts.yaml != nil {
-			config, err = clientcmd.RESTConfigFromKubeConfig(defOpts.yaml)
 		} else {
 			config, err = clientcmd.BuildConfigFromFlags("", defOpts.path)
 		}
+	} else {
+		err = errors.New("cannot authenticate Kubernetes API requests")
 	}
 
 	if err != nil {

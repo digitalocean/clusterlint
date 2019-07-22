@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
@@ -46,9 +47,10 @@ func main() {
 			Name:  "context",
 			Usage: "context for the kubernetes client. default: current context",
 		},
-		cli.StringFlag{
+		cli.DurationFlag{
 			Name:  "timeout",
 			Usage: "configure timeout for the kubernetes client. default: 30s",
+			Value: time.Second * 30,
 		},
 	}
 	app.Commands = []cli.Command{
@@ -131,7 +133,7 @@ func listChecks(c *cli.Context) error {
 
 // runChecks runs all the checks based on the flags passed.
 func runChecks(c *cli.Context) error {
-	client, err := kube.NewClient(kube.WithConfigFile(c.GlobalString("kubeconfig")), kube.WithKubeContext(c.GlobalString("context")), kube.WithTimeout(c.GlobalString("timeout")))
+	client, err := kube.NewClient(kube.WithConfigFile(c.GlobalString("kubeconfig")), kube.WithKubeContext(c.GlobalString("context")), kube.WithTimeout(c.GlobalDuration("timeout")))
 	if err != nil {
 		return err
 	}
