@@ -22,8 +22,6 @@ import (
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 	"github.com/stretchr/testify/assert"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestPrivilegedContainersCheckMeta(t *testing.T) {
@@ -55,8 +53,8 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 		},
 		{
 			name:     "pod with container in privileged mode",
-			objs:     container(true),
-			expected: warnings(container(true), privilegedContainerCheck.Name()),
+			objs:     containerPrivileged(true),
+			expected: warnings(containerPrivileged(true), privilegedContainerCheck.Name()),
 		},
 		{
 			name:     "pod with container.SecurityContext = nil",
@@ -70,13 +68,13 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 		},
 		{
 			name:     "pod with container in regular mode",
-			objs:     container(false),
+			objs:     containerPrivileged(false),
 			expected: nil,
 		},
 		{
 			name:     "pod with init container in privileged mode",
-			objs:     initContainer(true),
-			expected: warnings(initContainer(true), privilegedContainerCheck.Name()),
+			objs:     initContainerPrivileged(true),
+			expected: warnings(initContainerPrivileged(true), privilegedContainerCheck.Name()),
 		},
 		{
 			name:     "pod with initContainer.SecurityContext = nil",
@@ -90,7 +88,7 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 		},
 		{
 			name:     "pod with init container in regular mode",
-			objs:     initContainer(false),
+			objs:     initContainerPrivileged(false),
 			expected: nil,
 		},
 	}
@@ -102,90 +100,6 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 			assert.ElementsMatch(t, test.expected, d)
 		})
 	}
-}
-
-func initPod() *kube.Objects {
-	objs := &kube.Objects{
-		Pods: &corev1.PodList{
-			Items: []corev1.Pod{
-				{
-					TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
-					ObjectMeta: metav1.ObjectMeta{Name: "pod_foo", Namespace: "k8s"},
-				},
-			},
-		},
-	}
-	return objs
-}
-
-func container(privileged bool) *kube.Objects {
-	objs := initPod()
-	objs.Pods.Items[0].Spec = corev1.PodSpec{
-		Containers: []corev1.Container{
-			{
-				Name:            "bar",
-				SecurityContext: &corev1.SecurityContext{Privileged: &privileged},
-			}},
-	}
-	return objs
-}
-
-func containerSecurityContextNil() *kube.Objects {
-	objs := initPod()
-	objs.Pods.Items[0].Spec = corev1.PodSpec{
-		Containers: []corev1.Container{
-			{
-				Name: "bar",
-			}},
-	}
-	return objs
-}
-
-func containerPrivilegedNil() *kube.Objects {
-	objs := initPod()
-	objs.Pods.Items[0].Spec = corev1.PodSpec{
-		Containers: []corev1.Container{
-			{
-				Name:            "bar",
-				SecurityContext: &corev1.SecurityContext{},
-			}},
-	}
-	return objs
-}
-
-func initContainer(privileged bool) *kube.Objects {
-	objs := initPod()
-	objs.Pods.Items[0].Spec = corev1.PodSpec{
-		InitContainers: []corev1.Container{
-			{
-				Name:            "bar",
-				SecurityContext: &corev1.SecurityContext{Privileged: &privileged},
-			}},
-	}
-	return objs
-}
-
-func initContainerSecurityContextNil() *kube.Objects {
-	objs := initPod()
-	objs.Pods.Items[0].Spec = corev1.PodSpec{
-		InitContainers: []corev1.Container{
-			{
-				Name: "bar",
-			}},
-	}
-	return objs
-}
-
-func initContainerPrivilegedNil() *kube.Objects {
-	objs := initPod()
-	objs.Pods.Items[0].Spec = corev1.PodSpec{
-		InitContainers: []corev1.Container{
-			{
-				Name:            "bar",
-				SecurityContext: &corev1.SecurityContext{},
-			}},
-	}
-	return objs
 }
 
 func warnings(objs *kube.Objects, name string) []checks.Diagnostic {
