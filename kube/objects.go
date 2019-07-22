@@ -17,6 +17,9 @@ limitations under the License.
 package kube
 
 import (
+	"context"
+	"errors"
+
 	"golang.org/x/sync/errgroup"
 	ar "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -57,7 +60,8 @@ type Client struct {
 }
 
 // FetchObjects returns the objects from a Kubernetes cluster.
-func (c *Client) FetchObjects() (*Objects, error) {
+// ctx is currently unused during API calls. More info: https://github.com/kubernetes/community/pull/1166
+func (c *Client) FetchObjects(ctx context.Context) (*Objects, error) {
 	client := c.KubeClient.CoreV1()
 	admissionControllerClient := c.KubeClient.AdmissionregistrationV1beta1()
 	opts := metav1.ListOptions{}
@@ -135,46 +139,43 @@ func (c *Client) FetchObjects() (*Objects, error) {
 }
 
 // NewClient builds a kubernetes client to interact with the live cluster.
-// The kube config file path and the context must be specified for the client
+// The kube config file path or the kubeconfig yaml must be specified
 // If not specified, defaults are assumed - configPath: ~/.kube/config, configContext: current context
-func NewClient(configPath, configContext string) (*Client, error) {
+func NewClient(opts ...Option) (*Client, error) {
+	defOpts := &options{}
+
+	for _, opt := range opts {
+		if err := opt(defOpts); err != nil {
+			return nil, err
+		}
+	}
+
 	var config *rest.Config
 	var err error
+	if defOpts.yaml != nil && defOpts.path != "" {
+		return nil, errors.New("cannot specify both yaml and kubeconfg file path")
+	}
 
-	if configContext != "" {
-		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-			&clientcmd.ClientConfigLoadingRules{ExplicitPath: configPath},
-			&clientcmd.ConfigOverrides{
-				CurrentContext: configContext,
-			}).ClientConfig()
+	if defOpts.yaml != nil {
+		config, err = clientcmd.RESTConfigFromKubeConfig(defOpts.yaml)
+	} else if defOpts.path != "" {
+		if defOpts.kubeContext != "" {
+			config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+				&clientcmd.ClientConfigLoadingRules{ExplicitPath: defOpts.path},
+				&clientcmd.ConfigOverrides{
+					CurrentContext: defOpts.kubeContext,
+				}).ClientConfig()
+		} else {
+			config, err = clientcmd.BuildConfigFromFlags("", defOpts.path)
+		}
 	} else {
-		config, err = clientcmd.BuildConfigFromFlags("", configPath)
+		err = errors.New("cannot authenticate Kubernetes API requests")
 	}
 
 	if err != nil {
 		return nil, err
 	}
-
-	client, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Client{
-		KubeClient: client,
-	}, nil
-}
-
-// BuildClient builds a kubernetes client from the yaml to interact with the live cluster.
-func BuildClient(yaml []byte) (*Client, error) {
-	var config *rest.Config
-	var err error
-
-	config, err = clientcmd.RESTConfigFromKubeConfig(yaml)
-	if err != nil {
-		return nil, err
-	}
-
+	config.Timeout = defOpts.timeout
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err

@@ -17,6 +17,8 @@ limitations under the License.
 package kube
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,7 +39,7 @@ func TestFetchObjects(t *testing.T) {
 			Labels: map[string]string{"doks_key": "bar"}},
 	})
 
-	actual, err := api.FetchObjects()
+	actual, err := api.FetchObjects(context.Background())
 	assert.NoError(t, err)
 
 	assert.NotNil(t, actual.Nodes)
@@ -55,4 +57,13 @@ func TestFetchObjects(t *testing.T) {
 	assert.NotNil(t, actual.ValidatingWebhookConfigurations)
 	assert.NotNil(t, actual.MutatingWebhookConfigurations)
 	assert.NotNil(t, actual.SystemNamespace)
+}
+
+func TestNewClientErrors(t *testing.T) {
+	// test both yaml and filepath specified
+	_, err := NewClient(WithConfigFile("some-path"), WithYaml([]byte("yaml")))
+	assert.Equal(t, errors.New("cannot specify both yaml and kubeconfg file path"), err)
+	// test no authentication mechanism
+	_, err = NewClient()
+	assert.Equal(t, errors.New("cannot authenticate Kubernetes API requests"), err)
 }

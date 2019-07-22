@@ -17,10 +17,12 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
@@ -34,7 +36,7 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "clusterlint"
-	app.Usage = "Linter for k8sobjects from a live cluster"
+	app.Usage = "Linter for k8s objects from a live cluster"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "kubeconfig",
@@ -44,6 +46,11 @@ func main() {
 		cli.StringFlag{
 			Name:  "context",
 			Usage: "context for the kubernetes client. default: current context",
+		},
+		cli.DurationFlag{
+			Name:  "timeout",
+			Usage: "configure timeout for the kubernetes client. default: 30s",
+			Value: time.Second * 30,
 		},
 	}
 	app.Commands = []cli.Command{
@@ -126,7 +133,7 @@ func listChecks(c *cli.Context) error {
 
 // runChecks runs all the checks based on the flags passed.
 func runChecks(c *cli.Context) error {
-	client, err := kube.NewClient(c.GlobalString("kubeconfig"), c.GlobalString("context"))
+	client, err := kube.NewClient(kube.WithConfigFile(c.GlobalString("kubeconfig")), kube.WithKubeContext(c.GlobalString("context")), kube.WithTimeout(c.GlobalDuration("timeout")))
 	if err != nil {
 		return err
 	}
@@ -138,7 +145,7 @@ func runChecks(c *cli.Context) error {
 
 	diagnosticFilter := checks.DiagnosticFilter{Severity: checks.Severity(c.String("level"))}
 
-	diagnostics, err := checks.Run(client, filter, diagnosticFilter)
+	diagnostics, err := checks.Run(context.Background(), client, filter, diagnosticFilter)
 
 	write(diagnostics, c)
 
