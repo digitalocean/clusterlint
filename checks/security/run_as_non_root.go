@@ -53,30 +53,27 @@ func (nr *nonRootUserCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, err
 	var diagnostics []checks.Diagnostic
 
 	for _, pod := range objects.Pods.Items {
-		diagnostics = append(diagnostics, nr.checkRootUser(pod.Spec.Containers, pod)...)
-		diagnostics = append(diagnostics, nr.checkRootUser(pod.Spec.InitContainers, pod)...)
+		var containers []corev1.Container
+		containers = append(containers, pod.Spec.Containers...)
+		containers = append(containers, pod.Spec.InitContainers...)
+
+		podRunAsRoot := pod.Spec.SecurityContext == nil || pod.Spec.SecurityContext.RunAsNonRoot == nil || !*pod.Spec.SecurityContext.RunAsNonRoot
+		for _, container := range containers {
+			containerRunAsRoot := container.SecurityContext == nil || container.SecurityContext.RunAsNonRoot == nil || !*container.SecurityContext.RunAsNonRoot
+
+			if containerRunAsRoot && podRunAsRoot {
+				d := checks.Diagnostic{
+					Check:    nr.Name(),
+					Severity: checks.Warning,
+					Message:  fmt.Sprintf("Container `%s` can run as root user. Please ensure that the image is from a trusted source.", container.Name),
+					Kind:     checks.Pod,
+					Object:   &pod.ObjectMeta,
+					Owners:   pod.ObjectMeta.GetOwnerReferences(),
+				}
+				diagnostics = append(diagnostics, d)
+			}
+		}
 	}
 
 	return diagnostics, nil
-}
-
-func (nr *nonRootUserCheck) checkRootUser(containers []corev1.Container, pod corev1.Pod) []checks.Diagnostic {
-	var diagnostics []checks.Diagnostic
-	for _, container := range containers {
-		podRunAsRoot := pod.Spec.SecurityContext == nil || pod.Spec.SecurityContext.RunAsNonRoot == nil || !*pod.Spec.SecurityContext.RunAsNonRoot
-		containerRunAsRoot := container.SecurityContext == nil || container.SecurityContext.RunAsNonRoot == nil || !*container.SecurityContext.RunAsNonRoot
-
-		if containerRunAsRoot && podRunAsRoot {
-			d := checks.Diagnostic{
-				Check:    nr.Name(),
-				Severity: checks.Warning,
-				Message:  fmt.Sprintf("Container `%s` can run as root user. Please ensure that the image is from a trusted source.", container.Name),
-				Kind:     checks.Pod,
-				Object:   &pod.ObjectMeta,
-				Owners:   pod.ObjectMeta.GetOwnerReferences(),
-			}
-			diagnostics = append(diagnostics, d)
-		}
-	}
-	return diagnostics
 }
