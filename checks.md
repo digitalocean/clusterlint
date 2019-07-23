@@ -106,6 +106,37 @@ spec:
         - NET_ADMIN
 ```
 
+###### Run As Non-Root
+
+Name: `run-as-non-root`
+
+Group: `security`
+
+Description: If containers within a pod are allowed to run with the pid `0`, then the host can be subjected to malicious attacks. We recommend that a UID other than 0 be used in your container image for running applications. This can also be enforced in the Kubernetes pod configuration as shown below.
+
+Example:
+
+```yaml
+# Don't do this
+spec:
+  containers:
+  - name: mypod
+    image: nginx
+```
+
+How to fix:
+
+```yaml
+# Specify to error out when container is run as root
+spec:
+  securityContext:
+    runAsNonRoot: true
+  containers:
+  - name: mypod
+    image: nginx
+
+```
+
 ###### Fully Qualified Image
 
 Name: `fully-qualified-image`
