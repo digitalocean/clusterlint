@@ -133,7 +133,8 @@ func listChecks(c *cli.Context) error {
 
 // runChecks runs all the checks based on the flags passed.
 func runChecks(c *cli.Context) error {
-	client, err := kube.NewClient(kube.WithConfigFile(c.GlobalString("kubeconfig")), kube.WithKubeContext(c.GlobalString("context")), kube.WithTimeout(c.GlobalDuration("timeout")))
+	timeout := c.GlobalDuration("timeout")
+	client, err := kube.NewClient(kube.WithConfigFile(c.GlobalString("kubeconfig")), kube.WithKubeContext(c.GlobalString("context")), kube.WithTimeout(timeout))
 	if err != nil {
 		return err
 	}
@@ -144,8 +145,9 @@ func runChecks(c *cli.Context) error {
 	}
 
 	diagnosticFilter := checks.DiagnosticFilter{Severity: checks.Severity(c.String("level"))}
-
-	diagnostics, err := checks.Run(context.Background(), client, filter, diagnosticFilter)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	diagnostics, err := checks.Run(ctx, client, filter, diagnosticFilter)
 
 	write(diagnostics, c)
 

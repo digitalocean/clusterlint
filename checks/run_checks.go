@@ -41,7 +41,8 @@ func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diag
 	}
 	var diagnostics []Diagnostic
 	var mu sync.Mutex
-	var g errgroup.Group
+	g, gctx := errgroup.WithContext(ctx)
+	c := make(chan string, 100)
 
 	for _, check := range all {
 		check := check
@@ -53,6 +54,11 @@ func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diag
 			mu.Lock()
 			diagnostics = append(diagnostics, d...)
 			mu.Unlock()
+			select {
+			case c <- check.Name():
+			case <-gctx.Done():
+				return gctx.Err()
+			}
 			return nil
 		})
 	}
