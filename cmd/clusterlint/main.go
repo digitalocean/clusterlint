@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -33,6 +34,8 @@ import (
 	_ "github.com/digitalocean/clusterlint/checks/all"
 )
 
+const delimiter = ":"
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "clusterlint"
@@ -40,7 +43,6 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "kubeconfig",
-			Value: filepath.Join(os.Getenv("HOME"), ".kube", "config"),
 			Usage: "absolute path to the kubeconfig file",
 		},
 		cli.StringFlag{
@@ -133,7 +135,17 @@ func listChecks(c *cli.Context) error {
 
 // runChecks runs all the checks based on the flags passed.
 func runChecks(c *cli.Context) error {
-	client, err := kube.NewClient(kube.WithConfigFile(c.GlobalString("kubeconfig")), kube.WithKubeContext(c.GlobalString("context")), kube.WithTimeout(c.GlobalDuration("timeout")))
+	var kubeconfigFilePaths []string
+
+	if kubeconfig := c.GlobalString("kubeconfig"); kubeconfig != "" {
+		kubeconfigFilePaths = []string{kubeconfig}
+	} else if value := os.Getenv("KUBECONFIG"); value != "" {
+		kubeconfigFilePaths = strings.Split(value, delimiter)
+	} else {
+		kubeconfigFilePaths = []string{filepath.Join(os.Getenv("HOME"), ".kube", "config")}
+	}
+
+	client, err := kube.NewClient(kube.WithMergedConfigFiles(kubeconfigFilePaths), kube.WithKubeContext(c.GlobalString("context")), kube.WithTimeout(c.GlobalDuration("timeout")))
 	if err != nil {
 		return err
 	}

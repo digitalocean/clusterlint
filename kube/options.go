@@ -16,10 +16,15 @@ limitations under the License.
 
 package kube
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+const delimiter = ":"
 
 type options struct {
-	path        string
+	paths       []string
 	kubeContext string
 	yaml        []byte
 	timeout     time.Duration
@@ -31,7 +36,7 @@ type Option func(*options) error
 // WithConfigFile returns an Option injected with a config file path.
 func WithConfigFile(path string) Option {
 	return func(o *options) error {
-		o.path = path
+		o.paths = []string{path}
 		return nil
 	}
 }
@@ -52,10 +57,25 @@ func WithYaml(yaml []byte) Option {
 	}
 }
 
+// WithMergedConfigFiles returns an Option injected with value of $KUBECONFIG
+func WithMergedConfigFiles(paths []string) Option {
+	return func(o *options) error {
+		o.paths = paths
+		return nil
+	}
+}
+
 // WithTimeout returns an Option injected with a timeout option while building client.
 func WithTimeout(t time.Duration) Option {
 	return func(o *options) error {
 		o.timeout = t
 		return nil
 	}
+}
+
+func (o *options) validate() error {
+	if o.yaml != nil && len(o.paths) != 0 {
+		return errors.New("cannot specify yaml and kubeconfig file paths")
+	}
+	return nil
 }

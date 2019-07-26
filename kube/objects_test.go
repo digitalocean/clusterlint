@@ -61,9 +61,18 @@ func TestFetchObjects(t *testing.T) {
 
 func TestNewClientErrors(t *testing.T) {
 	// test both yaml and filepath specified
-	_, err := NewClient(WithConfigFile("some-path"), WithYaml([]byte("yaml")))
-	assert.Equal(t, errors.New("cannot specify both yaml and kubeconfg file path"), err)
-	// test no authentication mechanism
-	_, err = NewClient()
-	assert.Equal(t, errors.New("cannot authenticate Kubernetes API requests"), err)
+	t.Run("both yaml and filepath specified", func(t *testing.T) {
+		_, err := NewClient(WithConfigFile("some-path"), WithYaml([]byte("yaml")))
+		assert.Equal(t, errors.New("cannot specify yaml and kubeconfig file paths"), err)
+	})
+
+	t.Run("both yaml and KUBECONFIG specified", func(t *testing.T) {
+		_, err := NewClient(WithMergedConfigFiles([]string{"some-path"}), WithYaml([]byte("yaml")))
+		assert.Equal(t, errors.New("cannot specify yaml and kubeconfig file paths"), err)
+	})
+
+	t.Run("no authentication mechanism", func(t *testing.T) {
+		_, err := NewClient()
+		assert.Equal(t, errors.New("cannot authenticate Kubernetes API requests"), err)
+	})
 }

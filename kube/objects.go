@@ -152,22 +152,20 @@ func NewClient(opts ...Option) (*Client, error) {
 
 	var config *rest.Config
 	var err error
-	if defOpts.yaml != nil && defOpts.path != "" {
-		return nil, errors.New("cannot specify both yaml and kubeconfg file path")
+	err = defOpts.validate()
+	if err != nil {
+		return nil, err
 	}
 
 	if defOpts.yaml != nil {
 		config, err = clientcmd.RESTConfigFromKubeConfig(defOpts.yaml)
-	} else if defOpts.path != "" {
+	} else if len(defOpts.paths) != 0 {
+		loadingRules := &clientcmd.ClientConfigLoadingRules{Precedence: defOpts.paths}
+		configOverrides := &clientcmd.ConfigOverrides{}
 		if defOpts.kubeContext != "" {
-			config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-				&clientcmd.ClientConfigLoadingRules{ExplicitPath: defOpts.path},
-				&clientcmd.ConfigOverrides{
-					CurrentContext: defOpts.kubeContext,
-				}).ClientConfig()
-		} else {
-			config, err = clientcmd.BuildConfigFromFlags("", defOpts.path)
+			configOverrides.CurrentContext = defOpts.kubeContext
 		}
+		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
 	} else {
 		err = errors.New("cannot authenticate Kubernetes API requests")
 	}
