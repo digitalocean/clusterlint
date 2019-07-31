@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -141,8 +140,6 @@ func runChecks(c *cli.Context) error {
 		kubeconfigFilePaths = []string{kubeconfig}
 	} else if value := os.Getenv("KUBECONFIG"); value != "" {
 		kubeconfigFilePaths = strings.Split(value, delimiter)
-	} else {
-		kubeconfigFilePaths = []string{filepath.Join(os.Getenv("HOME"), ".kube", "config")}
 	}
 
 	client, err := kube.NewClient(kube.WithMergedConfigFiles(kubeconfigFilePaths), kube.WithKubeContext(c.GlobalString("context")), kube.WithTimeout(c.GlobalDuration("timeout")))

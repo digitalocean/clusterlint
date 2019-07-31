@@ -18,7 +18,6 @@ package kube
 
 import (
 	"context"
-	"errors"
 
 	"golang.org/x/sync/errgroup"
 	ar "k8s.io/api/admissionregistration/v1beta1"
@@ -159,15 +158,16 @@ func NewClient(opts ...Option) (*Client, error) {
 
 	if defOpts.yaml != nil {
 		config, err = clientcmd.RESTConfigFromKubeConfig(defOpts.yaml)
-	} else if len(defOpts.paths) != 0 {
-		loadingRules := &clientcmd.ClientConfigLoadingRules{Precedence: defOpts.paths}
+	} else {
+		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+		if len(defOpts.paths) != 0 {
+			loadingRules.Precedence = defOpts.paths
+		}
 		configOverrides := &clientcmd.ConfigOverrides{}
 		if defOpts.kubeContext != "" {
 			configOverrides.CurrentContext = defOpts.kubeContext
 		}
 		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
-	} else {
-		err = errors.New("cannot authenticate Kubernetes API requests")
 	}
 
 	if err != nil {
