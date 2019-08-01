@@ -18,7 +18,6 @@ package kube
 
 import (
 	"context"
-	"errors"
 
 	"golang.org/x/sync/errgroup"
 	ar "k8s.io/api/admissionregistration/v1beta1"
@@ -152,24 +151,23 @@ func NewClient(opts ...Option) (*Client, error) {
 
 	var config *rest.Config
 	var err error
-	if defOpts.yaml != nil && defOpts.path != "" {
-		return nil, errors.New("cannot specify both yaml and kubeconfg file path")
+	err = defOpts.validate()
+	if err != nil {
+		return nil, err
 	}
 
 	if defOpts.yaml != nil {
 		config, err = clientcmd.RESTConfigFromKubeConfig(defOpts.yaml)
-	} else if defOpts.path != "" {
-		if defOpts.kubeContext != "" {
-			config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-				&clientcmd.ClientConfigLoadingRules{ExplicitPath: defOpts.path},
-				&clientcmd.ConfigOverrides{
-					CurrentContext: defOpts.kubeContext,
-				}).ClientConfig()
-		} else {
-			config, err = clientcmd.BuildConfigFromFlags("", defOpts.path)
-		}
 	} else {
-		err = errors.New("cannot authenticate Kubernetes API requests")
+		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+		if len(defOpts.paths) != 0 {
+			loadingRules.Precedence = defOpts.paths
+		}
+		configOverrides := &clientcmd.ConfigOverrides{}
+		if defOpts.kubeContext != "" {
+			configOverrides.CurrentContext = defOpts.kubeContext
+		}
+		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
 	}
 
 	if err != nil {
