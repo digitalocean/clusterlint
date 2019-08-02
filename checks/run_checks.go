@@ -43,7 +43,7 @@ func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diag
 	var diagnostics []Diagnostic
 	var mu sync.Mutex
 	var g errgroup.Group
-	checkDuration := make(map[string]string)
+	checkDuration := make(map[string]time.Duration)
 	for _, check := range all {
 		check := check
 		g.Go(func() error {
@@ -55,7 +55,7 @@ func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diag
 			}
 			mu.Lock()
 			diagnostics = append(diagnostics, d...)
-			checkDuration[check.Name()] = elapsed.String()
+			checkDuration[check.Name()] = elapsed
 			mu.Unlock()
 			return nil
 		})
@@ -96,5 +96,5 @@ func filterSeverity(level Severity, diagnostics []Diagnostic) []Diagnostic {
 // CheckResult is the output returned by the Run function
 type CheckResult struct {
 	Diagnostics []Diagnostic
-	Durations   map[string]string
+	Durations   map[string]time.Duration
 }
