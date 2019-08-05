@@ -20,13 +20,14 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/digitalocean/clusterlint/kube"
 	"golang.org/x/sync/errgroup"
 )
 
 // Run applies the filters and runs the resultant check list in parallel
-func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diagnosticFilter DiagnosticFilter) ([]Diagnostic, error) {
+func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diagnosticFilter DiagnosticFilter) (*CheckResult, error) {
 	objects, err := client.FetchObjects(ctx)
 	if err != nil {
 		return nil, err
@@ -42,16 +43,19 @@ func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diag
 	var diagnostics []Diagnostic
 	var mu sync.Mutex
 	var g errgroup.Group
-
+	checkDuration := make(map[string]time.Duration)
 	for _, check := range all {
 		check := check
 		g.Go(func() error {
+			start := time.Now()
 			d, err := check.Run(objects)
+			elapsed := time.Since(start)
 			if err != nil {
 				return err
 			}
 			mu.Lock()
 			diagnostics = append(diagnostics, d...)
+			checkDuration[check.Name()] = elapsed
 			mu.Unlock()
 			return nil
 		})
@@ -62,7 +66,8 @@ func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diag
 	}
 	diagnostics = filterEnabled(diagnostics)
 	diagnostics = filterSeverity(diagnosticFilter.Severity, diagnostics)
-	return diagnostics, err
+	CheckResult := &CheckResult{Diagnostics: diagnostics, Durations: checkDuration}
+	return CheckResult, err
 }
 
 func filterEnabled(diagnostics []Diagnostic) []Diagnostic {
@@ -86,4 +91,10 @@ func filterSeverity(level Severity, diagnostics []Diagnostic) []Diagnostic {
 		}
 	}
 	return ret
+}
+
+// CheckResult is the output returned by the Run function
+type CheckResult struct {
+	Diagnostics []Diagnostic
+	Durations   map[string]time.Duration
 }

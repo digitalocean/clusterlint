@@ -154,19 +154,21 @@ func runChecks(c *cli.Context) error {
 
 	diagnosticFilter := checks.DiagnosticFilter{Severity: checks.Severity(c.String("level"))}
 
-	diagnostics, err := checks.Run(context.Background(), client, filter, diagnosticFilter)
+	output, err := checks.Run(context.Background(), client, filter, diagnosticFilter)
+	if err != nil {
+		return err
+	}
+	write(output, c)
 
-	write(diagnostics, c)
-
-	return err
+	return nil
 }
 
-func write(diagnostics []checks.Diagnostic, c *cli.Context) error {
+func write(checkResult *checks.CheckResult, c *cli.Context) error {
 	output := c.String("output")
 
 	switch output {
 	case "json":
-		err := json.NewEncoder(os.Stdout).Encode(diagnostics)
+		err := json.NewEncoder(os.Stdout).Encode(checkResult)
 		if err != nil {
 			return err
 		}
@@ -177,7 +179,7 @@ func write(diagnostics []checks.Diagnostic, c *cli.Context) error {
 		e := color.New(color.FgRed)
 		w := color.New(color.FgYellow)
 		s := color.New(color.FgBlue)
-		for _, d := range diagnostics {
+		for _, d := range checkResult.Diagnostics {
 			switch d.Severity {
 			case checks.Error:
 				e.Println(d)
