@@ -12,7 +12,7 @@ This also documents some of the recommended practices to follow while writing th
 ### Install
 
 ```bash
-go install ./cmd/clusterlint
+go get github.com/digitalocean/clusterlint/cmd/clusterlint
 ```
 
 The above command creates the `clusterlint` binary in `$GOPATH/bin`
