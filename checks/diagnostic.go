@@ -75,4 +75,6 @@ const (
 	ValidatingWebhookConfiguration Kind = "validating webhook configuration"
 	// MutatingWebhookConfiguration identifies Kubernetes objects of kind `mutating webhook configuration`
 	MutatingWebhookConfiguration Kind = "mutating webhook configuration"
+	// Node identifies a Kubernetes node object.
+	Node Kind = "node"
 )
