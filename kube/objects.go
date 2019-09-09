@@ -54,6 +54,7 @@ type Objects struct {
 	LimitRanges                     *corev1.LimitRangeList
 	MutatingWebhookConfigurations   *ar.MutatingWebhookConfigurationList
 	ValidatingWebhookConfigurations *ar.ValidatingWebhookConfigurationList
+	Namespaces                      *corev1.NamespaceList
 }
 
 // Client encapsulates a client for a Kubernetes cluster.
@@ -129,6 +130,10 @@ func (c *Client) FetchObjects(ctx context.Context) (*Objects, error) {
 	})
 	g.Go(func() (err error) {
 		objects.ValidatingWebhookConfigurations, err = admissionControllerClient.ValidatingWebhookConfigurations().List(opts)
+		return
+	})
+	g.Go(func() (err error) {
+		objects.Namespaces, err = client.Namespaces().List(opts)
 		return
 	})
 
