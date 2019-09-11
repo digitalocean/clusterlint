@@ -510,3 +510,24 @@ spec:
       - name: nginx
         image: nginx:1.7.9
 ```
+
+###### Node Labels and Taints
+
+Name:         `node-labels-and-taints`
+
+Group:        `doks`
+
+Description: When a DOKS cluster is upgraded, all worker nodes are replaced, and
+replacement nodes do not retain any custom labels or taints that were set on the
+pre-upgrade nodes. This check reports any nodes that have had labels or taints
+set by the user, which would be lost on upgrade or other node replacement.
+
+How to fix:
+
+```bash
+kubectl label node <node-name> <label-key>-
+kubectl taint node <node-name> <taint-key>-
+```
+
+Note the trailing `-` on the label or taint key; this causes `kubectl` to delete
+the label or taint.
