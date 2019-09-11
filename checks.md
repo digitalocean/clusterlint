@@ -1,15 +1,16 @@
-###### Default Namespace
+[Clusterlint](https://github.com/digitalocean/clusterlint) flags issues with a cluster that might prevent or complicate its upgrade to a new Kubernetes version.
 
-Name:         `default-namespace`
+## Default Namespace
 
-Group:        `basic`
+- Name: `default-namespace`
+- Group: `basic`
 
-Description:  Namespace is used to limit the scope of the Kubernetes resources created by multiple sets of users within a team. Even though there is a default namespace, dumping all the created resources into one namespace is not recommended. It can lead to privilege escalation, resource name collisions, latency in operations as resources scale up and mismanagement of kubernetes objects. Having namespaces ensures that resource quotas can be enabled to keep track node, cpu and memory usage for individual teams.
+Namespaces are a way to limit the scope of the resources that subsets of users within a team can create. While a default namespace is created for every Kubernetes cluster, we don't recommend adding all created resources into the default namespace because of the risk of privilege escalation, resource name collisions, latency in operations as resources scale up, and mismanagement of Kubernetes objects. Having namespaces lets you enable resource quotas can be enabled to track node, CPU and memory usage for individual teams.
 
-Example:
+### Example
 
 ```yaml
-# Don't do this
+# Not recommended: Defining resources with no namespace, which adds them to the default.
 apiVersion: v1
 kind: Pod
 metadata:
@@ -20,13 +21,12 @@ spec:
   containers:
   - name: mypod
     image: nginx:1.17.0
-
 ```
 
-How to fix:
+### How to Fix
 
 ```yaml
-# Explicitly specify namespace in the object config
+# Recommended: Explicitly specify a namespace in the object config
 apiVersion: v1
 kind: Pod
 metadata:
@@ -40,18 +40,17 @@ spec:
     image: nginx:1.17.0
 ```
 
-###### Latest Tag
+## Latest Tag
 
-Name: `latest-tag`
+- Name: `latest-tag`
+- Group: `basic`
 
-Group: `basic`
+We don't recommend using container images with the `latest` tag or not specifying a tag in the image (which defaults to `latest`), as this leads to confusion around the version of image used. Pods get rescheduled often as conditions inside a cluster change, and upon a reschedule, you may find that the images' versions have changed to use the latest release, which can break the application and make it difficult to debug errors. Instead, update segments of the application individually using images pinned to specific versions.
 
-Description: Using container images with `latest` tag or not specifying a tag in the image (implies `latest` tag) is not recommended. It leads to confusion around the version of image used. With a dynamic environment in a Kubernetes cluster, pods get rescheduled often. Upon a reschedule, you may find that the images' versions have changed. This can break the application and make it difficult to debug the errors in the application. You can update segments of the application individually if the images are pinned to specific versions.
-
-Example:
+### Example
 
 ```yaml
-# Don't do this
+# Not recommended: Not specifying an image tag, or using "latest"
 spec:
   containers:
   - name: mypod
@@ -60,10 +59,10 @@ spec:
     image: redis:latest
 ```
 
-How to fix:
+### How to Fix
 
 ```yaml
-# Explicitly specify tag or digest in the object config
+# Recommended: Explicitly specify a tag or digest
 spec:
   containers:
   - name: mypod
@@ -72,18 +71,17 @@ spec:
     image: redis@sha256:dca057ffa2337682333a3aba69cc0e7809819b3cd7fc78f3741d9de8c2a4f08b
 ```
 
-###### Privileged Containers
+## Privileged Containers
 
-Name: `privileged-containers`
+- Name: `privileged-containers`
+- Group: `security`
 
-Group: `security`
+Use the `privileged` mode for trusted containers only. Because the privileged mode allows container processes to access the host, malicious containers can extensively damage the host and bring down services on the cluster. If you need to run containers in privileged mode, test the container before using it in production. For more information about the risks of running containers in privileged mode, please refer to the [Kubernetes security context documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
 
-Description: Use the `privileged` mode for trusted containers only. Because the privileged mode allows container processes to access the host, malicious containers can extensively damage the host and bring down many services on the cluster. Explicitly add additional capabilities for the container if that helps with getting more privileges than default. Sometimes, however, containers need to be run in privileged mode. Make sure to test the container before using in production. For more information about the risks of running containers in privileged mode, please refer to this [article](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
-
-Example:
+### Example
 
 ```yaml
-# Don't do this
+# Not recommended: Using privileged mode instead of granting capabilities when it's not necessary
 spec:
   containers:
   - name: mypod
@@ -92,10 +90,10 @@ spec:
       privileged: true
 ```
 
-How to fix:
+### How to Fix
 
 ```yaml
-# Explicitly add capabilities to the container if that helps with getting more privileges than default
+# Recommended: Explicitly add only the needed capabilities to the container
 spec:
   containers:
   - name: mypod
@@ -106,28 +104,27 @@ spec:
         - NET_ADMIN
 ```
 
-###### Run As Non-Root
+## Run As Non-Root
 
-Name: `run-as-non-root`
+- Name: `run-as-non-root`
+- Group: `security`
 
-Group: `security`
+If containers within a pod are allowed to run with the process ID (PID) `0`, then the host can be subjected to malicious activity. We recommend using a user identifier (UID) other than `0` in your container image for running applications. You can also enforce this in the Kubernetes pod configuration as shown below.
 
-Description: If containers within a pod are allowed to run with the pid `0`, then the host can be subjected to malicious attacks. We recommend that a UID other than 0 be used in your container image for running applications. This can also be enforced in the Kubernetes pod configuration as shown below.
-
-Example:
+### Example
 
 ```yaml
-# Don't do this
+# Not recommended: Doing nothing to prevent containers from running under UID 0
 spec:
   containers:
   - name: mypod
     image: nginx
 ```
 
-How to fix:
+### How to Fix
 
 ```yaml
-# Specify to error out when container is run as root
+# Recommended: Ensure containers do not run as root
 spec:
   securityContext:
     runAsNonRoot: true
@@ -137,46 +134,44 @@ spec:
 
 ```
 
-###### Fully Qualified Image
+## Fully Qualified Image
 
-Name: `fully-qualified-image`
+- Name: `fully-qualified-image`
+- Group: `basic`
 
-Group: `basic`
+Docker is the most popular runtime for Kubernetes. However, Kubernetes supports other container runtimes as well, such as containerd and CRI-O. If the registry is not prepended to the image name, docker assumes `docker.io` and pulls it from DockerHub. However, the other runtimes will result in errors while pulling images. To maintain portability, we recommend using a fully qualified image name. If the underlying runtime is changed and the object configs are deployed to a new cluster, having fully qualified image names ensures that the applications don't break.
 
-Description: Docker is the most popular runtime for Kubernetes. However, Kubernetes supports other container runtimes as well: containerd, CRI-O, etc. If the registry is not prepended to the image name, docker assumes `docker.io` and pulls it from DockerHub. However, the other runtimes will result in errors while pulling images. In order to maintain portability, we recommend to provide a fully qualified image name. If the underlying runtime is changed and the object configs are deployed to a new cluster, having fully qualified image names ensures that the applications don't break.
-
-Example:
+### Example
 
 ```yaml
-# Don't do this
+# Not recommended: Failing to specify the registry in the image name
 spec:
   containers:
   - name: mypod
     image: nginx:1.17.0
 ```
 
-How to fix:
+### How to Fix
 
 ```yaml
-# Provide the registry name in the image.
+# Recommended: Provide the registry name in the image
 spec:
   containers:
   - name: mypod
     image: docker.io/nginx:1.17.0
 ```
 
-###### Node name selector
+## Node Name Selector
 
-Name: `node-name-pod-selector`
+- Name: `node-name-pod-selector`
+- Group: `doks`
 
-Group: `doks`
+On upgrade of a cluster on DOKS, the worker nodes' hostname changes. So, if a user's pod spec relies on the hostname to schedule pods on specific nodes, pod scheduling will fail after the upgrade.
 
-Description: On upgrade of a cluster on DOKS, the worker nodes' hostname changes. So, if a user's pod spec relies on the hostname to schedule pods on specific nodes, pod scheduling will fail after upgrade.
-
-Example:
+### Example
 
 ```yaml
-# Don't do this
+# Not recommended: Using a raw DigitalOcean resource name in the nodeSelector
 apiVersion: v1
 kind: Pod
 metadata:
@@ -191,10 +186,10 @@ spec:
     kubernetes.io/hostname: pool-y25ag12r1-xxxx
 ```
 
-How to fix:
+### How to Fix
 
 ```yaml
-# Use a custom label or a DOKS specific label
+# Recommended: Use a custom label or a DOKS specific label
 apiVersion: v1
 kind: Pod
 metadata:
@@ -209,19 +204,17 @@ spec:
     doks.digitalocean.com/node-pool: pool-y25ag12r1
 ```
 
-###### Admission Controller Webhook
+## Admission Controller Webhook
 
-Name: `admission-controller-webhook`
+- Name: `admission-controller-webhook`
+- Group: `doks`
 
-Group: `doks`
+When you configure admission controllers with webhooks that have a `failurePolicy` set to `Fail`, it prevents managed components like Cilium, kube-proxy, and CoreDNS from starting on a new node during an upgrade. This will result in the cluster upgrade failing.
 
-Description: When admission controllers are configured with webhook with `Fail` failure policy, it prevents managed components like cilium, kube-proxy, coredns from starting on a new node during an upgrade. This will result in cluster upgrade failing.
-
-Example:
+### Example
 
 ```yaml
-# Don't do this
-
+# Not recommended: Configure a webhook with a failurePolicy set to "Fail"
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
@@ -249,11 +242,10 @@ webhooks:
   failurePolicy: Fail
 ```
 
-How to fix:
+### How to Fix
 
 ```yaml
-# Exclude objects in the `kube-system` namespace by explicitly specifying a namespaceSelector or objectSelector
-
+# Recommended: Exclude objects in the `kube-system` namespace by explicitly specifying a namespaceSelector or objectSelector
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
@@ -285,36 +277,30 @@ webhooks:
         operator: "Exists"
 ```
 
-###### Pod State
+## Pod State
 
-Name: `pod-state`
+- Name: `pod-state`
+- Group: `workload-health`
 
-Group: `workload-health`
+This checks for unhealthy pods in a cluster. This check is not run by default. Specify a group name or a check name to run this check.
 
-Description: This check is done so users can find out if they have unhealthy pods in their cluster before upgrade. If there are suspicious failed pods, this check will indicate the same.
+## HostPath Volume
 
-This check is not run by default. Specify group name or check name in order to run this check.
+- Name: `hostpath-volume`
+- Group: `basic`
 
+Using `hostPath` volumes is best avoided because:
 
-###### HostPath Volume
+- Pods with an identical configuration (such as those created from a `podTemplate`) intended to behave identically to one another regardless of their deployment will in fact behave differently from node to node due to differences in the files present on the nodes themselves.
+- Resource-aware scheduling is not be able to account for resources used by a `hostPath` volume.
+- The files created on the hosts are only writable by root; you will need to run your process as root in a privileged container or modify the file permissions on the host to be able to write to a `hostPath` volume.
 
-Name: `hostpath-volume`
+For more details about `hostPath` volumes, please refer to [the Kubernetes documentation](https://kubernetes.io/docs/concepts/storage/volumes/#hostpath)
 
-Group: `basic`
-
-Description: Using hostPath volumes is best avoided because:
-
-- Pods with identical configuration (such as created from a podTemplate) may behave differently on different nodes due to different files on the nodes.
-- When Kubernetes adds resource-aware scheduling, as is planned, it will not be able to account for resources used by a hostPath
-the files or directories created on the underlying hosts are only writable by root.
-- You either need to run your process as root in a privileged Container or modify the file permissions on the host to be able to write to a hostPath volume
-
-For more details about hostpath, please refer to the Kubernetes [documentation](https://kubernetes.io/docs/concepts/storage/volumes/#hostpath)
-
-Example:
+### Example
 
 ```yaml
-# Don't do this
+# Not recommended: Using a hostPath volume
 apiVersion: v1
 kind: Pod
 metadata:
@@ -331,13 +317,12 @@ spec:
     hostPath:
       path: /data
       type: Directory
-
 ```
 
-How to fix:
+### How to Fix
 
 ```yaml
-# Use other volume sources. See https://kubernetes.io/docs/concepts/storage/volumes/
+# Recommended: Use other volume sources. See https://kubernetes.io/docs/concepts/storage/volumes/
 apiVersion: v1
 kind: Pod
 metadata:
@@ -357,76 +342,71 @@ spec:
       user: admin
       secretFile: "/etc/ceph/admin.secret"
       readOnly: true
-
 ```
-###### Unused Persistent Volume
 
-Name: `unused-pv`
+## Unused Persistent Volume
 
-Group: `basic`
+- Name: `unused-pv`
+- Group: `basic`
 
-Description: This check reports all the persistent volumes in the cluster that are not claimed by persistent volume claims in any namespace. The cluster can be cleaned up based on this information and there will be fewer objects to manage.
+This check reports all the persistent volumes in the cluster that are not claimed by a `PersistentVolumeClaim` (PVC) in any namespace. You can clean up the cluster based on this information and there will be fewer objects to manage.
 
-How to fix:
+### How to Fix
 
 ```bash
 kubectl delete pv <unused pv>
 ```
 
-###### Unused Persistent Volume Claims
+## Unused Persistent Volume Claims
 
-Name: `unused-pvc`
+- Name: `unused-pvc`
+- Group: `basic`
 
-Group: `basic`
+This check reports all the PVCs in the cluster that are not referenced by pods in the respective namespaces. You can clean up the cluster based on this information.
 
-Description: This check reports all the persistent volume claims in the cluster that are not referenced by pods in the respective namespaces. The cluster can be cleaned up based on this information and there will be fewer objects to manage.
-
-How to fix:
+### How to Fix
 
 ```bash
 kubectl delete pvc <unused pvc>
 ```
 
-###### Unused Config Maps
+## Unused Config Maps
 
-Name: `unused-config-map`
+- Name: `unused-config-map`
+- Group: `basic`
 
-Group: `basic`
+This check reports all the config maps in the cluster that are not referenced by pods in the respective namespaces. You can clean up the cluster based on this information.
 
-Description: This check reports all the config maps in the cluster that are not referenced by pods in the respective namespaces. The cluster can be cleaned up based on this information and there will be fewer objects to manage.
-
-How to fix:
+### How to Fix
 
 ```bash
 kubectl delete configmap <unused config map>
 ```
 
-###### Unused Secrets
+## Unused Secrets
 
-Name: `unused-secret`
+- Name: `unused-secret`
+- Group: `basic`
 
-Group: `basic`
+This check reports all the secret names in the cluster that are not referenced by pods in the respective namespaces. You can clean up the cluster based on this information.
 
-Description: This check reports all the secret names in the cluster that are not referenced by pods in the respective namespaces. The cluster can be cleaned up based on this information.
-
-How to fix:
+### How to Fix
 
 ```bash
 kubectl delete secret <unused secret name>
 ```
 
-###### Resource Requests and Limits
+## Resource Requests and Limits
 
-Name: `resource-requirements`
+- Name: `resource-requirements`
+- Group: `basic`
 
-Group: `basic`
+When you specify resource limits for containers, the scheduler can make better decisions about which nodes to place pods on, and handle contention for resources on a node in a specified manner.
 
-Description: When Containers have resource requests specified, the scheduler can make better decisions about which nodes to place Pods on. And when Containers have their limits specified, contention for resources on a node can be handled in a specified manner.
-
-Example:
+### Example
 
 ```yaml
-# Don't do this
+# Not recommended: Scheduling pods without specifying any resource limits
 apiVersion: v1
 kind: Pod
 metadata:
@@ -435,13 +415,12 @@ spec:
   containers:
   - image: docker.io/nginx:1.17.0
     name: test-container
-
 ```
 
-How to fix:
+### How to Fix
 
 ```yaml
-# Specify resource requests and limits
+# Recommended: Specify resource requests and limits
 apiVersion: v1
 kind: Pod
 metadata:
@@ -455,22 +434,19 @@ spec:
         cpu: 102m
       requests:
         cpu: 102m
-
 ```
 
-###### Bare Pods
+## Bare Pods
 
-Name:         `bare-pods`
+- Name: `bare-pods`
+- Group: `basic`
 
-Group:        `basic`
+When the node that a pod is running on reboots or fails, the pod is terminated and will not be restarted. However, a job will create new pods to replace terminated ones. For this reason, we recommend that you use a job, deployment, or `StatefulSet` rather than a bare pod, even if your application requires only a single pod.
 
-Description:  When the node that a Pod is running on reboots or fails, the pod is terminated and will not be restarted. However, a Job will create new Pods to replace terminated ones. For this reason, we recommend that you use a Job, Deployment or StatefulSet rather than a bare Pod, even if your application requires only a single Pod.
-
-
-Example:
+### Example
 
 ```yaml
-# Don't do this
+# Not recommended: Deploying a bare pod without any deployment parameters
 apiVersion: v1
 kind: Pod
 metadata:
@@ -482,13 +458,12 @@ spec:
   containers:
   - name: mypod
     image: nginx:1.17.0
-
 ```
 
-How to fix:
+### How to Fix
 
 ```yaml
-# Configure pods as part of a deployment, job, statefulset
+# Recommended: Configure pods as part of a deployment, job, or StatefulSet
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -510,24 +485,3 @@ spec:
       - name: nginx
         image: nginx:1.7.9
 ```
-
-###### Node Labels and Taints
-
-Name:         `node-labels-and-taints`
-
-Group:        `doks`
-
-Description: When a DOKS cluster is upgraded, all worker nodes are replaced, and
-replacement nodes do not retain any custom labels or taints that were set on the
-pre-upgrade nodes. This check reports any nodes that have had labels or taints
-set by the user, which would be lost on upgrade or other node replacement.
-
-How to fix:
-
-```bash
-kubectl label node <node-name> <label-key>-
-kubectl taint node <node-name> <taint-key>-
-```
-
-Note the trailing `-` on the label or taint key; this causes `kubectl` to delete
-the label or taint.
