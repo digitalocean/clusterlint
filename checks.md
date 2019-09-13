@@ -189,7 +189,7 @@ spec:
 ### How to Fix
 
 ```yaml
-# Recommended: Use a custom label or a DOKS specific label
+# Recommended: Use the DOKS-specific node pool label
 apiVersion: v1
 kind: Pod
 metadata:
