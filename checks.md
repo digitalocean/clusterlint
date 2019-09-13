@@ -3,7 +3,7 @@
 ## Default Namespace
 
 - Name: `default-namespace`
-- Group: `basic`
+- Groups: `basic`
 
 Namespaces are a way to limit the scope of the resources that subsets of users within a team can create. While a default namespace is created for every Kubernetes cluster, we don't recommend adding all created resources into the default namespace because of the risk of privilege escalation, resource name collisions, latency in operations as resources scale up, and mismanagement of Kubernetes objects. Having namespaces lets you enable resource quotas can be enabled to track node, CPU and memory usage for individual teams.
 
@@ -43,7 +43,7 @@ spec:
 ## Latest Tag
 
 - Name: `latest-tag`
-- Group: `basic`
+- Groups: `basic`
 
 We don't recommend using container images with the `latest` tag or not specifying a tag in the image (which defaults to `latest`), as this leads to confusion around the version of image used. Pods get rescheduled often as conditions inside a cluster change, and upon a reschedule, you may find that the images' versions have changed to use the latest release, which can break the application and make it difficult to debug errors. Instead, update segments of the application individually using images pinned to specific versions.
 
@@ -74,7 +74,7 @@ spec:
 ## Privileged Containers
 
 - Name: `privileged-containers`
-- Group: `security`
+- Groups: `security`
 
 Use the `privileged` mode for trusted containers only. Because the privileged mode allows container processes to access the host, malicious containers can extensively damage the host and bring down services on the cluster. If you need to run containers in privileged mode, test the container before using it in production. For more information about the risks of running containers in privileged mode, please refer to the [Kubernetes security context documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).
 
@@ -107,7 +107,7 @@ spec:
 ## Run As Non-Root
 
 - Name: `run-as-non-root`
-- Group: `security`
+- Groups: `security`
 
 If containers within a pod are allowed to run with the process ID (PID) `0`, then the host can be subjected to malicious activity. We recommend using a user identifier (UID) other than `0` in your container image for running applications. You can also enforce this in the Kubernetes pod configuration as shown below.
 
@@ -137,7 +137,7 @@ spec:
 ## Fully Qualified Image
 
 - Name: `fully-qualified-image`
-- Group: `basic`
+- Groups: `basic`
 
 Docker is the most popular runtime for Kubernetes. However, Kubernetes supports other container runtimes as well, such as containerd and CRI-O. If the registry is not prepended to the image name, docker assumes `docker.io` and pulls it from DockerHub. However, the other runtimes will result in errors while pulling images. To maintain portability, we recommend using a fully qualified image name. If the underlying runtime is changed and the object configs are deployed to a new cluster, having fully qualified image names ensures that the applications don't break.
 
@@ -164,7 +164,7 @@ spec:
 ## Node Name Selector
 
 - Name: `node-name-pod-selector`
-- Group: `doks`
+- Groups: `doks`
 
 On upgrade of a cluster on DOKS, the worker nodes' hostname changes. So, if a user's pod spec relies on the hostname to schedule pods on specific nodes, pod scheduling will fail after the upgrade.
 
@@ -207,7 +207,7 @@ spec:
 ## Admission Controller Webhook
 
 - Name: `admission-controller-webhook`
-- Group: `doks`
+- Groups: `doks`
 
 When you configure admission controllers with webhooks that have a `failurePolicy` set to `Fail`, it prevents managed components like Cilium, kube-proxy, and CoreDNS from starting on a new node during an upgrade. This will result in the cluster upgrade failing.
 
@@ -280,14 +280,14 @@ webhooks:
 ## Pod State
 
 - Name: `pod-state`
-- Group: `workload-health`
+- Groups: `workload-health`
 
 This checks for unhealthy pods in a cluster. This check is not run by default. Specify a group name or a check name to run this check.
 
 ## HostPath Volume
 
 - Name: `hostpath-volume`
-- Group: `basic`
+- Groups: `basic`
 
 Using `hostPath` volumes is best avoided because:
 
@@ -347,7 +347,7 @@ spec:
 ## Unused Persistent Volume
 
 - Name: `unused-pv`
-- Group: `basic`
+- Groups: `basic`
 
 This check reports all the persistent volumes in the cluster that are not claimed by a `PersistentVolumeClaim` (PVC) in any namespace. You can clean up the cluster based on this information and there will be fewer objects to manage.
 
@@ -360,7 +360,7 @@ kubectl delete pv <unused pv>
 ## Unused Persistent Volume Claims
 
 - Name: `unused-pvc`
-- Group: `basic`
+- Groups: `basic`
 
 This check reports all the PVCs in the cluster that are not referenced by pods in the respective namespaces. You can clean up the cluster based on this information.
 
@@ -373,7 +373,7 @@ kubectl delete pvc <unused pvc>
 ## Unused Config Maps
 
 - Name: `unused-config-map`
-- Group: `basic`
+- Groups: `basic`
 
 This check reports all the config maps in the cluster that are not referenced by pods in the respective namespaces. You can clean up the cluster based on this information.
 
@@ -386,7 +386,7 @@ kubectl delete configmap <unused config map>
 ## Unused Secrets
 
 - Name: `unused-secret`
-- Group: `basic`
+- Groups: `basic`
 
 This check reports all the secret names in the cluster that are not referenced by pods in the respective namespaces. You can clean up the cluster based on this information.
 
@@ -399,7 +399,7 @@ kubectl delete secret <unused secret name>
 ## Resource Requests and Limits
 
 - Name: `resource-requirements`
-- Group: `basic`
+- Groups: `basic`
 
 When you specify resource limits for containers, the scheduler can make better decisions about which nodes to place pods on, and handle contention for resources on a node in a specified manner.
 
@@ -439,7 +439,7 @@ spec:
 ## Bare Pods
 
 - Name: `bare-pods`
-- Group: `basic`
+- Groups: `basic`
 
 When the node that a pod is running on reboots or fails, the pod is terminated and will not be restarted. However, a job will create new pods to replace terminated ones. For this reason, we recommend that you use a job, deployment, or `StatefulSet` rather than a bare pod, even if your application requires only a single pod.
 
