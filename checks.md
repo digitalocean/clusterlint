@@ -1,4 +1,4 @@
-[Clusterlint](https://github.com/digitalocean/clusterlint) flags issues with a cluster that might prevent or complicate its upgrade to a new Kubernetes version.
+[Clusterlint](https://github.com/digitalocean/clusterlint) flags issues with workloads deployed in a cluster. These issues might cause workload downtime during maintenance or upgrade to a new Kubernetes version, and could complicate the maintenance or upgrade itself.
 
 ## Default Namespace
 
