@@ -1,0 +1,7 @@
+tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+t=${tag#"v"}
+env GOOS=linux GOARCH=amd64 go build -o clusterlint-$t-linux-amd64 ./cmd/clusterlint
+env GOOS=linux GOARCH=386 go build -o clusterlint-$t-linux-386 ./cmd/clusterlint
+env GOOS=darwin GOARCH=amd64 go build -o clusterlint-$t-darwin-amd64 ./cmd/clusterlint
+env GOOS=windows GOARCH=amd64 go build -o clusterlint-$t-windows-amd64.exe ./cmd/clusterlint
+env GOOS=windows GOARCH=386 go build -o clusterlint-$t-windows-386.exe ./cmd/clusterlint
