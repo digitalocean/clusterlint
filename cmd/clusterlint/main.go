@@ -105,6 +105,11 @@ func main() {
 			},
 			Action: runChecks,
 		},
+		{
+			Name:   "groups",
+			Usage:  "list all groups and associated checks in the registry",
+			Action: listGroups,
+		},
 	}
 	err := app.Run(os.Args)
 	if err != nil {
@@ -129,6 +134,21 @@ func listChecks(c *cli.Context) error {
 		fmt.Printf("%s : %s\n", check.Name(), check.Description())
 	}
 
+	return nil
+}
+
+// listGroups lists all the groups in the registry or a specific group if found
+// shows checks that belong to the group.
+func listGroups(c *cli.Context) error {
+	groups := checks.ListGroups()
+	for _, group := range groups {
+		var checkNames []string
+		checks := checks.GetGroup(group)
+		for _, check := range checks {
+			checkNames = append(checkNames, check.Name())
+		}
+		fmt.Printf("%s: %s\n", group, strings.Join(checkNames, ", "))
+	}
 	return nil
 }
 
