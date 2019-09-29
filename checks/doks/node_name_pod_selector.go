@@ -54,7 +54,7 @@ func (p *podSelectorCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, erro
 		if _, ok := nodeSelectorMap[corev1.LabelHostname]; ok {
 			d := checks.Diagnostic{
 				Check:    p.Name(),
-				Severity: checks.Error,
+				Severity: checks.Warning,
 				Message:  "Avoid node name label for node selector.",
 				Kind:     checks.Pod,
 				Object:   &pod.ObjectMeta,

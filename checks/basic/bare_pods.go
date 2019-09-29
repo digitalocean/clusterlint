@@ -51,7 +51,7 @@ func (b *barePodCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 		if len(pod.ObjectMeta.OwnerReferences) == 0 {
 			d := checks.Diagnostic{
 				Check:    b.Name(),
-				Severity: checks.Error,
+				Severity: checks.Warning,
 				Message:  "Avoid using bare pods in clusters",
 				Kind:     checks.Pod,
 				Object:   &pod.ObjectMeta,
