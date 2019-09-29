@@ -28,7 +28,7 @@ import (
 func TestHostpathCheckMeta(t *testing.T) {
 	hostPathCheck := hostPathCheck{}
 	assert.Equal(t, "hostpath-volume", hostPathCheck.Name())
-	assert.Equal(t, []string{"basic"}, hostPathCheck.Groups())
+	assert.Equal(t, []string{"basic", "doks"}, hostPathCheck.Groups())
 	assert.NotEmpty(t, hostPathCheck.Description())
 }
 
