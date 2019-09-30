@@ -66,7 +66,7 @@ func TestBarePodError(t *testing.T) {
 			objs: initPod(),
 			expected: []checks.Diagnostic{
 				{
-					Severity: "error",
+					Severity: "warning",
 					Check:    "bare-pods",
 					Kind:     checks.Pod,
 					Message:  "Avoid using bare pods in clusters",
@@ -80,7 +80,7 @@ func TestBarePodError(t *testing.T) {
 			objs: initMultiplePods(),
 			expected: []checks.Diagnostic{
 				{
-					Severity: "error",
+					Severity: "warning",
 					Check:    "bare-pods",
 					Kind:     checks.Pod,
 					Message:  "Avoid using bare pods in clusters",
@@ -88,7 +88,7 @@ func TestBarePodError(t *testing.T) {
 					Owners:   nil,
 				},
 				{
-					Severity: "error",
+					Severity: "warning",
 					Check:    "bare-pods",
 					Kind:     checks.Pod,
 					Message:  "Avoid using bare pods in clusters",

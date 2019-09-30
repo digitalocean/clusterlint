@@ -148,7 +148,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 
 func TestMalformedImageError(t *testing.T) {
 	const message = "Malformed image name for container 'bar'"
-	const severity = checks.Error
+	const severity = checks.Warning
 	const name = "fully-qualified-image"
 
 	tests := []struct {
