@@ -29,7 +29,7 @@ import (
 func TestBarePodCheckMeta(t *testing.T) {
 	barePodCheck := barePodCheck{}
 	assert.Equal(t, "bare-pods", barePodCheck.Name())
-	assert.Equal(t, []string{"basic"}, barePodCheck.Groups())
+	assert.Equal(t, []string{"basic", "doks"}, barePodCheck.Groups())
 	assert.NotEmpty(t, barePodCheck.Description())
 }
 

@@ -34,7 +34,7 @@ func (b *barePodCheck) Name() string {
 
 // Groups returns a list of group names this check should be part of.
 func (b *barePodCheck) Groups() []string {
-	return []string{"basic"}
+	return []string{"basic", "doks"}
 }
 
 // Description returns a detailed human-readable description of what this check
