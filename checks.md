@@ -209,7 +209,10 @@ spec:
 - Name: `admission-controller-webhook`
 - Groups: `doks`
 
-When you configure admission controllers with webhooks that have a `failurePolicy` set to `Fail`, it prevents managed components like Cilium, kube-proxy, and CoreDNS from starting on a new node during an upgrade. This will result in the cluster upgrade failing.
+Admission control webhooks can disrupt upgrade and node replacement operations by preventing system components from starting. Specifically, this happens when an admission control webhook:
+* has failurePolicy set to Fail,
+* targets a service other than the Kubernetes apiserver, and
+* applies to both kube-system and the namespace of the targeted service.
 
 ### Example
 
@@ -233,7 +236,7 @@ webhooks:
     scope: "Namespaced"
   clientConfig:
     service:
-      namespace: kube-system
+      namespace: webhook
       name: webhook-server
       path: /pods
   admissionReviewVersions:
@@ -244,8 +247,23 @@ webhooks:
 
 ### How to Fix
 
+There are a few options:
+1. Use the `Ignore` `failurePolicy`.
+2. Use an apiserver extension as your webhook service.
+3. Explicitly exclude the kube-system namespace.
+4. Explicitly exclude the webhook service's namespace.
+
 ```yaml
-# Recommended: Exclude objects in the `kube-system` namespace by explicitly specifying a namespaceSelector or objectSelector
+# Recommended: Exclude objects in the `webhook` namespace by explicitly specifying a namespaceSelector.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: webhook
+  labels:
+    skip-webhooks: "yes"
+
+---
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
@@ -264,7 +282,7 @@ webhooks:
     scope: "Namespaced"
   clientConfig:
     service:
-      namespace: kube-system
+      namespace: webhook
       name: webhook-server
       path: /pods
   admissionReviewVersions:
@@ -273,8 +291,8 @@ webhooks:
   failurePolicy: Fail
   namespaceSelector:
     matchExpressions:
-      - key: "doks.digitalocean.com/webhook"
-        operator: "Exists"
+      - key: "skip-webhooks"
+        operator: "DoesNotExist"
 ```
 
 ## Pod State

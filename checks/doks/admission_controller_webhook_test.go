@@ -27,6 +27,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var webhookURL = "https://example.com/webhook"
+
 func TestWebhookCheckMeta(t *testing.T) {
 	webhookCheck := webhookCheck{}
 	assert.Equal(t, "admission-controller-webhook", webhookCheck.Name())
@@ -57,69 +59,180 @@ func TestWebhookError(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name:     "failure policy is ignore",
-			objs:     initObjects(ar.Ignore),
+			name: "failure policy is ignore",
+			objs: webhookTestObjects(
+				ar.Ignore,
+				&metav1.LabelSelector{},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+			),
 			expected: nil,
 		},
 		{
-			name:     "webook does not use service",
-			objs:     webhookURL(),
+			name: "webook does not use service",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{},
+				ar.WebhookClientConfig{
+					URL: &webhookURL,
+				},
+				2,
+			),
 			expected: nil,
 		},
 		{
-			name:     "namespace selector is empty",
-			objs:     initObjects(ar.Fail),
+			name: "webook service is apiserver",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "default",
+						Name:      "kubernetes",
+					},
+				},
+				2,
+			),
+			expected: nil,
+		},
+		{
+			name: "namespace label selector does not match kube-system",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{
+					MatchLabels: map[string]string{"non-existent-label-on-namespace": "bar"},
+				},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+			),
+			expected: nil,
+		},
+		{
+			name: "namespace OpExists expression selector does not match kube-system",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{
+					MatchExpressions: expr("non-existent", []string{}, metav1.LabelSelectorOpExists),
+				},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+			),
+			expected: nil,
+		},
+		{
+			name: "namespace OpDoesNotExist expression selector does not match kube-system",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{
+					MatchExpressions: expr("doks_key", []string{}, metav1.LabelSelectorOpDoesNotExist),
+				},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+			),
+			expected: nil,
+		},
+		{
+			name: "namespace OpIn expression selector does not match kube-system",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{
+					MatchExpressions: expr("doks_key", []string{"non-existent"}, metav1.LabelSelectorOpIn),
+				},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+			),
+			expected: nil,
+		},
+		{
+			name: "namespace OpNotIn expression selector does not match kube-system",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{
+					MatchExpressions: expr("doks_key", []string{"bar"}, metav1.LabelSelectorOpNotIn),
+				},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+			),
+			expected: nil,
+		},
+		{
+			name: "namespace label selector does not match own namespace",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{
+					MatchLabels: map[string]string{"doks_key": "bar"},
+				},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+			),
+			expected: nil,
+		},
+		{
+			name: "single-node cluster",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{
+					MatchLabels: map[string]string{"doks_key": "bar"},
+				},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				1,
+			),
 			expected: webhookErrors(),
 		},
 		{
-			name:     "namespace selector matches label",
-			objs:     label(map[string]string{"doks_key": "bar"}),
+			name: "webhook applies to its own namespace and kube-system",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+			),
 			expected: webhookErrors(),
-		},
-		{
-			name:     "namespace selector does not match label",
-			objs:     label(map[string]string{"non-existent-label-on-namespace": "bar"}),
-			expected: nil,
-		},
-		{
-			name:     "namespace selector matches OpExists expression",
-			objs:     expr("doks_key", []string{}, metav1.LabelSelectorOpExists),
-			expected: webhookErrors(),
-		},
-		{
-			name:     "namespace selector matches OpDoesNotExist expression",
-			objs:     expr("random", []string{}, metav1.LabelSelectorOpDoesNotExist),
-			expected: webhookErrors(),
-		},
-		{
-			name:     "namespace selector matches OpIn expression",
-			objs:     expr("doks_key", []string{"bar"}, metav1.LabelSelectorOpIn),
-			expected: webhookErrors(),
-		},
-		{
-			name:     "namespace selector matches OpNotIn expression",
-			objs:     expr("doks_key", []string{"non-existent"}, metav1.LabelSelectorOpNotIn),
-			expected: webhookErrors(),
-		},
-		{
-			name:     "namespace selector does not match OpExists expression",
-			objs:     expr("non-existent", []string{}, metav1.LabelSelectorOpExists),
-			expected: nil,
-		},
-		{
-			name:     "namespace selector does not match OpDoesNotExist expression",
-			objs:     expr("doks_key", []string{}, metav1.LabelSelectorOpDoesNotExist),
-			expected: nil,
-		},
-		{
-			name:     "namespace selector does not match OpIn expression",
-			objs:     expr("doks_key", []string{"non-existent"}, metav1.LabelSelectorOpIn),
-			expected: nil,
-		},
-		{
-			name:     "namespace selector does not match OpNotIn expression",
-			objs:     expr("doks_key", []string{"bar"}, metav1.LabelSelectorOpNotIn),
-			expected: nil,
 		},
 	}
 
@@ -134,13 +247,45 @@ func TestWebhookError(t *testing.T) {
 	}
 }
 
-func initObjects(failurePolicyType ar.FailurePolicyType) *kube.Objects {
+func expr(key string, values []string, op metav1.LabelSelectorOperator) []metav1.LabelSelectorRequirement {
+	return []metav1.LabelSelectorRequirement{{
+		Key:      key,
+		Operator: op,
+		Values:   values,
+	}}
+}
+
+func webhookTestObjects(
+	failurePolicyType ar.FailurePolicyType,
+	nsSelector *metav1.LabelSelector,
+	clientConfig ar.WebhookClientConfig,
+	numNodes int,
+) *kube.Objects {
 	objs := &kube.Objects{
 		SystemNamespace: &corev1.Namespace{
 			TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:   "kube-system",
-				Labels: map[string]string{"doks_key": "bar"}},
+				Labels: map[string]string{"doks_key": "bar"},
+			},
+		},
+		Namespaces: &corev1.NamespaceList{
+			Items: []corev1.Namespace{
+				{
+					TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "kube-system",
+						Labels: map[string]string{"doks_key": "bar"},
+					},
+				},
+				{
+					TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:   "webhook",
+						Labels: map[string]string{"doks_key": "xyzzy"},
+					},
+				},
+			},
 		},
 		MutatingWebhookConfigurations: &ar.MutatingWebhookConfigurationList{
 			Items: []ar.MutatingWebhookConfiguration{
@@ -153,13 +298,8 @@ func initObjects(failurePolicyType ar.FailurePolicyType) *kube.Objects {
 						{
 							Name:              "mw_foo",
 							FailurePolicy:     &failurePolicyType,
-							NamespaceSelector: &metav1.LabelSelector{},
-							ClientConfig: ar.WebhookClientConfig{
-								Service: &ar.ServiceReference{
-									Name:      "some-svc",
-									Namespace: "k8s",
-								},
-							},
+							NamespaceSelector: nsSelector,
+							ClientConfig:      clientConfig,
 						},
 					},
 				},
@@ -176,83 +316,38 @@ func initObjects(failurePolicyType ar.FailurePolicyType) *kube.Objects {
 						{
 							Name:              "vw_foo",
 							FailurePolicy:     &failurePolicyType,
-							NamespaceSelector: &metav1.LabelSelector{},
-							ClientConfig: ar.WebhookClientConfig{
-								Service: &ar.ServiceReference{
-									Name:      "some-svc",
-									Namespace: "k8s",
-								},
-							},
+							NamespaceSelector: nsSelector,
+							ClientConfig:      clientConfig,
 						},
 					},
 				},
 			},
 		},
 	}
-	return objs
-}
 
-func webhookURL() *kube.Objects {
-	var url = "https://example.com/webhook/action"
-	objs := initObjects(ar.Fail)
-	objs.ValidatingWebhookConfigurations.Items[0].Webhooks[0].ClientConfig = ar.WebhookClientConfig{
-		URL: &url,
-	}
-	objs.MutatingWebhookConfigurations.Items[0].Webhooks[0].ClientConfig = ar.WebhookClientConfig{
-		URL: &url,
-	}
-	return objs
-}
-
-func label(label map[string]string) *kube.Objects {
-	objs := initObjects(ar.Fail)
-	objs.ValidatingWebhookConfigurations.Items[0].Webhooks[0].NamespaceSelector = &metav1.LabelSelector{
-		MatchLabels: label,
-	}
-	objs.MutatingWebhookConfigurations.Items[0].Webhooks[0].NamespaceSelector = &metav1.LabelSelector{
-		MatchLabels: label,
-	}
-	return objs
-}
-
-func expr(key string, values []string, labelOperator metav1.LabelSelectorOperator) *kube.Objects {
-	objs := initObjects(ar.Fail)
-	objs.ValidatingWebhookConfigurations.Items[0].Webhooks[0].NamespaceSelector = &metav1.LabelSelector{
-		MatchExpressions: []metav1.LabelSelectorRequirement{
-			{
-				Key:      key,
-				Operator: labelOperator,
-				Values:   values,
-			},
-		},
-	}
-	objs.MutatingWebhookConfigurations.Items[0].Webhooks[0].NamespaceSelector = &metav1.LabelSelector{
-		MatchExpressions: []metav1.LabelSelectorRequirement{
-			{
-				Key:      key,
-				Operator: labelOperator,
-				Values:   values,
-			},
-		},
+	objs.Nodes = &corev1.NodeList{}
+	for i := 0; i < numNodes; i++ {
+		objs.Nodes.Items = append(objs.Nodes.Items, corev1.Node{})
 	}
 	return objs
 }
 
 func webhookErrors() []checks.Diagnostic {
-	objs := initObjects(ar.Fail)
+	objs := webhookTestObjects(ar.Fail, nil, ar.WebhookClientConfig{}, 0)
 	validatingConfig := objs.ValidatingWebhookConfigurations.Items[0]
 	mutatingConfig := objs.MutatingWebhookConfigurations.Items[0]
+
 	diagnostics := []checks.Diagnostic{
 		{
 			Severity: checks.Error,
-			Message:  "Webhook matches objects in the kube-system namespace. This can cause problems when upgrading the cluster.",
+			Message:  "Validating webhook is configured in such a way that it may be problematic during upgrades.",
 			Kind:     checks.ValidatingWebhookConfiguration,
 			Object:   &validatingConfig.ObjectMeta,
 			Owners:   validatingConfig.ObjectMeta.GetOwnerReferences(),
 		},
 		{
 			Severity: checks.Error,
-			Message:  "Webhook matches objects in the kube-system namespace. This can cause problems when upgrading the cluster.",
+			Message:  "Mutating webhook is configured in such a way that it may be problematic during upgrades.",
 			Kind:     checks.MutatingWebhookConfiguration,
 			Object:   &mutatingConfig.ObjectMeta,
 			Owners:   mutatingConfig.ObjectMeta.GetOwnerReferences(),
