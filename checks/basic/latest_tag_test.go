@@ -17,6 +17,7 @@ limitations under the License.
 package basic
 
 import (
+	"context"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -160,7 +161,7 @@ func TestLatestTagWarning(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			d, err := latestTagCheck.Run(test.objs)
+			d, err := latestTagCheck.Run(context.Background(), test.objs)
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, test.expected, d)
 		})

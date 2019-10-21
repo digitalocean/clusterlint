@@ -17,6 +17,7 @@ limitations under the License.
 package basic
 
 import (
+	"context"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -93,7 +94,7 @@ func TestUnusedConfigMapWarning(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			d, err := unusedCMCheck.Run(test.objs)
+			d, err := unusedCMCheck.Run(context.Background(), test.objs)
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, test.expected, d)
 		})

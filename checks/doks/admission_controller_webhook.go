@@ -17,6 +17,7 @@ limitations under the License.
 package doks
 
 import (
+	"context"
 	"errors"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -50,7 +51,7 @@ func (w *webhookCheck) Description() string {
 }
 
 // Run runs this check on a set of Kubernetes objects.
-func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (w *webhookCheck) Run(_ context.Context, objects *kube.Objects) ([]checks.Diagnostic, error) {
 	const apiserverServiceName = "kubernetes"
 
 	var diagnostics []checks.Diagnostic

@@ -48,7 +48,7 @@ func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diag
 		check := check
 		g.Go(func() error {
 			start := time.Now()
-			d, err := check.Run(objects)
+			d, err := check.Run(ctx, objects)
 			elapsed := time.Since(start)
 			if err != nil {
 				return err

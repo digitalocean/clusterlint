@@ -17,6 +17,7 @@ limitations under the License.
 package doks
 
 import (
+	"context"
 	"strings"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -46,7 +47,7 @@ func (*nodeLabelsTaintsCheck) Description() string {
 }
 
 // Run runs the check.
-func (c *nodeLabelsTaintsCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (c *nodeLabelsTaintsCheck) Run(_ context.Context, objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
 
 	for _, node := range objects.Nodes.Items {

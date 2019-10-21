@@ -17,6 +17,7 @@ limitations under the License.
 package basic
 
 import (
+	"context"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -80,7 +81,7 @@ func TestUnusedPVCWarning(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			d, err := unusedClaimCheck.Run(test.objs)
+			d, err := unusedClaimCheck.Run(context.Background(), test.objs)
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, test.expected, d)
 		})

@@ -17,6 +17,7 @@ limitations under the License.
 package security
 
 import (
+	"context"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -95,7 +96,7 @@ func TestPrivilegedContainerWarning(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			d, err := privilegedContainerCheck.Run(test.objs)
+			d, err := privilegedContainerCheck.Run(context.Background(), test.objs)
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, test.expected, d)
 		})

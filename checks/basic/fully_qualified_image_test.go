@@ -17,6 +17,7 @@ limitations under the License.
 package basic
 
 import (
+	"context"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -139,7 +140,7 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			d, err := fullyQualifiedImageCheck.Run(test.objs)
+			d, err := fullyQualifiedImageCheck.Run(context.Background(), test.objs)
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, test.expected, d)
 		})
@@ -171,7 +172,7 @@ func TestMalformedImageError(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			d, err := fullyQualifiedImageCheck.Run(test.objs)
+			d, err := fullyQualifiedImageCheck.Run(context.Background(), test.objs)
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, test.expected, d)
 		})

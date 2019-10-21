@@ -17,6 +17,8 @@ limitations under the License.
 package doks
 
 import (
+	"context"
+
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 	corev1 "k8s.io/api/core/v1"
@@ -47,7 +49,7 @@ func (p *podSelectorCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (p *podSelectorCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (p *podSelectorCheck) Run(_ context.Context, objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
 	for _, pod := range objects.Pods.Items {
 		nodeSelectorMap := pod.Spec.NodeSelector

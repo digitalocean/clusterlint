@@ -17,6 +17,7 @@ limitations under the License.
 package basic
 
 import (
+	"context"
 	"sync"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -144,7 +145,7 @@ func (nc *defaultNamespaceCheck) checkSA(items *corev1.ServiceAccountList, alert
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (nc *defaultNamespaceCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (nc *defaultNamespaceCheck) Run(_ context.Context, objects *kube.Objects) ([]checks.Diagnostic, error) {
 	alert := &alert{}
 	var g errgroup.Group
 	g.Go(func() error {

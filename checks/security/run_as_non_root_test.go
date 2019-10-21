@@ -17,6 +17,7 @@ limitations under the License.
 package security
 
 import (
+	"context"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -150,7 +151,7 @@ func TestNonRootUserWarning(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			d, err := nonRootUserCheck.Run(test.objs)
+			d, err := nonRootUserCheck.Run(context.Background(), test.objs)
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, test.expected, d)
 		})

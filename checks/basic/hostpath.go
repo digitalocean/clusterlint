@@ -17,6 +17,7 @@ limitations under the License.
 package basic
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -48,7 +49,7 @@ func (h *hostPathCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (h *hostPathCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (h *hostPathCheck) Run(_ context.Context, objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
 	for _, pod := range objects.Pods.Items {
 		for _, volume := range pod.Spec.Volumes {

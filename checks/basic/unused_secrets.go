@@ -17,6 +17,7 @@ limitations under the License.
 package basic
 
 import (
+	"context"
 	"sync"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -55,7 +56,7 @@ func (s *unusedSecretCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (s *unusedSecretCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (s *unusedSecretCheck) Run(_ context.Context, objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
 	used, err := checkReferences(objects)
 	if err != nil {

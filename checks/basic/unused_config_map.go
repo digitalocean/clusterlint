@@ -17,6 +17,7 @@ limitations under the License.
 package basic
 
 import (
+	"context"
 	"sync"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -50,7 +51,7 @@ func (c *unusedCMCheck) Description() string {
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (c *unusedCMCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (c *unusedCMCheck) Run(_ context.Context, objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
 
 	used, err := checkPodReferences(objects)

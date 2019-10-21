@@ -17,6 +17,7 @@ limitations under the License.
 package checks
 
 import (
+	"context"
 	"strings"
 
 	"github.com/digitalocean/clusterlint/kube"
@@ -25,6 +26,11 @@ import (
 
 const checkAnnotation = "clusterlint.digitalocean.com/disabled-checks"
 const separator = ","
+
+const (
+	// Repositories is a context key for valid repositories
+	Repositories = "repositories"
+)
 
 // Check is a check that can run on Kubernetes objects.
 type Check interface {
@@ -40,7 +46,7 @@ type Check interface {
 	// Run runs this check on a set of Kubernetes objects. It can return
 	// warnings (low-priority problems) and errors (high-priority problems) as
 	// well as an error value indicating that the check failed to run.
-	Run(*kube.Objects) ([]Diagnostic, error)
+	Run(context.Context, *kube.Objects) ([]Diagnostic, error)
 }
 
 // IsEnabled inspects the object annotations to see if a check is disabled

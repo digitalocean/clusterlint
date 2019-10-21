@@ -17,6 +17,7 @@ limitations under the License.
 package doks
 
 import (
+	"context"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -240,7 +241,7 @@ func TestWebhookError(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			d, err := webhookCheck.Run(test.objs)
+			d, err := webhookCheck.Run(context.Background(), test.objs)
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, test.expected, d)
 		})

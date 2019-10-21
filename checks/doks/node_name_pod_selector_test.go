@@ -17,6 +17,7 @@ limitations under the License.
 package doks
 
 import (
+	"context"
 	"testing"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -62,7 +63,7 @@ func TestNodeNameError(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			d, err := podSelectorCheck.Run(test.objs)
+			d, err := podSelectorCheck.Run(context.Background(), test.objs)
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, test.expected, d)
 		})

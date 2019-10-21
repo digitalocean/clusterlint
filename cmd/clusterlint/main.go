@@ -102,6 +102,10 @@ func main() {
 					Name:  "no-color",
 					Usage: "Disable color output",
 				},
+				cli.StringSliceFlag{
+					Name:  "r, repositories",
+					Usage: "Set canonical repositories for image checks",
+				},
 			},
 			Action: runChecks,
 		},
@@ -154,7 +158,8 @@ func runChecks(c *cli.Context) error {
 
 	diagnosticFilter := checks.DiagnosticFilter{Severity: checks.Severity(c.String("level"))}
 
-	output, err := checks.Run(context.Background(), client, filter, diagnosticFilter)
+	ctx := context.WithValue(context.Background(), checks.Repositories, c.StringSlice("r"))
+	output, err := checks.Run(ctx, client, filter, diagnosticFilter)
 	if err != nil {
 		return err
 	}

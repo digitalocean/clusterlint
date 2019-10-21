@@ -17,6 +17,8 @@ limitations under the License.
 package basic
 
 import (
+	"context"
+
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 )
@@ -44,7 +46,7 @@ func (b *barePodCheck) Description() string {
 }
 
 // Run runs this check on a set of Kubernetes objects.
-func (b *barePodCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (b *barePodCheck) Run(_ context.Context, objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
 	for _, pod := range objects.Pods.Items {
 		pod := pod
