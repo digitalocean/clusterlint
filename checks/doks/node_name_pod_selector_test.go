@@ -93,7 +93,6 @@ func expectedWarnings(objs *kube.Objects, name string) []checks.Diagnostic {
 	pod := objs.Pods.Items[0]
 	diagnostics := []checks.Diagnostic{
 		{
-			Check:    name,
 			Severity: checks.Warning,
 			Message:  "Avoid node name label for node selector.",
 			Kind:     checks.Pod,

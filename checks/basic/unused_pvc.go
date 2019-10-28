@@ -62,7 +62,6 @@ func (c *unusedClaimCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, erro
 	for _, claim := range objects.PersistentVolumeClaims.Items {
 		if _, ok := used[kube.Identifier{Name: claim.GetName(), Namespace: claim.GetNamespace()}]; !ok {
 			d := checks.Diagnostic{
-				Check:    c.Name(),
 				Severity: checks.Warning,
 				Message:  "Unused persistent volume claim",
 				Kind:     checks.PersistentVolumeClaim,

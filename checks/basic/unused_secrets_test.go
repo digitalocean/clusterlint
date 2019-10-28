@@ -78,7 +78,6 @@ func TestUnusedSecretWarning(t *testing.T) {
 			objs: initSecret(),
 			expected: []checks.Diagnostic{
 				{
-					Check:    unusedSecretCheck.Name(),
 					Severity: checks.Warning,
 					Message:  "Unused secret",
 					Kind:     checks.Secret,

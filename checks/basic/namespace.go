@@ -50,7 +50,6 @@ func (alert *alert) SetDiagnostics(d []checks.Diagnostic) {
 // warn adds warnings for k8s objects that should not be in the default namespace
 func (alert *alert) warn(k8stype checks.Kind, itemMeta metav1.ObjectMeta) {
 	d := checks.Diagnostic{
-		Check:    "default-namespace",
 		Severity: checks.Warning,
 		Message:  "Avoid using the default namespace",
 		Kind:     k8stype,

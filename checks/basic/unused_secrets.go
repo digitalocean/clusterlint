@@ -66,7 +66,6 @@ func (s *unusedSecretCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, err
 		if _, ok := used[kube.Identifier{Name: secret.GetName(), Namespace: secret.GetNamespace()}]; !ok {
 			secret := secret
 			d := checks.Diagnostic{
-				Check:    s.Name(),
 				Severity: checks.Warning,
 				Message:  "Unused secret",
 				Kind:     checks.Secret,

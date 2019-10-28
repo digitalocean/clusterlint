@@ -60,7 +60,6 @@ func TestResourceRequestsWarning(t *testing.T) {
 			objs: container("alpine"),
 			expected: []checks.Diagnostic{
 				{
-					Check:    resourceRequirementsCheck.Name(),
 					Severity: checks.Warning,
 					Message:  message,
 					Kind:     checks.Pod,
@@ -74,7 +73,6 @@ func TestResourceRequestsWarning(t *testing.T) {
 			objs: initContainer("alpine"),
 			expected: []checks.Diagnostic{
 				{
-					Check:    resourceRequirementsCheck.Name(),
 					Severity: checks.Warning,
 					Message:  message,
 					Kind:     checks.Pod,

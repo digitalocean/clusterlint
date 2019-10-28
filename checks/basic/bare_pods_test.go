@@ -67,7 +67,6 @@ func TestBarePodError(t *testing.T) {
 			expected: []checks.Diagnostic{
 				{
 					Severity: "warning",
-					Check:    "bare-pods",
 					Kind:     checks.Pod,
 					Message:  "Avoid using bare pods in clusters",
 					Object:   GetObjectMeta(),
@@ -81,7 +80,6 @@ func TestBarePodError(t *testing.T) {
 			expected: []checks.Diagnostic{
 				{
 					Severity: "warning",
-					Check:    "bare-pods",
 					Kind:     checks.Pod,
 					Message:  "Avoid using bare pods in clusters",
 					Object:   &metav1.ObjectMeta{Name: "pod_1", Namespace: "k8s"},
@@ -89,7 +87,6 @@ func TestBarePodError(t *testing.T) {
 				},
 				{
 					Severity: "warning",
-					Check:    "bare-pods",
 					Kind:     checks.Pod,
 					Message:  "Avoid using bare pods in clusters",
 					Object:   &metav1.ObjectMeta{Name: "pod_2", Namespace: "k8s"},

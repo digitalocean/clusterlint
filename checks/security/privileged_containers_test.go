@@ -106,7 +106,6 @@ func warnings(objs *kube.Objects, name string) []checks.Diagnostic {
 	pod := objs.Pods.Items[0]
 	d := []checks.Diagnostic{
 		{
-			Check:    name,
 			Severity: checks.Warning,
 			Message:  "Privileged container 'bar' found. Please ensure that the image is from a trusted source.",
 			Kind:     checks.Pod,

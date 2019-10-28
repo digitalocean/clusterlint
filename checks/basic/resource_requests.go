@@ -69,7 +69,6 @@ func (r *resourceRequirementsCheck) checkResourceRequirements(containers []corev
 	for _, container := range containers {
 		if container.Resources.Size() == 0 {
 			d := checks.Diagnostic{
-				Check:    r.Name(),
 				Severity: checks.Warning,
 				Message:  fmt.Sprintf("Set resource requests and limits for container `%s` to prevent resource contention", container.Name),
 				Kind:     checks.Pod,

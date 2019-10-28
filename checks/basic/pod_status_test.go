@@ -71,7 +71,6 @@ func TestPodStateError(t *testing.T) {
 			objs: status(corev1.PodFailed),
 			expected: []checks.Diagnostic{
 				{
-					Check:    podStatusCheck.Name(),
 					Severity: checks.Warning,
 					Message:  "Unhealthy pod. State: `Failed`. Pod state should be `Running`, `Pending` or `Succeeded`.",
 					Kind:     checks.Pod,
@@ -85,7 +84,6 @@ func TestPodStateError(t *testing.T) {
 			objs: status(corev1.PodUnknown),
 			expected: []checks.Diagnostic{
 				{
-					Check:    podStatusCheck.Name(),
 					Severity: checks.Warning,
 					Message:  "Unhealthy pod. State: `Unknown`. Pod state should be `Running`, `Pending` or `Succeeded`.",
 					Kind:     checks.Pod,

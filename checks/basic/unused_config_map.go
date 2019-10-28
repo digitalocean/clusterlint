@@ -71,7 +71,6 @@ func (c *unusedCMCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) 
 		if _, ok := used[kube.Identifier{Name: cm.GetName(), Namespace: cm.GetNamespace()}]; !ok {
 			cm := cm
 			d := checks.Diagnostic{
-				Check:    c.Name(),
 				Severity: checks.Warning,
 				Message:  "Unused config map",
 				Kind:     checks.ConfigMap,
