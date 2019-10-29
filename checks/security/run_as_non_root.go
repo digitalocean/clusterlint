@@ -63,7 +63,6 @@ func (nr *nonRootUserCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, err
 
 			if containerRunAsRoot && podRunAsRoot {
 				d := checks.Diagnostic{
-					Check:    nr.Name(),
 					Severity: checks.Warning,
 					Message:  fmt.Sprintf("Container `%s` can run as root user. Please ensure that the image is from a trusted source.", container.Name),
 					Kind:     checks.Pod,

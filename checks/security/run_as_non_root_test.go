@@ -161,7 +161,6 @@ func diagnostic() []checks.Diagnostic {
 	pod := initPod().Pods.Items[0]
 	d := []checks.Diagnostic{
 		{
-			Check:    "non-root-user",
 			Severity: checks.Warning,
 			Message:  "Container `bar` can run as root user. Please ensure that the image is from a trusted source.",
 			Kind:     checks.Pod,

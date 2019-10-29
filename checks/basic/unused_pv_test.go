@@ -63,7 +63,6 @@ func TestUnusedPVWarning(t *testing.T) {
 			objs: unused(),
 			expected: []checks.Diagnostic{
 				{
-					Check:    unusedPVCheck.Name(),
 					Severity: checks.Warning,
 					Message:  "Unused Persistent Volume 'pv_foo'.",
 					Kind:     checks.PersistentVolume,

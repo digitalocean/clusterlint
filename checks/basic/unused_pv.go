@@ -53,7 +53,6 @@ func (p *unusedPVCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) 
 	for _, pv := range objects.PersistentVolumes.Items {
 		if pv.Spec.ClaimRef == nil {
 			d := checks.Diagnostic{
-				Check:    p.Name(),
 				Severity: checks.Warning,
 				Message:  fmt.Sprintf("Unused Persistent Volume '%s'.", pv.GetName()),
 				Kind:     checks.PersistentVolume,

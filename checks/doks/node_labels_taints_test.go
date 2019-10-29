@@ -74,7 +74,6 @@ func TestNodeLabels(t *testing.T) {
 				"region": "tor1",
 			},
 			expectedDiagnostics: []checks.Diagnostic{{
-				Check:    "node-labels-and-taints",
 				Severity: checks.Warning,
 				Message:  "Custom node labels will be lost if node is replaced or upgraded.",
 				Kind:     checks.Node,
@@ -134,7 +133,6 @@ func TestNodeTaints(t *testing.T) {
 				Effect: corev1.TaintEffectNoSchedule,
 			}},
 			expectedDiagnostics: []checks.Diagnostic{{
-				Check:    "node-labels-and-taints",
 				Severity: checks.Warning,
 				Message:  "Custom node taints will be lost if node is replaced or upgraded.",
 				Kind:     checks.Node,

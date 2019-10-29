@@ -53,7 +53,6 @@ func (c *nodeLabelsTaintsCheck) Run(objects *kube.Objects) ([]checks.Diagnostic,
 		for labelKey := range node.Labels {
 			if !isKubernetesLabel(labelKey) && !isDOKSLabel(labelKey) {
 				d := checks.Diagnostic{
-					Check:    c.Name(),
 					Severity: checks.Warning,
 					Message:  "Custom node labels will be lost if node is replaced or upgraded.",
 					Kind:     checks.Node,
@@ -67,7 +66,6 @@ func (c *nodeLabelsTaintsCheck) Run(objects *kube.Objects) ([]checks.Diagnostic,
 		for _, taint := range node.Spec.Taints {
 			if !isDOKSTaint(taint) {
 				d := checks.Diagnostic{
-					Check:    c.Name(),
 					Severity: checks.Warning,
 					Message:  "Custom node taints will be lost if node is replaced or upgraded.",
 					Kind:     checks.Node,

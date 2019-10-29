@@ -67,7 +67,6 @@ func TestUnusedPVCWarning(t *testing.T) {
 			objs: initPVC(),
 			expected: []checks.Diagnostic{
 				{
-					Check:    unusedClaimCheck.Name(),
 					Severity: checks.Warning,
 					Message:  "Unused persistent volume claim",
 					Kind:     checks.PersistentVolumeClaim,

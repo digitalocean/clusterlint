@@ -71,7 +71,6 @@ func (fq *fullyQualifiedImageCheck) checkImage(containers []corev1.Container, po
 		value, err := reference.ParseAnyReference(container.Image)
 		if err != nil {
 			d := checks.Diagnostic{
-				Check:    fq.Name(),
 				Severity: checks.Warning,
 				Message:  fmt.Sprintf("Malformed image name for container '%s'", container.Name),
 				Kind:     checks.Pod,
@@ -82,7 +81,6 @@ func (fq *fullyQualifiedImageCheck) checkImage(containers []corev1.Container, po
 		} else {
 			if value.String() != container.Image {
 				d := checks.Diagnostic{
-					Check:    fq.Name(),
 					Severity: checks.Warning,
 					Message:  fmt.Sprintf("Use fully qualified image for container '%s'", container.Name),
 					Kind:     checks.Pod,

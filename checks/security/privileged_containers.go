@@ -67,7 +67,6 @@ func (pc *privilegedContainerCheck) checkPrivileged(containers []corev1.Containe
 	for _, container := range containers {
 		if container.SecurityContext != nil && container.SecurityContext.Privileged != nil && *container.SecurityContext.Privileged {
 			d := checks.Diagnostic{
-				Check:    pc.Name(),
 				Severity: checks.Warning,
 				Message:  fmt.Sprintf("Privileged container '%s' found. Please ensure that the image is from a trusted source.", container.Name),
 				Kind:     checks.Pod,

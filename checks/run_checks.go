@@ -54,6 +54,12 @@ func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diag
 				return err
 			}
 			mu.Lock()
+			// Fill in the check names for the diagnostics. Doing this here
+			// absolves checks of needing to do it and also ensures they're
+			// consistent.
+			for i := 0; i < len(d); i++ {
+				d[i].Check = check.Name()
+			}
 			diagnostics = append(diagnostics, d...)
 			checkDuration[check.Name()] = elapsed
 			mu.Unlock()

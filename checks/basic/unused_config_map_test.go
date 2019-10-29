@@ -80,7 +80,6 @@ func TestUnusedConfigMapWarning(t *testing.T) {
 			objs: initConfigMap(),
 			expected: []checks.Diagnostic{
 				{
-					Check:    unusedCMCheck.Name(),
 					Severity: checks.Warning,
 					Message:  "Unused config map",
 					Kind:     checks.ConfigMap,
