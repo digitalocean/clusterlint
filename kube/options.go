@@ -18,16 +18,18 @@ package kube
 
 import (
 	"errors"
+	"net/http"
 	"time"
 )
 
 const delimiter = ":"
 
 type options struct {
-	paths       []string
-	kubeContext string
-	yaml        []byte
-	timeout     time.Duration
+	paths            []string
+	kubeContext      string
+	yaml             []byte
+	transportWrapper TransportWrapper
+	timeout          time.Duration
 }
 
 // Option function that allows injecting options while building kube.Client.
@@ -69,6 +71,17 @@ func WithMergedConfigFiles(paths []string) Option {
 func WithTimeout(t time.Duration) Option {
 	return func(o *options) error {
 		o.timeout = t
+		return nil
+	}
+}
+
+// TransportWrapper wraps an http.RoundTripper
+type TransportWrapper = func(http.RoundTripper) http.RoundTripper
+
+// WithTransportWrapper allows wrapping the underlying http.RoundTripper
+func WithTransportWrapper(f TransportWrapper) Option {
+	return func(o *options) error {
+		o.transportWrapper = f
 		return nil
 	}
 }
