@@ -207,6 +207,80 @@ spec:
 ## Admission Controller Webhook
 
 - Name: `admission-controller-webhook`
+- Groups: `basic`
+
+Admission control webhooks can disrupt normal cluster operations. Specifically, this happens when an admission control webhook:
+* targets a service that does not exist,
+* targets a service in a namespace that does not exist.
+
+### Example
+
+```yaml
+# Error: Configure a webhook pointing at a service that does not exist
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: sample-webhook.example.com
+webhooks:
+- name: sample-webhook.example.com
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    resources:
+    - pods
+    scope: "Namespaced"
+  clientConfig:
+    service:
+      namespace: webhook
+      name: missing-webhook-server
+      path: /pods
+  admissionReviewVersions:
+  - v1beta1
+  timeoutSeconds: 1
+  failurePolicy: Fail
+```
+
+### How to Fix
+
+Point the webhook at the correct service.
+
+```yaml
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: sample-webhook.example.com
+webhooks:
+- name: sample-webhook.example.com
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    resources:
+    - pods
+    scope: "Namespaced"
+  clientConfig:
+    service:
+      namespace: webhook
+      name: webhook-server
+      path: /pods
+  admissionReviewVersions:
+  - v1beta1
+  timeoutSeconds: 1
+  failurePolicy: Fail
+  namespaceSelector:
+    matchExpressions:
+      - key: "skip-webhooks"
+        operator: "DoesNotExist"
+```
+
+- Name: `admission-controller-webhook-replacement`
 - Groups: `doks`
 
 Admission control webhooks can disrupt upgrade and node replacement operations by preventing system components from starting. Specifically, this happens when an admission control webhook:

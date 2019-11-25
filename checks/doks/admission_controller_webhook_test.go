@@ -30,15 +30,15 @@ import (
 var webhookURL = "https://example.com/webhook"
 
 func TestWebhookCheckMeta(t *testing.T) {
-	webhookCheck := webhookCheck{}
-	assert.Equal(t, "admission-controller-webhook", webhookCheck.Name())
+	webhookCheck := webhookReplaementCheck{}
+	assert.Equal(t, "admission-controller-webhook-replacement", webhookCheck.Name())
 	assert.Equal(t, []string{"doks"}, webhookCheck.Groups())
 	assert.NotEmpty(t, webhookCheck.Description())
 }
 
 func TestWebhookCheckRegistration(t *testing.T) {
-	webhookCheck := &webhookCheck{}
-	check, err := checks.Get("admission-controller-webhook")
+	webhookCheck := &webhookReplaementCheck{}
+	check, err := checks.Get("admission-controller-webhook-replacement")
 	assert.NoError(t, err)
 	assert.Equal(t, check, webhookCheck)
 }
@@ -236,7 +236,7 @@ func TestWebhookError(t *testing.T) {
 		},
 	}
 
-	webhookCheck := webhookCheck{}
+	webhookCheck := webhookReplaementCheck{}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

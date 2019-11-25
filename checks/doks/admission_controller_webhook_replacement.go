@@ -17,8 +17,6 @@ limitations under the License.
 package doks
 
 import (
-	"errors"
-
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 	ar "k8s.io/api/admissionregistration/v1beta1"
@@ -28,29 +26,29 @@ import (
 )
 
 func init() {
-	checks.Register(&webhookCheck{})
+	checks.Register(&webhookReplaementCheck{})
 }
 
-type webhookCheck struct{}
+type webhookReplaementCheck struct{}
 
 // Name returns a unique name for this check.
-func (w *webhookCheck) Name() string {
-	return "admission-controller-webhook"
+func (w *webhookReplaementCheck) Name() string {
+	return "admission-controller-webhook-replacement"
 }
 
 // Groups returns a list of group names this check should be part of.
-func (w *webhookCheck) Groups() []string {
+func (w *webhookReplaementCheck) Groups() []string {
 	return []string{"doks"}
 }
 
 // Description returns a detailed human-readable description of what this check
 // does.
-func (w *webhookCheck) Description() string {
-	return "Check for admission control webhooks that could cause problems during upgrades"
+func (w *webhookReplaementCheck) Description() string {
+	return "Check for admission control webhooks that could cause problems during upgrades or node replacement"
 }
 
 // Run runs this check on a set of Kubernetes objects.
-func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (w *webhookReplaementCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	const apiserverServiceName = "kubernetes"
 
 	var diagnostics []checks.Diagnostic
@@ -80,10 +78,9 @@ func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 					svcNamespace = &ns
 				}
 			}
-			if svcNamespace == nil {
-				return nil, errors.New("webhook refers to service in non-existent namespace")
-			}
-			if !selectorMatchesNamespace(wh.NamespaceSelector, svcNamespace) && len(objects.Nodes.Items) > 1 {
+			if svcNamespace != nil &&
+				!selectorMatchesNamespace(wh.NamespaceSelector, svcNamespace) &&
+				len(objects.Nodes.Items) > 1 {
 				// Webhooks that don't apply to their own namespace are fine, as
 				// long as there's more than one node in the cluster.
 				continue
@@ -130,10 +127,9 @@ func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 					svcNamespace = &ns
 				}
 			}
-			if svcNamespace == nil {
-				return nil, errors.New("webhook refers to service in non-existent namespace")
-			}
-			if !selectorMatchesNamespace(wh.NamespaceSelector, svcNamespace) && len(objects.Nodes.Items) > 1 {
+			if svcNamespace != nil &&
+				!selectorMatchesNamespace(wh.NamespaceSelector, svcNamespace) &&
+				len(objects.Nodes.Items) > 1 {
 				// Webhooks that don't apply to their own namespace are fine, as
 				// long as there's more than one node in the cluster.
 				continue
