@@ -182,6 +182,10 @@ func NewClient(opts ...Option) (*Client, error) {
 		return nil, err
 	}
 	config.Timeout = defOpts.timeout
+	if defOpts.transportWrapper != nil {
+		config.Wrap(defOpts.transportWrapper)
+	}
+
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err

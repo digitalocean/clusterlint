@@ -19,6 +19,7 @@ package kube
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -69,4 +70,38 @@ func TestNewClientErrors(t *testing.T) {
 		_, err := NewClient(WithMergedConfigFiles([]string{"some-path"}), WithYaml([]byte("yaml")))
 		assert.Equal(t, errors.New("cannot specify yaml and kubeconfig file paths"), err)
 	})
+}
+
+type failTransport struct{}
+
+func (failTransport) RoundTrip(_ *http.Request) (*http.Response, error) {
+	return nil, errors.New("fail")
+}
+
+func TestNewClientRoundTripper(t *testing.T) {
+	client, err := NewClient(WithTransportWrapper(func(_ http.RoundTripper) http.RoundTripper {
+		return failTransport{}
+	}), WithYaml([]byte(`apiVersion: v1
+kind: Config
+clusters:
+- cluster:
+    server: http://localhost
+  name: cool
+contexts:
+- context:
+    cluster: cool
+    user: admin
+  name: cool
+current-context: cool
+users:
+- name: admin
+`)))
+	assert.NoError(t, err)
+	_, err = client.KubeClient.CoreV1().Namespaces().Create(&corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "kube-system",
+		},
+	})
+	assert.Contains(t, err.Error(), "fail")
 }
