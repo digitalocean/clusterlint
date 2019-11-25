@@ -56,13 +56,8 @@ func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 		for _, wh := range config.Webhooks {
 			if wh.ClientConfig.Service != nil {
 				// Ensure that the service (and its namespace) that is configure actually exists.
-				var svcNamespace *v1.Namespace
-				for _, ns := range objects.Namespaces.Items {
-					if ns.Name == wh.ClientConfig.Service.Namespace {
-						svcNamespace = &ns
-					}
-				}
-				if svcNamespace == nil {
+
+				if !namespaceExists(objects.Namespaces, wh.ClientConfig.Service.Namespace) {
 					diagnostics = append(diagnostics, checks.Diagnostic{
 						Severity: checks.Error,
 						Message:  fmt.Sprintf("Validating webhook %s is configured against a service in a namespace that does not exist.", wh.Name),
@@ -73,13 +68,7 @@ func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 					continue
 				}
 
-				svcExists := false
-				for _, svc := range objects.Services.Items {
-					if svc.Name == wh.ClientConfig.Service.Name && svc.Namespace == wh.ClientConfig.Service.Namespace {
-						svcExists = true
-					}
-				}
-				if !svcExists {
+				if !serviceExists(objects.Services, wh.ClientConfig.Service.Name, wh.ClientConfig.Service.Namespace) {
 					diagnostics = append(diagnostics, checks.Diagnostic{
 						Severity: checks.Error,
 						Message:  fmt.Sprintf("Validating webhook %s is configured against a service that does not exist.", wh.Name),
@@ -96,13 +85,8 @@ func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 		for _, wh := range config.Webhooks {
 			if wh.ClientConfig.Service != nil {
 				// Ensure that the service (and its namespace) that is configure actually exists.
-				var svcNamespace *v1.Namespace
-				for _, ns := range objects.Namespaces.Items {
-					if ns.Name == wh.ClientConfig.Service.Namespace {
-						svcNamespace = &ns
-					}
-				}
-				if svcNamespace == nil {
+
+				if !namespaceExists(objects.Namespaces, wh.ClientConfig.Service.Namespace) {
 					diagnostics = append(diagnostics, checks.Diagnostic{
 						Severity: checks.Error,
 						Message:  fmt.Sprintf("Mutating webhook %s is configured against a service in a namespace that does not exist.", wh.Name),
@@ -113,13 +97,7 @@ func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 					continue
 				}
 
-				svcExists := false
-				for _, svc := range objects.Services.Items {
-					if svc.Name == wh.ClientConfig.Service.Name && svc.Namespace == wh.ClientConfig.Service.Namespace {
-						svcExists = true
-					}
-				}
-				if !svcExists {
+				if !serviceExists(objects.Services, wh.ClientConfig.Service.Name, wh.ClientConfig.Service.Namespace) {
 					diagnostics = append(diagnostics, checks.Diagnostic{
 						Severity: checks.Error,
 						Message:  fmt.Sprintf("Mutating webhook %s is configured against a service that does not exist.", wh.Name),
@@ -132,4 +110,22 @@ func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 		}
 	}
 	return diagnostics, nil
+}
+
+func namespaceExists(namespaceList *v1.NamespaceList, namespace string) bool {
+	for _, ns := range namespaceList.Items {
+		if ns.Name == namespace {
+			return true
+		}
+	}
+	return false
+}
+
+func serviceExists(serviceList *v1.ServiceList, service, namespace string) bool {
+	for _, svc := range serviceList.Items {
+		if svc.Name == service && svc.Namespace == namespace {
+			return true
+		}
+	}
+	return false
 }
