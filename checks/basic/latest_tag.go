@@ -66,7 +66,18 @@ func (l *latestTagCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error)
 func (l *latestTagCheck) checkTags(containers []corev1.Container, pod corev1.Pod) []checks.Diagnostic {
 	var diagnostics []checks.Diagnostic
 	for _, container := range containers {
-		namedRef, _ := reference.ParseNormalizedNamed(container.Image)
+		namedRef, err := reference.ParseNormalizedNamed(container.Image)
+		if err != nil {
+			d := checks.Diagnostic{
+				Severity: checks.Warning,
+				Message:  fmt.Sprintf("Image name for container '%s' could not be parsed", container.Name),
+				Kind:     checks.Pod,
+				Object:   &pod.ObjectMeta,
+				Owners:   pod.ObjectMeta.GetOwnerReferences(),
+			}
+			diagnostics = append(diagnostics, d)
+			continue
+		}
 		tagNameOnly := reference.TagNameOnly(namedRef)
 		if strings.HasSuffix(tagNameOnly.String(), ":latest") {
 			d := checks.Diagnostic{
