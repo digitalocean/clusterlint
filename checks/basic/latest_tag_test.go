@@ -40,6 +40,7 @@ func TestLatestTagCheckRegistration(t *testing.T) {
 
 func TestLatestTagWarning(t *testing.T) {
 	const message = "Avoid using latest tag for container 'bar'"
+	const invalidMessage = "Image name for container 'bar' could not be parsed"
 	const severity = checks.Warning
 	const name = "latest-tag"
 
@@ -153,6 +154,16 @@ func TestLatestTagWarning(t *testing.T) {
 			name:     "pod with init container image - busybox:v1.2.3",
 			objs:     initContainer("busybox:v1.2.3"),
 			expected: nil,
+		},
+		{
+			name:     "pod with init container with invalid image name",
+			objs:     initContainer(""),
+			expected: issues(severity, invalidMessage, checks.Pod, name),
+		},
+		{
+			name:     "pod with container with invalid image name",
+			objs:     container(""),
+			expected: issues(severity, invalidMessage, checks.Pod, name),
 		},
 	}
 
