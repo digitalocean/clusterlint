@@ -94,6 +94,16 @@ func TestBarePodError(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:     "pod with node name (static pod)",
+			objs:     initNodeAndPodWithNodeName(),
+			expected: nil,
+		},
+		{
+			name:     "multiple pods with node name (static pod)",
+			objs:     initNodeAndPodsWithNodeName(),
+			expected: nil,
+		},
 	}
 
 	barePodCheck := &barePodCheck{}
@@ -115,6 +125,58 @@ func initRefs(objs *kube.Objects) *kube.Objects {
 				APIVersion: "apps/v1",
 			},
 		}
+	}
+	return objs
+}
+
+func initNodeAndPodWithNodeName() *kube.Objects {
+	objs := &kube.Objects{
+		Pods: &corev1.PodList{
+			Items: []corev1.Pod{
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "pod_foo-node_a", Namespace: "k8s"},
+				},
+			},
+		},
+		Nodes: &corev1.NodeList{
+			Items: []corev1.Node{
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Node", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "node_a"},
+				},
+			},
+		},
+	}
+	return objs
+}
+
+func initNodeAndPodsWithNodeName() *kube.Objects {
+	objs := &kube.Objects{
+		Pods: &corev1.PodList{
+			Items: []corev1.Pod{
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "pod_foo-node_a", Namespace: "k8s"},
+				},
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "pod_foo-node_b", Namespace: "k8s"},
+				},
+			},
+		},
+		Nodes: &corev1.NodeList{
+			Items: []corev1.Node{
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Node", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "node_a"},
+				},
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Node", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "node_b"},
+				},
+			},
+		},
 	}
 	return objs
 }
