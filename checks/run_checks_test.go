@@ -45,7 +45,7 @@ func TestRun(t *testing.T) {
 	alwaysFailCheck, err := Get("always-fail")
 	assert.NoError(t, err)
 
-	result, err := Run(context.Background(), client, filter, DiagnosticFilter{})
+	result, err := Run(context.Background(), client, filter, DiagnosticFilter{},kube.ObjectsFilter{})
 	assert.NoError(t, err)
 	assert.Len(t, result.Diagnostics, 1)
 	assert.Equal(t, alwaysFailCheck.Name(), result.Diagnostics[0].Check)

@@ -27,7 +27,7 @@ import (
 )
 
 // Run applies the filters and runs the resultant check list in parallel
-func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diagnosticFilter DiagnosticFilter) (*CheckResult, error) {
+func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diagnosticFilter DiagnosticFilter, objectFilter kube.ObjectsFilter) (*CheckResult, error) {
 	objects, err := client.FetchObjects(ctx)
 	if err != nil {
 		return nil, err
@@ -40,6 +40,8 @@ func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diag
 	if len(all) == 0 {
 		return nil, errors.New("No checks to run. Are you sure that you provided the right names for groups and checks?")
 	}
+	objectFilter.Filter(objects)
+
 	var diagnostics []Diagnostic
 	var mu sync.Mutex
 	var g errgroup.Group
