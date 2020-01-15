@@ -17,8 +17,11 @@ limitations under the License.
 package basic
 
 import (
+	"strings"
+
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func init() {
@@ -49,6 +52,12 @@ func (b *barePodCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	for _, pod := range objects.Pods.Items {
 		pod := pod
 		if len(pod.ObjectMeta.OwnerReferences) == 0 {
+			// skip static pod
+			if objects.Nodes != nil {
+				if isStaticPod(pod, objects.Nodes.Items) {
+					continue
+				}
+			}
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
 				Message:  "Avoid using bare pods in clusters",
@@ -61,4 +70,14 @@ func (b *barePodCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	}
 
 	return diagnostics, nil
+}
+
+func isStaticPod(pod corev1.Pod, nodeList []corev1.Node) bool {
+	for _,node := range nodeList {
+		// https://github.com/kubernetes/kubernetes/blob/b409073e99695ea35642a8194b9285ac12fd0cf8/pkg/kubelet/config/common.go#L51
+		if strings.HasSuffix(pod.Name, "-" + strings.ToLower(node.Name)) {
+			return true
+		}
+	}
+	return false
 }
