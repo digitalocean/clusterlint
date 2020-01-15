@@ -28,15 +28,26 @@ $ clusterlint --plugins=./example-plugin.so run -c example-plugin
 The example plugin produces a suggestion for each pod running in the cluster,
 just to show what a plugin can do.
 
-## Troubleshooting
+## Caveats
 
-The easiest problem to hit with plugins is trying to use a plugin built against
-a different version of the clusterlint codebase than the clusterlint binary
-you're using. In this case, you'll get a message like:
+### Supported Platforms
+
+Go plugins are [supported only on Linux and macOS](https://golang.org/pkg/plugin/#pkg-overview).
+
+### Versioning
+
+Plugins **must** be built against the exact same version of the clusterlint
+codebase as the clusterlint binary you are using, as well as against the same
+version of all dependencies.
+
+If the version used to build the plugin doesn't match the binary version you'll
+get a message like:
 
 ```
 plugin.Open("./example-plugin"): plugin was built with a different version of package github.com/digitalocean/clusterlint/kube
 ```
 
 We recommend using go module versioning to ensure you're building your plugin
-against code from the clusterlint release you're using.
+against code from the clusterlint release you're using. If you build clusterlint
+using the vendored dependencies, make sure you also build your plugins using the
+vendored dependencies.

@@ -72,7 +72,8 @@ truly specific check that is not appropriate for sharing with the broader
 community, you can implement it using Go plugins.
 
 See the [example plugin](example-plugin) for documentation on how to build a
-plugin.
+plugin. Please be sure to read the [caveats](example-plugin/README.md#caveats)
+and consider whether you really want to maintain a plugin.
 
 To use your plugin with clusterlint, pass its path on the commandline:
 
