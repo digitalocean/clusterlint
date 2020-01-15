@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"plugin"
 	"strings"
 	"time"
 
@@ -53,6 +54,10 @@ func main() {
 			Usage: "configure timeout for the kubernetes client. default: 30s",
 			Value: time.Second * 30,
 		},
+		cli.StringSliceFlag{
+			Name:  "plugins",
+			Usage: "paths of Go plugins to load containing local checks",
+		},
 	}
 	app.Commands = []cli.Command{
 		{
@@ -68,6 +73,7 @@ func main() {
 					Usage: "list all checks not in groups `GROUP1, GROUP2`",
 				},
 			},
+			Before: loadPlugins,
 			Action: listChecks,
 		},
 		{
@@ -103,6 +109,7 @@ func main() {
 					Usage: "Disable color output",
 				},
 			},
+			Before: loadPlugins,
 			Action: runChecks,
 		},
 	}
@@ -111,6 +118,18 @@ func main() {
 		fmt.Printf("failed: %v", err)
 		os.Exit(1)
 	}
+}
+
+func loadPlugins(c *cli.Context) error {
+	plugins := c.GlobalStringSlice("plugins")
+	for _, p := range plugins {
+		_, err := plugin.Open(p)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // listChecks lists the names and desc of all checks in the group if found

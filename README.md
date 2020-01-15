@@ -62,6 +62,26 @@ Clusterlint provides a way to ignore some special objects in the cluster from be
 }
 ```
 
+### Building local checks
+
+Some individuals and organizations have Kubernetes best practices that are not
+applicable to the general community, but which they would like to check with
+clusterlint. If your check may be useful for *anyone* else, we encourage you to
+submit it to clusterlint rather than keeping it local. However, if you have a
+truly specific check that is not appropriate for sharing with the broader
+community, you can implement it using Go plugins.
+
+See the [example plugin](example-plugin) for documentation on how to build a
+plugin. Please be sure to read the [caveats](example-plugin/README.md#caveats)
+and consider whether you really want to maintain a plugin.
+
+To use your plugin with clusterlint, pass its path on the commandline:
+
+```console
+$ clusterlint --plugins=/path/to/plugin.so list
+$ clusterlint --plugins=/path/to/plugin.so run -c my-plugin-check
+```
+
 ## Contributing
 
 Contributions are welcome, in the form of either issues or pull requests. Please
