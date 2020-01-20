@@ -27,7 +27,7 @@ import (
 )
 
 // Run applies the filters and runs the resultant check list in parallel
-func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diagnosticFilter DiagnosticFilter, objectFilter kube.ObjectsFilter) (*CheckResult, error) {
+func Run(ctx context.Context, client *kube.Client, checkFilter CheckFilter, diagnosticFilter DiagnosticFilter, objectFilter kube.ObjectFilter) (*CheckResult, error) {
 	objects, err := client.FetchObjects(ctx)
 	if err != nil {
 		return nil, err

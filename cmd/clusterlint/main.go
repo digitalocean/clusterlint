@@ -181,7 +181,7 @@ func runChecks(c *cli.Context) error {
 
 	diagnosticFilter := checks.DiagnosticFilter{Severity: checks.Severity(c.String("level"))}
 
-	objectFilter, err := kube.NewObjectsFilter(c.StringSlice("n"), c.StringSlice("N"))
+	objectFilter, err := kube.NewObjectFilter(c.StringSlice("n"), c.StringSlice("N"))
 	if err != nil {
 		return err
 	}

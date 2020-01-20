@@ -26,20 +26,20 @@ import (
 )
 
 func TestNamespaceError(t *testing.T) {
-	_, err := NewObjectsFilter([]string{"kube-system"}, []string{"kube-system"})
+	_, err := NewObjectFilter([]string{"kube-system"}, []string{"kube-system"})
 
 	assert.Error(t, err)
 	assert.Equal(t, fmt.Errorf("cannot specify both include and exclude namespace conditions"), err)
 }
 
 func TestFilter(t *testing.T) {
-	filter, err := NewObjectsFilter([]string{"namespace_1"},nil)
+	filter, err := NewObjectFilter([]string{"namespace_1"},nil)
 	assert.NoError(t, err)
 	objects := namespaceObjects()
 	filter.Filter(objects)
 	assert.Equal(t, namespace1Objects(), objects)
 
-	filter, err = NewObjectsFilter(nil,[]string{"namespace_2"})
+	filter, err = NewObjectFilter(nil,[]string{"namespace_2"})
 	assert.NoError(t, err)
 	objects = namespaceObjects()
 	filter.Filter(objects)

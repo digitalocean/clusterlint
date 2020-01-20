@@ -22,26 +22,26 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
-// ObjectsFilter stores names of namespaces that needs to be included or excluded while running checks
-type ObjectsFilter struct {
+// ObjectFilter stores k8s object's fields that needs to be included or excluded while running checks
+type ObjectFilter struct {
 	IncludeNamespaces []string
 	ExcludeNamespaces []string
 }
 
 
-// NewObjectsFilter is a constructor to initialize an instance of ObjectsFilter
-func NewObjectsFilter(includeNamespaces, excludeNamespaces []string) (ObjectsFilter, error) {
+// NewObjectFilter is a constructor to initialize an instance of ObjectFilter
+func NewObjectFilter(includeNamespaces, excludeNamespaces []string) (ObjectFilter, error) {
 	if len(includeNamespaces) > 0 && len(excludeNamespaces) > 0 {
-		return ObjectsFilter{}, fmt.Errorf("cannot specify both include and exclude namespace conditions")
+		return ObjectFilter{}, fmt.Errorf("cannot specify both include and exclude namespace conditions")
 	}
-	return ObjectsFilter{
+	return ObjectFilter{
 		IncludeNamespaces: includeNamespaces,
 		ExcludeNamespaces: excludeNamespaces,
 	}, nil
 }
 
-// FilterChecks filters all to return set of checks based on the ObjectsFilter
-func (f ObjectsFilter) Filter(objects *Objects) {
+// FilterChecks filters all to return set of checks based on the ObjectFilter
+func (f ObjectFilter) Filter(objects *Objects) {
 	if len(f.IncludeNamespaces) > 0 {
 		var ps []corev1.Pod
 		for _, p := range objects.Pods.Items  {
