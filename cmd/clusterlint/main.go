@@ -96,12 +96,12 @@ func main() {
 					Name:  "C, ignore-checks",
 					Usage: "run a specific check",
 				},
-				cli.StringSliceFlag{
-					Name:  "n, namespaces",
+				cli.StringFlag{
+					Name:  "n, namespace",
 					Usage: "run checks in specific namespace",
 				},
-				cli.StringSliceFlag{
-					Name:  "N, ignore-namespaces",
+				cli.StringFlag{
+					Name:  "N, ignore-namespace",
 					Usage: "run checks not in specific namespace",
 				},
 				cli.StringFlag{
@@ -181,7 +181,7 @@ func runChecks(c *cli.Context) error {
 
 	diagnosticFilter := checks.DiagnosticFilter{Severity: checks.Severity(c.String("level"))}
 
-	objectFilter, err := kube.NewObjectFilter(c.StringSlice("n"), c.StringSlice("N"))
+	objectFilter, err := kube.NewObjectFilter(c.String("n"), c.String("N"))
 	if err != nil {
 		return err
 	}

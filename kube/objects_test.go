@@ -40,7 +40,7 @@ func TestFetchObjects(t *testing.T) {
 			Labels: map[string]string{"doks_key": "bar"}},
 	})
 
-	actual, err := api.FetchObjects(context.Background())
+	actual, err := api.FetchObjects(context.Background(),ObjectFilter{})
 	assert.NoError(t, err)
 
 	assert.NotNil(t, actual.Nodes)

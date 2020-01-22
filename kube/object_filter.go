@@ -19,179 +19,34 @@ package kube
 import (
 	// Load client-go authentication plugins
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 // ObjectFilter stores k8s object's fields that needs to be included or excluded while running checks
 type ObjectFilter struct {
-	IncludeNamespaces []string
-	ExcludeNamespaces []string
+	IncludeNamespace string
+	ExcludeNamespace string
 }
 
-
 // NewObjectFilter is a constructor to initialize an instance of ObjectFilter
-func NewObjectFilter(includeNamespaces, excludeNamespaces []string) (ObjectFilter, error) {
-	if len(includeNamespaces) > 0 && len(excludeNamespaces) > 0 {
+func NewObjectFilter(includeNamespace, excludeNamespace string) (ObjectFilter, error) {
+	if len(includeNamespace) > 0 && len(excludeNamespace) > 0 {
 		return ObjectFilter{}, fmt.Errorf("cannot specify both include and exclude namespace conditions")
 	}
 	return ObjectFilter{
-		IncludeNamespaces: includeNamespaces,
-		ExcludeNamespaces: excludeNamespaces,
+		IncludeNamespace: includeNamespace,
+		ExcludeNamespace: excludeNamespace,
 	}, nil
 }
 
-// FilterChecks filters all to return set of checks based on the ObjectFilter
-func (f ObjectFilter) Filter(objects *Objects) {
-	if len(f.IncludeNamespaces) > 0 {
-		var ps []corev1.Pod
-		for _, p := range objects.Pods.Items  {
-			if contains(f.IncludeNamespaces, p.Namespace) {
-				ps = append(ps, p)
-			}
-		}
-		objects.Pods.Items = ps
-
-		var pts []corev1.PodTemplate
-		for _, pt := range objects.PodTemplates.Items  {
-			if contains(f.IncludeNamespaces, pt.Namespace) {
-				pts = append(pts, pt)
-			}
-		}
-		objects.PodTemplates.Items = pts
-
-		var pvcs []corev1.PersistentVolumeClaim
-		for _, pvc := range objects.PersistentVolumeClaims.Items {
-			if contains(f.IncludeNamespaces, pvc.Namespace) {
-				pvcs = append(pvcs, pvc)
-			}
-		}
-		objects.PersistentVolumeClaims.Items = pvcs
-
-		var cms []corev1.ConfigMap
-		for _, cm := range objects.ConfigMaps.Items {
-			if contains(f.IncludeNamespaces, cm.Namespace) {
-				cms = append(cms, cm)
-			}
-		}
-		objects.ConfigMaps.Items = cms
-
-		var svcs []corev1.Service
-		for _, svc := range objects.Services.Items {
-			if contains(f.IncludeNamespaces, svc.Namespace) {
-				svcs = append(svcs, svc)
-			}
-		}
-		objects.Services.Items = svcs
-
-		var scrts []corev1.Secret
-		for _, scrt := range objects.Secrets.Items {
-			if contains(f.IncludeNamespaces, scrt.Namespace) {
-				scrts = append(scrts, scrt)
-			}
-		}
-		objects.Secrets.Items = scrts
-
-		var sas []corev1.ServiceAccount
-		for _, sa := range objects.ServiceAccounts.Items {
-			if contains(f.IncludeNamespaces, sa.Namespace) {
-				sas = append(sas, sa)
-			}
-		}
-		objects.ServiceAccounts.Items = sas
-
-		var rqs []corev1.ResourceQuota
-		for _, rq := range objects.ResourceQuotas.Items {
-			if contains(f.IncludeNamespaces, rq.Namespace) {
-				rqs = append(rqs, rq)
-			}
-		}
-		objects.ResourceQuotas.Items = rqs
-
-		var lrs []corev1.LimitRange
-		for _, lr := range objects.LimitRanges.Items {
-			if contains(f.IncludeNamespaces, lr.Namespace) {
-				lrs = append(lrs, lr)
-			}
-		}
-		objects.LimitRanges.Items = lrs
-
-		return
+// NamespaceOptions returns ListOptions for filtering by namespace
+func (f ObjectFilter) NamespaceOptions(opts metav1.ListOptions) metav1.ListOptions {
+	if len(f.IncludeNamespace) > 0 {
+		opts.FieldSelector = fields.OneTermEqualSelector("metadata.namespace",f.IncludeNamespace).String()
 	}
-
-	if len(f.ExcludeNamespaces) > 0 {
-		var ps []corev1.Pod
-		for _, p := range objects.Pods.Items  {
-			if !contains(f.ExcludeNamespaces, p.Namespace) {
-				ps = append(ps, p)
-			}
-		}
-		objects.Pods.Items = ps
-
-		var pts []corev1.PodTemplate
-		for _, pt := range objects.PodTemplates.Items  {
-			if !contains(f.ExcludeNamespaces, pt.Namespace) {
-				pts = append(pts, pt)
-			}
-		}
-		objects.PodTemplates.Items = pts
-
-		var pvcs []corev1.PersistentVolumeClaim
-		for _, pvc := range objects.PersistentVolumeClaims.Items {
-			if !contains(f.ExcludeNamespaces, pvc.Namespace) {
-				pvcs = append(pvcs, pvc)
-			}
-		}
-		objects.PersistentVolumeClaims.Items = pvcs
-
-		var cms []corev1.ConfigMap
-		for _, cm := range objects.ConfigMaps.Items {
-			if !contains(f.ExcludeNamespaces, cm.Namespace) {
-				cms = append(cms, cm)
-			}
-		}
-		objects.ConfigMaps.Items = cms
-
-		var svcs []corev1.Service
-		for _, svc := range objects.Services.Items {
-			if !contains(f.ExcludeNamespaces, svc.Namespace) {
-				svcs = append(svcs, svc)
-			}
-		}
-		objects.Services.Items = svcs
-
-		var scrts []corev1.Secret
-		for _, scrt := range objects.Secrets.Items {
-			if !contains(f.ExcludeNamespaces, scrt.Namespace) {
-				scrts = append(scrts, scrt)
-			}
-		}
-		objects.Secrets.Items = scrts
-
-		var sas []corev1.ServiceAccount
-		for _, sa := range objects.ServiceAccounts.Items {
-			if !contains(f.ExcludeNamespaces, sa.Namespace) {
-				sas = append(sas, sa)
-			}
-		}
-		objects.ServiceAccounts.Items = sas
-
-		var rqs []corev1.ResourceQuota
-		for _, rq := range objects.ResourceQuotas.Items {
-			if !contains(f.ExcludeNamespaces, rq.Namespace) {
-				rqs = append(rqs, rq)
-			}
-		}
-		objects.ResourceQuotas.Items = rqs
-
-		var lrs []corev1.LimitRange
-		for _, lr := range objects.LimitRanges.Items {
-			if !contains(f.ExcludeNamespaces, lr.Namespace) {
-				lrs = append(lrs, lr)
-			}
-		}
-		objects.LimitRanges.Items = lrs
-
-		return
+	if len(f.ExcludeNamespace) > 0 {
+		opts.FieldSelector = fields.OneTermNotEqualSelector("metadata.namespace",f.ExcludeNamespace).String()
 	}
+	return opts
 }
-

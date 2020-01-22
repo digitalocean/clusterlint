@@ -64,7 +64,7 @@ type Client struct {
 
 // FetchObjects returns the objects from a Kubernetes cluster.
 // ctx is currently unused during API calls. More info: https://github.com/kubernetes/community/pull/1166
-func (c *Client) FetchObjects(ctx context.Context) (*Objects, error) {
+func (c *Client) FetchObjects(ctx context.Context,filter ObjectFilter) (*Objects, error) {
 	client := c.KubeClient.CoreV1()
 	admissionControllerClient := c.KubeClient.AdmissionregistrationV1beta1()
 	opts := metav1.ListOptions{}
@@ -85,39 +85,39 @@ func (c *Client) FetchObjects(ctx context.Context) (*Objects, error) {
 		return
 	})
 	g.Go(func() (err error) {
-		objects.Pods, err = client.Pods(corev1.NamespaceAll).List(opts)
+		objects.Pods, err = client.Pods(corev1.NamespaceAll).List(filter.NamespaceOptions(opts))
 		return
 	})
 	g.Go(func() (err error) {
-		objects.PodTemplates, err = client.PodTemplates(corev1.NamespaceAll).List(opts)
+		objects.PodTemplates, err = client.PodTemplates(corev1.NamespaceAll).List(filter.NamespaceOptions(opts))
 		return
 	})
 	g.Go(func() (err error) {
-		objects.PersistentVolumeClaims, err = client.PersistentVolumeClaims(corev1.NamespaceAll).List(opts)
+		objects.PersistentVolumeClaims, err = client.PersistentVolumeClaims(corev1.NamespaceAll).List(filter.NamespaceOptions(opts))
 		return
 	})
 	g.Go(func() (err error) {
-		objects.ConfigMaps, err = client.ConfigMaps(corev1.NamespaceAll).List(opts)
+		objects.ConfigMaps, err = client.ConfigMaps(corev1.NamespaceAll).List(filter.NamespaceOptions(opts))
 		return
 	})
 	g.Go(func() (err error) {
-		objects.Secrets, err = client.Secrets(corev1.NamespaceAll).List(opts)
+		objects.Secrets, err = client.Secrets(corev1.NamespaceAll).List(filter.NamespaceOptions(opts))
 		return
 	})
 	g.Go(func() (err error) {
-		objects.Services, err = client.Services(corev1.NamespaceAll).List(opts)
+		objects.Services, err = client.Services(corev1.NamespaceAll).List(filter.NamespaceOptions(opts))
 		return
 	})
 	g.Go(func() (err error) {
-		objects.ServiceAccounts, err = client.ServiceAccounts(corev1.NamespaceAll).List(opts)
+		objects.ServiceAccounts, err = client.ServiceAccounts(corev1.NamespaceAll).List(filter.NamespaceOptions(opts))
 		return
 	})
 	g.Go(func() (err error) {
-		objects.ResourceQuotas, err = client.ResourceQuotas(corev1.NamespaceAll).List(opts)
+		objects.ResourceQuotas, err = client.ResourceQuotas(corev1.NamespaceAll).List(filter.NamespaceOptions(opts))
 		return
 	})
 	g.Go(func() (err error) {
-		objects.LimitRanges, err = client.LimitRanges(corev1.NamespaceAll).List(opts)
+		objects.LimitRanges, err = client.LimitRanges(corev1.NamespaceAll).List(filter.NamespaceOptions(opts))
 		return
 	})
 	g.Go(func() (err error) {
