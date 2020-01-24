@@ -97,6 +97,14 @@ func main() {
 					Usage: "run a specific check",
 				},
 				cli.StringFlag{
+					Name:  "n, namespace",
+					Usage: "run checks in specific namespace",
+				},
+				cli.StringFlag{
+					Name:  "N, ignore-namespace",
+					Usage: "run checks not in specific namespace",
+				},
+				cli.StringFlag{
 					Name:  "output, o",
 					Usage: "output format [text|json]. Default: text",
 				},
@@ -173,7 +181,12 @@ func runChecks(c *cli.Context) error {
 
 	diagnosticFilter := checks.DiagnosticFilter{Severity: checks.Severity(c.String("level"))}
 
-	output, err := checks.Run(context.Background(), client, filter, diagnosticFilter)
+	objectFilter, err := kube.NewObjectFilter(c.String("n"), c.String("N"))
+	if err != nil {
+		return err
+	}
+
+	output, err := checks.Run(context.Background(), client, filter, diagnosticFilter, objectFilter)
 	if err != nil {
 		return err
 	}
