@@ -1,5 +1,5 @@
 /*
-Copyright 2019 DigitalOcean
+Copyright 2020 DigitalOcean
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -153,6 +153,11 @@ func checkEnvVars(containers []corev1.Container, namespace string) []kube.Identi
 		for _, env := range container.EnvFrom {
 			if env.ConfigMapRef != nil {
 				refs = append(refs, kube.Identifier{Name: env.ConfigMapRef.LocalObjectReference.Name, Namespace: namespace})
+			}
+		}
+		for _, env := range container.Env {
+			if env.ValueFrom != nil && env.ValueFrom.ConfigMapKeyRef != nil {
+				refs = append(refs, kube.Identifier{Name: env.ValueFrom.ConfigMapKeyRef.LocalObjectReference.Name, Namespace: namespace})
 			}
 		}
 	}
