@@ -1,5 +1,5 @@
 /*
-Copyright 2019 DigitalOcean
+Copyright 2020 DigitalOcean
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -63,6 +63,11 @@ func TestUnusedConfigMapWarning(t *testing.T) {
 		{
 			name:     "environment variable references config map",
 			objs:     configMapEnvSource(),
+			expected: nil,
+		},
+		{
+			name:     "environment variable value from references config map",
+			objs:     configMapEnvVarValueFromSource(),
 			expected: nil,
 		},
 		{
@@ -195,6 +200,29 @@ func configMapEnvSource() *kube.Objects {
 					},
 				},
 			}},
+	}
+	return objs
+}
+
+func configMapEnvVarValueFromSource() *kube.Objects {
+	objs := initConfigMap()
+	objs.Pods.Items[0].Spec = corev1.PodSpec{
+		Containers: []corev1.Container{
+			{
+				Name:  "test-container",
+				Image: "docker.io/nginx",
+				Env: []corev1.EnvVar{
+					{
+						Name: "special_env_var",
+						ValueFrom: &corev1.EnvVarSource{
+							ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{Name: "cm_foo"},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	return objs
 }
