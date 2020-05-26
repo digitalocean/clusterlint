@@ -64,7 +64,7 @@ type Client struct {
 
 // FetchObjects returns the objects from a Kubernetes cluster.
 // ctx is currently unused during API calls. More info: https://github.com/kubernetes/community/pull/1166
-func (c *Client) FetchObjects(ctx context.Context,filter ObjectFilter) (*Objects, error) {
+func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Objects, error) {
 	client := c.KubeClient.CoreV1()
 	admissionControllerClient := c.KubeClient.AdmissionregistrationV1beta1()
 	opts := metav1.ListOptions{}

@@ -30,6 +30,7 @@ type Diagnostic struct {
 	Kind     Kind
 	Object   *metav1.ObjectMeta
 	Owners   []metav1.OwnerReference
+	Details  string
 }
 
 func (d Diagnostic) String() string {

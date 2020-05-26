@@ -33,17 +33,17 @@ func TestNamespaceError(t *testing.T) {
 }
 
 func TestNamespaceOptions(t *testing.T) {
-	filter, err := NewObjectFilter("namespace-1","")
+	filter, err := NewObjectFilter("namespace-1", "")
 	assert.NoError(t, err)
 	assert.Equal(t,
-		metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.namespace","namespace-1").String()},
+		metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.namespace", "namespace-1").String()},
 		filter.NamespaceOptions(metav1.ListOptions{}),
 	)
 
-	filter, err = NewObjectFilter("","namespace-2")
+	filter, err = NewObjectFilter("", "namespace-2")
 	assert.NoError(t, err)
 	assert.Equal(t,
-		metav1.ListOptions{FieldSelector: fields.OneTermNotEqualSelector("metadata.namespace","namespace-2").String()},
+		metav1.ListOptions{FieldSelector: fields.OneTermNotEqualSelector("metadata.namespace", "namespace-2").String()},
 		filter.NamespaceOptions(metav1.ListOptions{}),
 	)
 }

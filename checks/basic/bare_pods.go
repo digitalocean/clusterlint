@@ -73,9 +73,9 @@ func (b *barePodCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 }
 
 func isStaticPod(pod corev1.Pod, nodeList []corev1.Node) bool {
-	for _,node := range nodeList {
+	for _, node := range nodeList {
 		// https://github.com/kubernetes/kubernetes/blob/b409073e99695ea35642a8194b9285ac12fd0cf8/pkg/kubelet/config/common.go#L51
-		if strings.HasSuffix(pod.Name, "-" + strings.ToLower(node.Name)) {
+		if strings.HasSuffix(pod.Name, "-"+strings.ToLower(node.Name)) {
 			return true
 		}
 	}
