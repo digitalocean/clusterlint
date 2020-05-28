@@ -59,7 +59,7 @@ func (c *nodeLabelsTaintsCheck) Run(objects *kube.Objects) ([]checks.Diagnostic,
 		if len(customLabels) > 0 {
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
-				Message:  "Custom node labels will be lost if node is replaced or upgraded.",
+				Message:  "Custom node labels will be lost if node is replaced or upgraded. Add custom labels on node pools instead.",
 				Kind:     checks.Node,
 				Object:   &node.ObjectMeta,
 				Details:  fmt.Sprintf("Custom node labels: %s", customLabels),

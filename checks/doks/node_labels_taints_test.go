@@ -75,7 +75,7 @@ func TestNodeLabels(t *testing.T) {
 			},
 			expectedDiagnostics: []checks.Diagnostic{{
 				Severity: checks.Warning,
-				Message:  "Custom node labels will be lost if node is replaced or upgraded.",
+				Message:  "Custom node labels will be lost if node is replaced or upgraded. Add custom labels on node pools instead.",
 				Kind:     checks.Node,
 				Details:  "Custom node labels: [example.com/custom-label example.com/another-label]",
 				Object: &metav1.ObjectMeta{
