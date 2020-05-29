@@ -17,6 +17,7 @@ limitations under the License.
 package doks
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -48,33 +49,37 @@ func (*nodeLabelsTaintsCheck) Description() string {
 // Run runs the check.
 func (c *nodeLabelsTaintsCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
-
 	for _, node := range objects.Nodes.Items {
+		var customLabels, customTaints []string
 		for labelKey := range node.Labels {
 			if !isKubernetesLabel(labelKey) && !isDOKSLabel(labelKey) {
-				d := checks.Diagnostic{
-					Severity: checks.Warning,
-					Message:  "Custom node labels will be lost if node is replaced or upgraded.",
-					Kind:     checks.Node,
-					Object:   &node.ObjectMeta,
-				}
-				diagnostics = append(diagnostics, d)
-				// Produce only one label diagnostic per node.
-				break
+				customLabels = append(customLabels, labelKey)
 			}
+		}
+		if len(customLabels) > 0 {
+			d := checks.Diagnostic{
+				Severity: checks.Warning,
+				Message:  "Custom node labels will be lost if node is replaced or upgraded. Add custom labels on node pools instead.",
+				Kind:     checks.Node,
+				Object:   &node.ObjectMeta,
+				Details:  fmt.Sprintf("Custom node labels: %s", customLabels),
+			}
+			diagnostics = append(diagnostics, d)
 		}
 		for _, taint := range node.Spec.Taints {
 			if !isDOKSTaint(taint) {
-				d := checks.Diagnostic{
-					Severity: checks.Warning,
-					Message:  "Custom node taints will be lost if node is replaced or upgraded.",
-					Kind:     checks.Node,
-					Object:   &node.ObjectMeta,
-				}
-				diagnostics = append(diagnostics, d)
-				// Produce only one taint diagnostic per node.
-				break
+				customTaints = append(customTaints, taint.Key)
 			}
+		}
+		if len(customTaints) > 0 {
+			d := checks.Diagnostic{
+				Severity: checks.Warning,
+				Message:  "Custom node taints will be lost if node is replaced or upgraded.",
+				Kind:     checks.Node,
+				Object:   &node.ObjectMeta,
+				Details:  fmt.Sprintf("Custom node taints: %s", customTaints),
+			}
+			diagnostics = append(diagnostics, d)
 		}
 	}
 

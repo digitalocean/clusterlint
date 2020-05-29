@@ -190,9 +190,8 @@ func runChecks(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	write(output, c)
-
-	return nil
+	err = write(output, c)
+	return err
 }
 
 func write(checkResult *checks.CheckResult, c *cli.Context) error {
@@ -220,7 +219,7 @@ func write(checkResult *checks.CheckResult, c *cli.Context) error {
 			case checks.Suggestion:
 				s.Println(d)
 			default:
-				fmt.Printf("%s\n", d)
+				fmt.Println(d)
 			}
 		}
 	}

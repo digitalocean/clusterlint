@@ -588,6 +588,8 @@ spec:
 
 When a DOKS cluster is upgraded, all worker nodes are replaced, and replacement nodes do not retain any custom labels or taints that were previously set by the user on the nodes. This check reports any labels or taints that will be lost on upgrade.
 
+DOKS provides persistent node pool labels. Adding a custom label to a node pool will ensure that the label is propagated to the worker nodes in the node pool after replacement or upgrade.
+
 ### How to Fix
 
 ```bash

@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
+
 // ObjectFilter stores k8s object's fields that needs to be included or excluded while running checks
 type ObjectFilter struct {
 	IncludeNamespace string
@@ -43,10 +44,10 @@ func NewObjectFilter(includeNamespace, excludeNamespace string) (ObjectFilter, e
 // NamespaceOptions returns ListOptions for filtering by namespace
 func (f ObjectFilter) NamespaceOptions(opts metav1.ListOptions) metav1.ListOptions {
 	if len(f.IncludeNamespace) > 0 {
-		opts.FieldSelector = fields.OneTermEqualSelector("metadata.namespace",f.IncludeNamespace).String()
+		opts.FieldSelector = fields.OneTermEqualSelector("metadata.namespace", f.IncludeNamespace).String()
 	}
 	if len(f.ExcludeNamespace) > 0 {
-		opts.FieldSelector = fields.OneTermNotEqualSelector("metadata.namespace",f.ExcludeNamespace).String()
+		opts.FieldSelector = fields.OneTermNotEqualSelector("metadata.namespace", f.ExcludeNamespace).String()
 	}
 	return opts
 }
