@@ -26,29 +26,29 @@ import (
 )
 
 func init() {
-	checks.Register(&webhookReplaementCheck{})
+	checks.Register(&webhookReplacementCheck{})
 }
 
-type webhookReplaementCheck struct{}
+type webhookReplacementCheck struct{}
 
 // Name returns a unique name for this check.
-func (w *webhookReplaementCheck) Name() string {
+func (w *webhookReplacementCheck) Name() string {
 	return "admission-controller-webhook-replacement"
 }
 
 // Groups returns a list of group names this check should be part of.
-func (w *webhookReplaementCheck) Groups() []string {
+func (w *webhookReplacementCheck) Groups() []string {
 	return []string{"doks"}
 }
 
 // Description returns a detailed human-readable description of what this check
 // does.
-func (w *webhookReplaementCheck) Description() string {
+func (w *webhookReplacementCheck) Description() string {
 	return "Check for admission control webhooks that could cause problems during upgrades or node replacement"
 }
 
 // Run runs this check on a set of Kubernetes objects.
-func (w *webhookReplaementCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (w *webhookReplacementCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	const apiserverServiceName = "kubernetes"
 
 	var diagnostics []checks.Diagnostic
