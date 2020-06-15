@@ -16,11 +16,13 @@ github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
 # github.com/docker/distribution v2.7.1+incompatible
+## explicit
 github.com/docker/distribution/digestset
 github.com/docker/distribution/reference
 # github.com/evanphx/json-patch v4.2.0+incompatible
 github.com/evanphx/json-patch
 # github.com/fatih/color v1.7.0
+## explicit
 github.com/fatih/color
 # github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d
 github.com/gogo/protobuf/proto
@@ -50,6 +52,7 @@ github.com/imdario/mergo
 # github.com/json-iterator/go v1.1.8
 github.com/json-iterator/go
 # github.com/mattn/go-colorable v0.1.2
+## explicit
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.8
 github.com/mattn/go-isatty
@@ -58,14 +61,17 @@ github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1
 github.com/modern-go/reflect2
 # github.com/opencontainers/go-digest v1.0.0-rc1
+## explicit
 github.com/opencontainers/go-digest
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.4.0
+## explicit
 github.com/stretchr/testify/assert
 # github.com/urfave/cli v1.19.1
+## explicit
 github.com/urfave/cli
 # golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
 golang.org/x/crypto/ssh/terminal
@@ -83,6 +89,7 @@ golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20190423024810-112230192c58
+## explicit
 golang.org/x/sync/errgroup
 # golang.org/x/sys v0.0.0-20190826190057-c7b8b68b1456
 golang.org/x/sys/unix
@@ -110,6 +117,7 @@ gopkg.in/inf.v0
 # gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
 # k8s.io/api v0.17.3
+## explicit
 k8s.io/api/admissionregistration/v1
 k8s.io/api/admissionregistration/v1beta1
 k8s.io/api/apps/v1
@@ -151,6 +159,7 @@ k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 # k8s.io/apimachinery v0.17.3
+## explicit
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
 k8s.io/apimachinery/pkg/api/resource
@@ -189,6 +198,7 @@ k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/json
 k8s.io/apimachinery/third_party/forked/golang/reflect
 # k8s.io/client-go v0.17.3
+## explicit
 k8s.io/client-go/discovery
 k8s.io/client-go/discovery/fake
 k8s.io/client-go/kubernetes

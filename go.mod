@@ -1,6 +1,6 @@
 module github.com/digitalocean/clusterlint
 
-go 1.12
+go 1.14
 
 require (
 	github.com/docker/distribution v2.7.1+incompatible
