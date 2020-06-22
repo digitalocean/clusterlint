@@ -2,7 +2,7 @@ version: 2
 jobs:
   license:
     docker:
-      - image: golang:1.12.6
+      - image: golang:1.13.12
     steps:
       - checkout
       - run: ./script/check-licenses.sh
@@ -10,13 +10,13 @@ jobs:
     environment:
       GOFLAGS: "-mod=vendor"
     docker:
-      - image: golang:1.12.6
+      - image: golang:1.13.12
     steps:
       - checkout
       - run: go vet ./...
   lint:
     docker:
-      - image: golang:1.12.6
+      - image: golang:1.13.12
     steps:
       - checkout
       - run: go get golang.org/x/lint/golint
@@ -25,7 +25,7 @@ jobs:
     environment:
       GOFLAGS: "-mod=vendor"
     docker:
-      - image: golang:1.12.6
+      - image: golang:1.13.12
     steps:
       - checkout
       - run: go test -race -cover ./...
