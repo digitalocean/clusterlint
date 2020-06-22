@@ -33,12 +33,12 @@ func TestFetchObjects(t *testing.T) {
 		KubeClient: fake.NewSimpleClientset(),
 	}
 
-	api.KubeClient.CoreV1().Namespaces().Create(&corev1.Namespace{
+	api.KubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "kube-system",
 			Labels: map[string]string{"doks_key": "bar"}},
-	})
+	}, metav1.CreateOptions{})
 
 	actual, err := api.FetchObjects(context.Background(), ObjectFilter{})
 	assert.NoError(t, err)
@@ -97,11 +97,11 @@ users:
 - name: admin
 `)))
 	assert.NoError(t, err)
-	_, err = client.KubeClient.CoreV1().Namespaces().Create(&corev1.Namespace{
+	_, err = client.KubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kube-system",
 		},
-	})
+	}, metav1.CreateOptions{})
 	assert.Contains(t, err.Error(), "fail")
 }

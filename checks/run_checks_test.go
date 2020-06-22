@@ -36,11 +36,11 @@ func TestRun(t *testing.T) {
 	client := &kube.Client{
 		KubeClient: fake.NewSimpleClientset(),
 	}
-	client.KubeClient.CoreV1().Namespaces().Create(&corev1.Namespace{
+	client.KubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kube-system",
 		},
-	})
+	}, metav1.CreateOptions{})
 
 	alwaysFailCheck, err := Get("always-fail")
 	assert.NoError(t, err)
