@@ -111,6 +111,20 @@ func TestWebhookTimeoutError(t *testing.T) {
 			),
 			expected: webhookTimeoutErrors(),
 		},
+		{
+			name: "TimeoutSeconds value is set to nil",
+			objs: webhookTimeoutTestObjects(
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				nil,
+				2,
+			),
+			expected: nil,
+		},
 	}
 
 	webhookCheck := webhookTimeoutCheck{}
@@ -206,14 +220,14 @@ func webhookTimeoutErrors() []checks.Diagnostic {
 	diagnostics := []checks.Diagnostic{
 		{
 			Severity: checks.Error,
-			Message:  "Validating webhook with a TimeoutSeconds value greater than 30 seconds will block upgrades.",
+			Message:  "Validating webhook with a TimeoutSeconds value greater than 29 seconds will block upgrades.",
 			Kind:     checks.ValidatingWebhookConfiguration,
 			Object:   &validatingConfig.ObjectMeta,
 			Owners:   validatingConfig.ObjectMeta.GetOwnerReferences(),
 		},
 		{
 			Severity: checks.Error,
-			Message:  "Mutating webhook with a TimeoutSeconds value greater than 30 seconds will block upgrades.",
+			Message:  "Mutating webhook with a TimeoutSeconds value greater than 29 seconds will block upgrades.",
 			Kind:     checks.MutatingWebhookConfiguration,
 			Object:   &mutatingConfig.ObjectMeta,
 			Owners:   mutatingConfig.ObjectMeta.GetOwnerReferences(),
