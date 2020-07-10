@@ -28,27 +28,54 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	Register(&alwaysFail{})
-
-	filter := CheckFilter{
-		IncludeChecks: []string{"always-fail"},
-	}
-	client := &kube.Client{
-		KubeClient: fake.NewSimpleClientset(),
-	}
-	client.KubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "kube-system",
+	tests := []struct{
+		name string
+		check string
+		expectedErr string
+		expectedDiagnostics int
+	}{
+		{
+			name: "test failure",
+			check: "always-fail",
+			expectedDiagnostics: 1,
 		},
-	}, metav1.CreateOptions{})
+		{
+			name: "test panic",
+			check: "panic-check",
+			expectedErr: "Recovered from panic in check 'panic-check':",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			Register(&alwaysFail{})
+			Register(&panicCheck{})
+			filter := CheckFilter{
+				IncludeChecks: []string{test.check},
+			}
 
-	alwaysFailCheck, err := Get("always-fail")
-	assert.NoError(t, err)
+			client := &kube.Client{
+				KubeClient: fake.NewSimpleClientset(),
+			}
+			client.KubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "kube-system",
+				},
+			}, metav1.CreateOptions{})
 
-	result, err := Run(context.Background(), client, filter, DiagnosticFilter{}, kube.ObjectFilter{})
-	assert.NoError(t, err)
-	assert.Len(t, result.Diagnostics, 1)
-	assert.Equal(t, alwaysFailCheck.Name(), result.Diagnostics[0].Check)
+			check, err := Get(test.check)
+			assert.NoError(t, err)
+
+			result, err := Run(context.Background(), client, filter, DiagnosticFilter{}, kube.ObjectFilter{})
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+				assert.Len(t, result.Diagnostics, 1)
+				assert.Equal(t, check.Name(), result.Diagnostics[0].Check)
+			} else {
+				assert.Contains(t, err.Error(), test.expectedErr)
+				assert.Nil(t, result)
+			}
+		})
+	}
 }
 
 type alwaysFail struct{}
@@ -79,4 +106,34 @@ func (nc *alwaysFail) Run(*kube.Objects) ([]Diagnostic, error) {
 		Kind:     Pod,
 		Object:   &metav1.ObjectMeta{},
 	}}, nil
+}
+
+type panicCheck struct {}
+
+// Name returns a unique name for this check.
+func (nc *panicCheck) Name() string {
+	return "panic-check"
+}
+
+// Groups returns a list of group names this check should be part of.
+func (nc *panicCheck) Groups() []string {
+	return nil
+}
+
+// Description returns a detailed human-readable description of what this check
+// does.
+func (nc *panicCheck) Description() string {
+	return "Does not check anything. Panics.."
+}
+
+// Run runs this check on a set of Kubernetes objects. It can return warnings
+// (low-priority problems) and errors (high-priority problems) as well as an
+// error value indicating that the check failed to run.
+func (nc *panicCheck) Run(*kube.Objects) ([]Diagnostic, error) {
+	type some struct {
+		x int
+	}
+	var s *some
+	_ = s.x
+	return nil, nil
 }
