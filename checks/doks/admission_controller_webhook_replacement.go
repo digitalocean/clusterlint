@@ -53,8 +53,10 @@ func (w *webhookReplacementCheck) Run(objects *kube.Objects) ([]checks.Diagnosti
 
 	var diagnostics []checks.Diagnostic
 
-	for _, config := range objects.ValidatingWebhookConfigurations.Items {
-		for _, wh := range config.Webhooks {
+	for i := range objects.ValidatingWebhookConfigurations.Items {
+		config := objects.ValidatingWebhookConfigurations.Items[i]
+		for k := range config.Webhooks {
+			wh := config.Webhooks[k]
 			if *wh.FailurePolicy == ar.Ignore {
 				// Webhooks with failurePolicy: Ignore are fine.
 				continue
@@ -73,7 +75,8 @@ func (w *webhookReplacementCheck) Run(objects *kube.Objects) ([]checks.Diagnosti
 				continue
 			}
 			var svcNamespace *v1.Namespace
-			for _, ns := range objects.Namespaces.Items {
+			for i := range objects.Namespaces.Items {
+				ns := objects.Namespaces.Items[i]
 				if ns.Name == wh.ClientConfig.Service.Namespace {
 					svcNamespace = &ns
 				}
@@ -102,8 +105,10 @@ func (w *webhookReplacementCheck) Run(objects *kube.Objects) ([]checks.Diagnosti
 		}
 	}
 
-	for _, config := range objects.MutatingWebhookConfigurations.Items {
-		for _, wh := range config.Webhooks {
+	for i := range objects.MutatingWebhookConfigurations.Items {
+		config := objects.MutatingWebhookConfigurations.Items[i]
+		for k := range config.Webhooks {
+			wh := config.Webhooks[k]
 			if *wh.FailurePolicy == ar.Ignore {
 				// Webhooks with failurePolicy: Ignore are fine.
 				continue

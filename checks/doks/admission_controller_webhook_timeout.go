@@ -47,8 +47,10 @@ func (w *webhookTimeoutCheck) Description() string {
 func (w *webhookTimeoutCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
 
-	for _, config := range objects.ValidatingWebhookConfigurations.Items {
-		for _, wh := range config.Webhooks {
+	for i := range objects.ValidatingWebhookConfigurations.Items {
+		config := objects.ValidatingWebhookConfigurations.Items[i]
+		for k := range config.Webhooks {
+			wh := config.Webhooks[k]
 			if wh.TimeoutSeconds == nil {
 				// TimeoutSeconds value should be set to a non-nil value (greater than or equal to 1 and less than 30).
 				// If the TimeoutSeconds value is set to nil and the cluster version is 1.13.*, users are
@@ -69,8 +71,10 @@ func (w *webhookTimeoutCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, e
 		}
 	}
 
-	for _, config := range objects.MutatingWebhookConfigurations.Items {
-		for _, wh := range config.Webhooks {
+	for i := range objects.MutatingWebhookConfigurations.Items {
+		config := objects.MutatingWebhookConfigurations.Items[i]
+		for k := range config.Webhooks {
+			wh := config.Webhooks[k]
 			if wh.TimeoutSeconds == nil {
 				// TimeoutSeconds value should be set to a non-nil value (greater than or equal to 1 and less than 30).
 				// If the TimeoutSeconds value is set to nil and the cluster version is 1.13.*, users are
