@@ -77,7 +77,7 @@ func TestNodeLabels(t *testing.T) {
 				Severity: checks.Warning,
 				Message:  "Custom node labels will be lost if node is replaced or upgraded. Add custom labels on node pools instead.",
 				Kind:     checks.Node,
-				Details:  "Custom node labels: [example.com/custom-label example.com/another-label]",
+				Details:  "Custom node labels: [example.com/another-label example.com/custom-label]",
 				Object: &metav1.ObjectMeta{
 					Labels: map[string]string{
 						"doks.digitalocean.com/foo":                "bar",

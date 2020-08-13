@@ -18,6 +18,7 @@ package doks
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -57,6 +58,9 @@ func (c *nodeLabelsTaintsCheck) Run(objects *kube.Objects) ([]checks.Diagnostic,
 			}
 		}
 		if len(customLabels) > 0 {
+			// The order of the map iteration above is non-deterministic, so
+			// sort the labels for stable output.
+			sort.Strings(customLabels)
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
 				Message:  "Custom node labels will be lost if node is replaced or upgraded. Add custom labels on node pools instead.",
