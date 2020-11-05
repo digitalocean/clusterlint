@@ -70,6 +70,8 @@ func TestWebhookError(t *testing.T) {
 					},
 				},
 				2,
+				[]string{"*"},
+				[]string{"*"},
 			),
 			expected: nil,
 		},
@@ -82,6 +84,8 @@ func TestWebhookError(t *testing.T) {
 					URL: &webhookURL,
 				},
 				2,
+				[]string{"*"},
+				[]string{"*"},
 			),
 			expected: nil,
 		},
@@ -97,6 +101,8 @@ func TestWebhookError(t *testing.T) {
 					},
 				},
 				2,
+				[]string{"*"},
+				[]string{"*"},
 			),
 			expected: nil,
 		},
@@ -114,6 +120,8 @@ func TestWebhookError(t *testing.T) {
 					},
 				},
 				2,
+				[]string{"*"},
+				[]string{"*"},
 			),
 			expected: nil,
 		},
@@ -131,6 +139,8 @@ func TestWebhookError(t *testing.T) {
 					},
 				},
 				2,
+				[]string{"*"},
+				[]string{"*"},
 			),
 			expected: nil,
 		},
@@ -148,6 +158,8 @@ func TestWebhookError(t *testing.T) {
 					},
 				},
 				2,
+				[]string{"*"},
+				[]string{"*"},
 			),
 			expected: nil,
 		},
@@ -165,6 +177,8 @@ func TestWebhookError(t *testing.T) {
 					},
 				},
 				2,
+				[]string{"*"},
+				[]string{"*"},
 			),
 			expected: nil,
 		},
@@ -182,6 +196,8 @@ func TestWebhookError(t *testing.T) {
 					},
 				},
 				2,
+				[]string{"*"},
+				[]string{"*"},
 			),
 			expected: nil,
 		},
@@ -199,6 +215,8 @@ func TestWebhookError(t *testing.T) {
 					},
 				},
 				2,
+				[]string{"*"},
+				[]string{"*"},
 			),
 			expected: nil,
 		},
@@ -216,6 +234,8 @@ func TestWebhookError(t *testing.T) {
 					},
 				},
 				1,
+				[]string{"*"},
+				[]string{"*"},
 			),
 			expected: webhookErrors(),
 		},
@@ -231,8 +251,112 @@ func TestWebhookError(t *testing.T) {
 					},
 				},
 				2,
+				[]string{"*"},
+				[]string{"*"},
 			),
 			expected: webhookErrors(),
+		},
+		{
+			name: "error: webhook applies to core/v1 group",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+				[]string{""},
+				[]string{"v1"},
+			),
+			expected: webhookErrors(),
+		},
+		{
+			name: "error: webhook applies to apps/v1 group",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+				[]string{"apps"},
+				[]string{"v1"},
+			),
+			expected: webhookErrors(),
+		},
+		{
+			name: "error: webhook applies to apps/v1beta1 group",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+				[]string{"apps"},
+				[]string{"v1beta1"},
+			),
+			expected: webhookErrors(),
+		},
+		{
+			name: "error: webhook applies to apps/v1beta2 group",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+				[]string{"apps"},
+				[]string{"v1beta2"},
+			),
+			expected: webhookErrors(),
+		},
+		{
+			name: "error: webhook applies to *",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+				[]string{"*"},
+				[]string{"*"},
+			),
+			expected: webhookErrors(),
+		},
+		{
+			name: "no error: webhook applies to batch/v1",
+			objs: webhookTestObjects(
+				ar.Fail,
+				&metav1.LabelSelector{},
+				ar.WebhookClientConfig{
+					Service: &ar.ServiceReference{
+						Namespace: "webhook",
+						Name:      "webhook-service",
+					},
+				},
+				2,
+				[]string{"batch"},
+				[]string{"*"},
+			),
+			expected: nil,
 		},
 	}
 
@@ -260,6 +384,8 @@ func webhookTestObjects(
 	nsSelector *metav1.LabelSelector,
 	clientConfig ar.WebhookClientConfig,
 	numNodes int,
+	groups []string,
+	versions []string,
 ) *kube.Objects {
 	objs := &kube.Objects{
 		SystemNamespace: &corev1.Namespace{
@@ -300,6 +426,14 @@ func webhookTestObjects(
 							FailurePolicy:     &failurePolicyType,
 							NamespaceSelector: nsSelector,
 							ClientConfig:      clientConfig,
+							Rules: []ar.RuleWithOperations{
+								{
+									Rule: ar.Rule{
+										APIGroups:   groups,
+										APIVersions: versions,
+									},
+								},
+							},
 						},
 					},
 				},
@@ -318,6 +452,14 @@ func webhookTestObjects(
 							FailurePolicy:     &failurePolicyType,
 							NamespaceSelector: nsSelector,
 							ClientConfig:      clientConfig,
+							Rules: []ar.RuleWithOperations{
+								{
+									Rule: ar.Rule{
+										APIGroups:   groups,
+										APIVersions: versions,
+									},
+								},
+							},
 						},
 					},
 				},
@@ -333,7 +475,7 @@ func webhookTestObjects(
 }
 
 func webhookErrors() []checks.Diagnostic {
-	objs := webhookTestObjects(ar.Fail, nil, ar.WebhookClientConfig{}, 0)
+	objs := webhookTestObjects(ar.Fail, nil, ar.WebhookClientConfig{}, 0, []string{"*"}, []string{"*"})
 	validatingConfig := objs.ValidatingWebhookConfigurations.Items[0]
 	mutatingConfig := objs.MutatingWebhookConfigurations.Items[0]
 

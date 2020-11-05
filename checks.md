@@ -289,6 +289,7 @@ Admission control webhooks can disrupt upgrade and node replacement operations b
 * has failurePolicy set to Fail,
 * targets a service other than the Kubernetes apiserver, and
 * applies to both kube-system and the namespace of the targeted service.
+* has rules applicable to `v1`, `apps/v1`, `apps/v1beta1` or `apps/v1beta2` resources.
 
 ### Example
 
@@ -302,9 +303,9 @@ webhooks:
 - name: sample-webhook.example.com
   rules:
   - apiGroups:
-    - ""
+    - "*"
     apiVersions:
-    - v1
+    - "*"
     operations:
     - CREATE
     resources:
@@ -328,6 +329,8 @@ There are a few options:
 2. Use an apiserver extension as your webhook service.
 3. Explicitly exclude the kube-system namespace.
 4. Explicitly exclude the webhook service's namespace.
+5. Explicitly include the resource api group and version in the rules.
+If you have configured webhooks for CRDs, we recommend that you explicitly specify the rules instead of generally applying them to all resources.
 
 ```yaml
 # Recommended: Exclude objects in the `webhook` namespace by explicitly specifying a namespaceSelector.

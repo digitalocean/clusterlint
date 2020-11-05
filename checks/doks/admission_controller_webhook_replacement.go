@@ -57,6 +57,10 @@ func (w *webhookReplacementCheck) Run(objects *kube.Objects) ([]checks.Diagnosti
 		config := config
 		for _, wh := range config.Webhooks {
 			wh := wh
+			if !applicable(wh.Rules) {
+				// Webhooks that do not apply to core/v1, apps/v1, apps/v1beta1, apps/v1beta2 resources are fine
+				continue
+			}
 			if *wh.FailurePolicy == ar.Ignore {
 				// Webhooks with failurePolicy: Ignore are fine.
 				continue
@@ -109,6 +113,10 @@ func (w *webhookReplacementCheck) Run(objects *kube.Objects) ([]checks.Diagnosti
 		config := config
 		for _, wh := range config.Webhooks {
 			wh := wh
+			if !applicable(wh.Rules) {
+				// Webhooks that do not apply to core/v1, apps/v1, apps/v1beta1, apps/v1beta2 resources are fine
+				continue
+			}
 			if *wh.FailurePolicy == ar.Ignore {
 				// Webhooks with failurePolicy: Ignore are fine.
 				continue
@@ -157,6 +165,33 @@ func (w *webhookReplacementCheck) Run(objects *kube.Objects) ([]checks.Diagnosti
 		}
 	}
 	return diagnostics, nil
+}
+
+func applicable(rules []ar.RuleWithOperations) bool {
+	for _, r := range rules {
+		if apiVersions(r.APIVersions) {
+			// applies to "apiVersions: v1"
+			if len(r.APIGroups) == 0 {
+				return true
+			}
+			// applies to "apiVersion: v1", "apiVersion: apps/v1", "apiVersion: apps/v1beta1", "apiVersion: apps/v1beta2"
+			for _, g := range r.APIGroups {
+				if g == "" || g == "*" || g == "apps" {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func apiVersions(versions []string) bool {
+	for _, v := range versions {
+		if v == "*" || v == "v1" || v == "v1beta1" || v == "v1beta2" {
+			return true
+		}
+	}
+	return false
 }
 
 func selectorMatchesNamespace(selector *metav1.LabelSelector, namespace *corev1.Namespace) bool {
