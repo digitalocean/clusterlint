@@ -71,6 +71,37 @@ spec:
     image: redis@sha256:dca057ffa2337682333a3aba69cc0e7809819b3cd7fc78f3741d9de8c2a4f08b
 ```
 
+## CronJob Concurrency
+
+- Name: `cronjob-concurrency`
+- Groups: `basic`
+
+We do not recommend having a `concurrencyPolicy` of `Allow` for CronJob resources. If a CronJob-managed Pod does not execute to completion within the expected window, it is possible that multiple Pods pile up over time, leading to several Pods stuck in a pending state and possible resource contention. Instead, prefer `Forbid`, which skips execution of a new job if the previous job has not exited, or `Replace`, which replaces the still-running job with a new job if it has not yet exited.
+
+### Example
+
+```yaml
+# Not recommended: Having a concurrency policy of Allow
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+   name: mycron
+spec:
+  concurrencyPolicy: Allow
+```
+
+### How to Fix
+
+```yaml
+# Recommended: Having a concurrency policy of Forbid or Replace
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+   name: mycron
+spec:
+  concurrencyPolicy: Replace
+```
+
 ## Privileged Containers
 
 - Name: `privileged-containers`
