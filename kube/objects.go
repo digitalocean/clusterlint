@@ -21,6 +21,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 	ar "k8s.io/api/admissionregistration/v1beta1"
+	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -55,6 +56,7 @@ type Objects struct {
 	MutatingWebhookConfigurations   *ar.MutatingWebhookConfigurationList
 	ValidatingWebhookConfigurations *ar.ValidatingWebhookConfigurationList
 	Namespaces                      *corev1.NamespaceList
+	CronJobs                        *batchv1beta1.CronJobList
 }
 
 // Client encapsulates a client for a Kubernetes cluster.
@@ -67,6 +69,7 @@ type Client struct {
 func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Objects, error) {
 	client := c.KubeClient.CoreV1()
 	admissionControllerClient := c.KubeClient.AdmissionregistrationV1beta1()
+	batchClient := c.KubeClient.BatchV1beta1()
 	opts := metav1.ListOptions{}
 	objects := &Objects{}
 
@@ -133,6 +136,10 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 	})
 	g.Go(func() (err error) {
 		objects.Namespaces, err = client.Namespaces().List(gCtx, opts)
+		return
+	})
+	g.Go(func() (err error) {
+		objects.CronJobs, err = batchClient.CronJobs(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
 		return
 	})
 
