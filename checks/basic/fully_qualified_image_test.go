@@ -59,6 +59,11 @@ func TestFullyQualifiedImageWarning(t *testing.T) {
 			expected: nil,
 		},
 		{
+			name:     "pod with container image - docker.io/busybox:latest",
+			objs:     container("docker.io/busybox:1.2.3"),
+			expected: nil,
+		},
+		{
 			name:     "pod with container image - busybox:latest",
 			objs:     container("busybox:latest"),
 			expected: issues(severity, message, checks.Pod, name),

@@ -18,6 +18,7 @@ package basic
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
@@ -79,7 +80,7 @@ func (fq *fullyQualifiedImageCheck) checkImage(containers []corev1.Container, po
 			}
 			diagnostics = append(diagnostics, d)
 		} else {
-			if value.String() != container.Image {
+			if !equalImageReferences(value.String(), container.Image) {
 				d := checks.Diagnostic{
 					Severity: checks.Warning,
 					Message:  fmt.Sprintf("Use fully qualified image for container '%s'", container.Name),
@@ -92,4 +93,14 @@ func (fq *fullyQualifiedImageCheck) checkImage(containers []corev1.Container, po
 		}
 	}
 	return diagnostics
+}
+
+func equalImageReferences(normalised, image string) bool {
+	if normalised == image {
+		return true
+	}
+	if strings.Replace(normalised, "docker.io/library/", "docker.io/", 1) == image {
+		return true
+	}
+	return false
 }
