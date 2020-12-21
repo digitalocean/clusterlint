@@ -69,6 +69,16 @@ func TestUnusedSecretWarning(t *testing.T) {
 			expected: nil,
 		},
 		{
+			name:     "init container environment variable references secret",
+			objs:     initContainerSecretEnvSource(),
+			expected: nil,
+		},
+		{
+			name:     "init container environment variable value from references secret",
+			objs:     initContainerSecretEnvVarValueFromSource(),
+			expected: nil,
+		},
+		{
 			name:     "pod with image pull secrets",
 			objs:     imagePullSecrets(),
 			expected: nil,
@@ -183,10 +193,52 @@ func secretEnvSource() *kube.Objects {
 	return objs
 }
 
+func initContainerSecretEnvSource() *kube.Objects {
+	objs := initSecret()
+	objs.Pods.Items[0].Spec = corev1.PodSpec{
+		InitContainers: []corev1.Container{
+			{
+				Name:  "test-container",
+				Image: "docker.io/nginx",
+				EnvFrom: []corev1.EnvFromSource{
+					{
+						SecretRef: &corev1.SecretEnvSource{
+							LocalObjectReference: corev1.LocalObjectReference{Name: "secret_foo"},
+						},
+					},
+				},
+			}},
+	}
+	return objs
+}
+
 func secretEnvVarValueFromSource() *kube.Objects {
 	objs := initSecret()
 	objs.Pods.Items[0].Spec = corev1.PodSpec{
 		Containers: []corev1.Container{
+			{
+				Name:  "test-container",
+				Image: "docker.io/nginx",
+				Env: []corev1.EnvVar{
+					{
+						Name: "special_env_var",
+						ValueFrom: &corev1.EnvVarSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{Name: "secret_foo"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	return objs
+}
+
+func initContainerSecretEnvVarValueFromSource() *kube.Objects {
+	objs := initSecret()
+	objs.Pods.Items[0].Spec = corev1.PodSpec{
+		InitContainers: []corev1.Container{
 			{
 				Name:  "test-container",
 				Image: "docker.io/nginx",

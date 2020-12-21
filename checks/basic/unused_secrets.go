@@ -112,7 +112,7 @@ func checkReferences(objects *kube.Objects) (map[kube.Identifier]struct{}, error
 				mu.Unlock()
 			}
 			identifiers := envVarsSecretRefs(pod.Spec.Containers, namespace)
-			identifiers = append(identifiers, checkEnvVars(pod.Spec.InitContainers, namespace)...)
+			identifiers = append(identifiers, envVarsSecretRefs(pod.Spec.InitContainers, namespace)...)
 			mu.Lock()
 			for _, i := range identifiers {
 				used[i] = empty
