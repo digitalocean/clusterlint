@@ -45,7 +45,6 @@ func TestFetchObjects(t *testing.T) {
 
 	assert.NotNil(t, actual.Nodes)
 	assert.NotNil(t, actual.PersistentVolumes)
-	assert.NotNil(t, actual.ComponentStatuses)
 	assert.NotNil(t, actual.Pods)
 	assert.NotNil(t, actual.PodTemplates)
 	assert.NotNil(t, actual.PersistentVolumeClaims)

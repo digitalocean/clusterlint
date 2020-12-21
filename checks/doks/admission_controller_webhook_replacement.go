@@ -19,7 +19,7 @@ package doks
 import (
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
-	ar "k8s.io/api/admissionregistration/v1beta1"
+	ar "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
