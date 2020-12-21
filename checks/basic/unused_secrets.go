@@ -123,6 +123,30 @@ func checkReferences(objects *kube.Objects) (map[kube.Identifier]struct{}, error
 		})
 	}
 
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	for _, sa := range objects.ServiceAccounts.Items {
+		sa := sa
+		namespace := sa.Namespace
+
+		g.Go(func() error {
+			for _, imageSecret := range sa.ImagePullSecrets {
+				mu.Lock()
+				used[kube.Identifier{Name: imageSecret.Name, Namespace: namespace}] = empty
+				mu.Unlock()
+			}
+
+			for _, secret := range sa.Secrets {
+				mu.Lock()
+				used[kube.Identifier{Name: secret.Name, Namespace: namespace}] = empty
+				mu.Unlock()
+			}
+			return nil
+		})
+	}
+
 	return used, g.Wait()
 }
 
