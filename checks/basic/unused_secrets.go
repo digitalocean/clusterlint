@@ -126,13 +126,18 @@ func checkReferences(objects *kube.Objects) (map[kube.Identifier]struct{}, error
 	return used, g.Wait()
 }
 
-// envVarsSecretRefs checks for config map references in container environment variables
+// envVarsSecretRefs checks for secret references in container environment variables
 func envVarsSecretRefs(containers []corev1.Container, namespace string) []kube.Identifier {
 	var refs []kube.Identifier
 	for _, container := range containers {
 		for _, env := range container.EnvFrom {
 			if env.SecretRef != nil {
 				refs = append(refs, kube.Identifier{Name: env.SecretRef.LocalObjectReference.Name, Namespace: namespace})
+			}
+		}
+		for _, env := range container.Env {
+			if env.ValueFrom != nil && env.ValueFrom.SecretKeyRef != nil {
+				refs = append(refs, kube.Identifier{Name: env.ValueFrom.SecretKeyRef.LocalObjectReference.Name, Namespace: namespace})
 			}
 		}
 	}
