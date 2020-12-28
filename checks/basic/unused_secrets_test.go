@@ -145,7 +145,8 @@ func secretVolume() *kube.Objects {
 						SecretName: "secret_foo",
 					},
 				},
-			}},
+			},
+		},
 	}
 	return objs
 }

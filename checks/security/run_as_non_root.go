@@ -53,6 +53,7 @@ func (nr *nonRootUserCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, err
 	var diagnostics []checks.Diagnostic
 
 	for _, pod := range objects.Pods.Items {
+		pod := pod
 		var containers []corev1.Container
 		containers = append(containers, pod.Spec.Containers...)
 		containers = append(containers, pod.Spec.InitContainers...)
