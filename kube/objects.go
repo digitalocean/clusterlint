@@ -20,7 +20,7 @@ import (
 	"context"
 
 	"golang.org/x/sync/errgroup"
-	ar "k8s.io/api/admissionregistration/v1beta1"
+	ar "k8s.io/api/admissionregistration/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,7 +42,6 @@ type Identifier struct {
 type Objects struct {
 	Nodes                           *corev1.NodeList
 	PersistentVolumes               *corev1.PersistentVolumeList
-	ComponentStatuses               *corev1.ComponentStatusList
 	SystemNamespace                 *corev1.Namespace
 	Pods                            *corev1.PodList
 	PodTemplates                    *corev1.PodTemplateList
@@ -68,7 +67,7 @@ type Client struct {
 // ctx is currently unused during API calls. More info: https://github.com/kubernetes/community/pull/1166
 func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Objects, error) {
 	client := c.KubeClient.CoreV1()
-	admissionControllerClient := c.KubeClient.AdmissionregistrationV1beta1()
+	admissionControllerClient := c.KubeClient.AdmissionregistrationV1()
 	batchClient := c.KubeClient.BatchV1beta1()
 	opts := metav1.ListOptions{}
 	objects := &Objects{}
@@ -80,10 +79,6 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 	})
 	g.Go(func() (err error) {
 		objects.PersistentVolumes, err = client.PersistentVolumes().List(gCtx, opts)
-		return
-	})
-	g.Go(func() (err error) {
-		objects.ComponentStatuses, err = client.ComponentStatuses().List(gCtx, opts)
 		return
 	})
 	g.Go(func() (err error) {
