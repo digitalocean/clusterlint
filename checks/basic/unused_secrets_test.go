@@ -50,7 +50,7 @@ func TestUnusedSecretWarning(t *testing.T) {
 	}{
 		{
 			name:     "no secrets",
-			objs:     &kube.Objects{Pods: &corev1.PodList{}, Secrets: &corev1.SecretList{}},
+			objs:     &kube.Objects{Pods: &corev1.PodList{}, Secrets: &corev1.SecretList{}, ServiceAccounts: &corev1.ServiceAccountList{}},
 			expected: nil,
 		},
 		{
@@ -81,6 +81,16 @@ func TestUnusedSecretWarning(t *testing.T) {
 		{
 			name:     "pod with image pull secrets",
 			objs:     imagePullSecrets(),
+			expected: nil,
+		},
+		{
+			name:     "sa with image pull secrets",
+			objs:     saImagePullSecrets(),
+			expected: nil,
+		},
+		{
+			name:     "sa with secrets refs",
+			objs:     saSecretRefs(),
 			expected: nil,
 		},
 		{
@@ -127,6 +137,14 @@ func initSecret() *kube.Objects {
 				{
 					TypeMeta:   metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 					ObjectMeta: metav1.ObjectMeta{Name: "secret_foo", Namespace: "k8s"},
+				},
+			},
+		},
+		ServiceAccounts: &corev1.ServiceAccountList{
+			Items: []corev1.ServiceAccount{
+				{
+					TypeMeta: metav1.TypeMeta{Kind: "ServiceAccount", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "default", Namespace: "k8s"},
 				},
 			},
 		},
@@ -266,6 +284,27 @@ func imagePullSecrets() *kube.Objects {
 			{
 				Name: "secret_foo",
 			},
+		},
+	}
+	return objs
+}
+
+func saImagePullSecrets() *kube.Objects {
+	objs := initSecret()
+	objs.ServiceAccounts.Items[0].ImagePullSecrets = []corev1.LocalObjectReference{
+		{
+			Name: "secret_foo",
+		},
+	}
+	return objs
+}
+
+func saSecretRefs() *kube.Objects {
+	objs := initSecret()
+	objs.ServiceAccounts.Items[0].Secrets = []corev1.ObjectReference{
+		{
+			Name: "secret_foo",
+			Namespace: "k8s",
 		},
 	}
 	return objs
