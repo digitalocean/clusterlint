@@ -473,6 +473,82 @@ webhooks:
   timeoutSeconds: 10
 ```
 
+## DOBS Pod Owner
+
+- Name: `dobs-pod-owner`
+- Groups: `doks`
+
+DOBS pod owner check ensures that any pod that references a DO Block Storage volume is owned by a StatefulSet. We want such pods to be owned by a StatefulSet because:
+
+1. The Eviction API does not respect deployment strategies. It only cares about pod disruption budgets (PDBs). So, if you don’t set it right, you can end up with multiple DOBS-using pods running concurrently. 
+This can lead to stuck deployments if they happen to come up on different nodes in the best case, and data corruption if they come up on the same node and end up writing to same volume concurrently. For more context, see: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/.
+
+2. Manual deletes do not care about PDBs at all. So, all pods from a Deployment, for instance are deleted and brought up at the same time. A StatefulSet, on the other hand, always ensures “at most” guarantees.
+
+### Example
+
+### Example
+
+```yaml
+# Not recommended: Pods that refer to DOBS volumes should be owned by a StatefulSet
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+  namespace: test
+  labels:
+    name: mypod
+spec:
+  containers:
+  - name: mypod
+    image: nginx:1.17.0
+    volumeMounts:
+    - mountPath: "/data"
+      name: all-data
+  volumes:
+    - name: my-dobs-volume
+      persistentVolumeClaim:
+        claim-name: do-csi-pvc
+```
+
+### How to fix
+
+```yaml
+# Recommended: Ensure that a StatefulSet is used to configure pods referencing DOBS volumes
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+  namespace: test
+spec:
+  selector:
+    matchLabels:
+      app: mypod
+  serviceName: "nginx"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mypod
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.17.0
+        volumeMounts:
+        - name: all-data
+          mountPath: "/data"
+  volumeClaimTemplates:
+  - metadata:
+      name: all-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+      storageClassName: do-block-storage
+```
+
+
 ## Pod State
 
 - Name: `pod-state`
