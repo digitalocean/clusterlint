@@ -23,6 +23,7 @@ import (
 	ar "k8s.io/api/admissionregistration/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	st "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -52,6 +53,8 @@ type Objects struct {
 	ServiceAccounts                 *corev1.ServiceAccountList
 	ResourceQuotas                  *corev1.ResourceQuotaList
 	LimitRanges                     *corev1.LimitRangeList
+	StorageClasses                  *st.StorageClassList
+	DefaultStorageClass             *st.StorageClass
 	MutatingWebhookConfigurations   *ar.MutatingWebhookConfigurationList
 	ValidatingWebhookConfigurations *ar.ValidatingWebhookConfigurationList
 	Namespaces                      *corev1.NamespaceList
@@ -69,12 +72,25 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 	client := c.KubeClient.CoreV1()
 	admissionControllerClient := c.KubeClient.AdmissionregistrationV1()
 	batchClient := c.KubeClient.BatchV1beta1()
+	storageClient := c.KubeClient.StorageV1()
 	opts := metav1.ListOptions{}
 	objects := &Objects{}
 
 	g, gCtx := errgroup.WithContext(ctx)
 	g.Go(func() (err error) {
 		objects.Nodes, err = client.Nodes().List(gCtx, opts)
+		return
+	})
+	g.Go(func() (err error) {
+		objects.StorageClasses, err = storageClient.StorageClasses().List(gCtx, opts)
+		if err != nil {
+			return err
+		}
+		for _, s := range objects.StorageClasses.Items {
+			if v, _ := s.Annotations["storageclass.kubernetes.io/is-default-class"]; v == "true" {
+				objects.DefaultStorageClass = &s
+			}
+		}
 		return
 	})
 	g.Go(func() (err error) {
