@@ -776,3 +776,20 @@ kubectl taint node <node-name> <taint-key>-
 ```
 
 Note the trailing `-` on the key; this causes `kubectl` to delete the label or taint.
+
+## Images hosted on docker.pkg.github.com
+
+- Name: `docker-pkg-github-com-registry`
+- Groups: `containerd`, `doks`
+
+`containerd` cannot pull container images from `docker.pkg.github.com` due to a [protocol mismatch](https://github.com/containerd/containerd/issues/3291#issuecomment-683700425). As `docker.pkg.github.com` is GitHub's old package registry, [they recommend migrating to `ghcr.io`](https://docs.github.com/en/packages/guides/migrating-to-github-container-registry-for-docker-images#domain-changes).
+
+### Example
+
+```yaml
+# Not supported: Using "docker.pkg.github.com" as container registry
+spec:
+  containers:
+  - name: redis
+    image: docker.pkg.github.com/redis/redis/redis:6
+```

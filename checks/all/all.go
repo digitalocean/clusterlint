@@ -27,4 +27,6 @@ import (
 	_ "github.com/digitalocean/clusterlint/checks/noop"
 	// Side-effect import to get all the checks in security package registered.
 	_ "github.com/digitalocean/clusterlint/checks/security"
+	// Side-effect import to get all the checks in containerd package registered.
+	_ "github.com/digitalocean/clusterlint/checks/containerd"
 )
