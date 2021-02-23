@@ -415,7 +415,7 @@ Admission control webhook timeouts can block upgrades, when the API call times o
 ### Example
 
 ```yaml
-# Error: Configure a webhook with a TimeoutSeconds value greater than 30 seconds.
+# Error: Configure a webhook with a TimeoutSeconds value greater than 29 seconds.
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
@@ -444,7 +444,7 @@ webhooks:
 
 ### How to Fix
 
-Set the TimeoutSeconds value to anything within the 1 to 30 second range.
+Set the TimeoutSeconds value to anything within the 1 to 29 second range.
 
 ```yaml
 apiVersion: admissionregistration.k8s.io/v1beta1
