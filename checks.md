@@ -410,7 +410,7 @@ webhooks:
 - Name: `admission-controller-webhook-timeout`
 - Groups: `doks`
 
-Admission control webhook timeouts can block upgrades, when the API call times out, due to an incorrectly configured TimeoutSeconds value. Since webhooks inherently add to API latency, we must stay within the recommended range in order for API requests to be successful. Specifically, this happens when an admission control webhook does not respond within 30 seconds.
+Admission control webhook timeouts can block upgrades, when the API call times out, due to an incorrectly configured TimeoutSeconds value. Since webhooks inherently add to API latency, we must stay within the recommended range in order for API requests to be successful. Specifically, this happens when an admission control webhook does not respond within 29 seconds.
 
 ### Example
 
@@ -480,7 +480,7 @@ webhooks:
 
 DOBS pod owner check ensures that any pod that references a DO Block Storage volume is owned by a StatefulSet. We want such pods to be owned by a StatefulSet because:
 
-1. The Eviction API does not respect deployment strategies. It only cares about pod disruption budgets (PDBs). So, if you don’t set it right, you can end up with multiple DOBS-using pods running concurrently. 
+1. The Eviction API does not respect deployment strategies. It only cares about pod disruption budgets (PDBs). So, if you don’t set it right, you can end up with multiple DOBS-using pods running concurrently.
 This can lead to stuck deployments if they happen to come up on different nodes in the best case, and data corruption if they come up on the same node and end up writing to same volume concurrently. For more context, see: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/.
 
 2. Manual deletes do not care about PDBs at all. So, all pods from a Deployment, for instance are deleted and brought up at the same time. A StatefulSet, on the other hand, always ensures “at most” guarantees.
