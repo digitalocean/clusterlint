@@ -5,7 +5,7 @@
 - Name: `default-namespace`
 - Groups: `basic`
 
-Namespaces are a way to limit the scope of the resources that subsets of users within a team can create. While a default namespace is created for every Kubernetes cluster, we don't recommend adding all created resources into the default namespace because of the risk of privilege escalation, resource name collisions, latency in operations as resources scale up, and mismanagement of Kubernetes objects. Having namespaces lets you enable resource quotas can be enabled to track node, CPU and memory usage for individual teams.
+Namespaces are a way to limit the scope of the resources that subsets of users within a team can create. While a default namespace is created for every Kubernetes cluster, we do not recommend adding all created resources into the default namespace because of the risk of privilege escalation, resource name collisions, latency in operations as resources scale up, and mismanagement of Kubernetes objects. Having namespaces lets you enable resource quotas can be enabled to track node, CPU and memory usage for individual teams.
 
 ### Example
 
@@ -45,7 +45,7 @@ spec:
 - Name: `latest-tag`
 - Groups: `basic`
 
-We don't recommend using container images with the `latest` tag or not specifying a tag in the image (which defaults to `latest`), as this leads to confusion around the version of image used. Pods get rescheduled often as conditions inside a cluster change, and upon a reschedule, you may find that the images' versions have changed to use the latest release, which can break the application and make it difficult to debug errors. Instead, update segments of the application individually using images pinned to specific versions.
+We do not recommend using container images with the `latest` tag or not specifying a tag in the image (which defaults to `latest`), as this leads to confusion around the version of image used. Pods get rescheduled often as conditions inside a cluster change, and upon a reschedule, you may find that the images' versions have changed to use the latest release, which can break the application and make it difficult to debug errors. Instead, update segments of the application individually using images pinned to specific versions.
 
 ### Example
 
@@ -170,7 +170,7 @@ spec:
 - Name: `fully-qualified-image`
 - Groups: `basic`
 
-Docker is the most popular runtime for Kubernetes. However, Kubernetes supports other container runtimes as well, such as containerd and CRI-O. If the registry is not prepended to the image name, docker assumes `docker.io` and pulls it from Docker Hub. However, the other runtimes will result in errors while pulling images. To maintain portability, we recommend using a fully qualified image name. If the underlying runtime is changed and the object configs are deployed to a new cluster, having fully qualified image names ensures that the applications don't break.
+Docker is the most popular runtime for Kubernetes. However, Kubernetes supports other container runtimes as well, such as containerd and CRI-O. If the registry is not prepended to the image name, docker assumes `docker.io` and pulls it from Docker Hub. However, the other runtimes will result in errors while pulling images. To maintain portability, we recommend using a fully qualified image name. If the underlying runtime is changed and the object configs are deployed to a new cluster, having fully qualified image names ensures that the applications do not break.
 
 ### Example
 
@@ -197,7 +197,7 @@ spec:
 - Name: `node-name-pod-selector`
 - Groups: `doks`
 
-On upgrade of a cluster on DOKS, the worker nodes' hostname changes. So, if a user's pod spec relies on the hostname to schedule pods on specific nodes, pod scheduling will fail after the upgrade.
+On upgrade of a cluster on DOKS, the worker nodes' hostname changes. So, if your pod spec relies on the hostname to schedule pods on specific nodes, pod scheduling will fail after the upgrade.
 
 ### Example
 
@@ -240,9 +240,9 @@ spec:
 - Name: `admission-controller-webhook`
 - Groups: `basic`
 
-Admission control webhooks can disrupt normal cluster operations. Specifically, this happens when an admission control webhook:
-* targets a service that does not exist,
-* targets a service in a namespace that does not exist.
+Admission control webhooks can disrupt normal cluster operations. Specifically, this happens when an admission control webhook targets a service that:
+* Does not exist
+* Is in a namespace that does not exist
 
 ### Example
 
@@ -317,10 +317,10 @@ webhooks:
 - Groups: `doks`
 
 Admission control webhooks can disrupt upgrade and node replacement operations by preventing system components from starting. Specifically, this happens when an admission control webhook:
-* has failurePolicy set to Fail,
-* targets a service other than the Kubernetes apiserver, and
-* applies to both kube-system and the namespace of the targeted service.
-* has rules applicable to `v1`, `apps/v1`, `apps/v1beta1` or `apps/v1beta2` resources.
+* Has `failurePolicy` set to `Fail`
+* Targets a service other than the Kubernetes apiserver
+* Applies to both kube-system and the namespace of the targeted service
+* Has rules applicable to `v1`, `apps/v1`, `apps/v1beta1` or `apps/v1beta2` resources
 
 ### Example
 
@@ -355,13 +355,12 @@ webhooks:
 
 ### How to Fix
 
-There are a few options:
-1. Use the `Ignore` `failurePolicy`.
-2. Use an apiserver extension as your webhook service.
-3. Explicitly exclude the kube-system namespace.
-4. Explicitly exclude the webhook service's namespace.
-5. Explicitly include the resource api group and version in the rules.
-If you have configured webhooks for CRDs, we recommend that you explicitly specify the rules instead of generally applying them to all resources.
+Use one of the following options:
+* Use the `Ignore failurePolicy`.
+* Use an apiserver extension as your webhook service.
+* Explicitly exclude the `kube-system` namespace.
+* Explicitly exclude the webhook service's namespace.
+* Explicitly include the resource api group and version in the rules. If you have configured webhooks for CRDs, we recommend that you explicitly specify the rules instead of generally applying them to all resources.
 
 ```yaml
 # Recommended: Exclude objects in the `webhook` namespace by explicitly specifying a namespaceSelector.
@@ -410,7 +409,7 @@ webhooks:
 - Name: `admission-controller-webhook-timeout`
 - Groups: `doks`
 
-Admission control webhook timeouts can block upgrades, when the API call times out, due to an incorrectly configured TimeoutSeconds value. Since webhooks inherently add to API latency, we must stay within the recommended range in order for API requests to be successful. Specifically, this happens when an admission control webhook does not respond within 29 seconds.
+Admission control webhook timeouts can block upgrades, when the API call times out, due to an incorrectly configured `TimeoutSeconds` value. Since webhooks inherently add to API latency, we must stay within the recommended range in order for API requests to be successful. Specifically, this happens when an admission control webhook does not respond within 29 seconds.
 
 ### Example
 
@@ -444,7 +443,7 @@ webhooks:
 
 ### How to Fix
 
-Set the TimeoutSeconds value to anything within the 1 to 29 second range.
+Set the `TimeoutSeconds` value to anything within the 1 to 29 second range.
 
 ```yaml
 apiVersion: admissionregistration.k8s.io/v1beta1
@@ -478,14 +477,11 @@ webhooks:
 - Name: `dobs-pod-owner`
 - Groups: `doks`
 
-DOBS pod owner check ensures that any pod that references a DO Block Storage volume is owned by a StatefulSet. We want such pods to be owned by a StatefulSet because:
+This check ensures that any pod that references a DigitalOcean Block Storage Volume is owned by a StatefulSet. We want such pods to be owned by a StatefulSet because:
 
-1. The Eviction API does not respect deployment strategies. It only cares about pod disruption budgets (PDBs). So, if you don’t set it right, you can end up with multiple DOBS-using pods running concurrently.
-This can lead to stuck deployments if they happen to come up on different nodes in the best case, and data corruption if they come up on the same node and end up writing to same volume concurrently. For more context, see: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/.
+- The [Eviction API](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/#eviction-api) does not respect deployment strategies. It only cares about pod disruption budgets (PDBs). So, if you don’t set it right, you can end up with multiple volume-using pods running concurrently. This can lead to stuck deployments if they happen to come up on different nodes in the best case, and data corruption if they come up on the same node and end up writing to the same volume concurrently. For more context, see [Disruptions](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/) in the Kubernetes documentation.
 
-2. Manual deletes do not care about PDBs at all. So, all pods from a Deployment, for instance are deleted and brought up at the same time. A StatefulSet, on the other hand, always ensures “at most” guarantees.
-
-### Example
+- Manual deletes do not care about PDBs at all. So, all pods from a Deployment, for instance, are deleted and brought up at the same time. A StatefulSet, on the other hand, always ensures “at most” guarantees.
 
 ### Example
 
@@ -760,13 +756,12 @@ spec:
 
 ## Node Labels and Taints
 
-
 - Name: `node-labels-and-taints`
 - Groups: `doks`
 
-When a DOKS cluster is upgraded, all worker nodes are replaced, and replacement nodes do not retain any custom labels or taints that were previously set by the user on the nodes. This check reports any labels or taints that will be lost on upgrade.
+When you upgrade a DOKS cluster, all worker nodes are replaced, and replacement nodes do not retain any custom labels or taints you previously set on the nodes. This check reports any labels or taints that will be lost on upgrade.
 
-DOKS provides persistent node pool labels. Adding a custom label to a node pool will ensure that the label is propagated to the worker nodes in the node pool after replacement or upgrade.
+DOKS provides persistent node pool labels. Adding a custom label to a node pool ensures that the label is propagated to the worker nodes in the node pool after replacement or upgrade.
 
 ### How to Fix
 
@@ -777,12 +772,12 @@ kubectl taint node <node-name> <taint-key>-
 
 Note the trailing `-` on the key; this causes `kubectl` to delete the label or taint.
 
-## Images hosted on docker.pkg.github.com
+## Images From GitHub Packages Docker Registry
 
 - Name: `docker-pkg-github-com-registry`
 - Groups: `containerd`, `doks`
 
-`containerd` cannot pull container images from `docker.pkg.github.com` due to a [protocol mismatch](https://github.com/containerd/containerd/issues/3291#issuecomment-683700425). As `docker.pkg.github.com` is GitHub's old package registry, [they recommend migrating to `ghcr.io`](https://docs.github.com/en/packages/guides/migrating-to-github-container-registry-for-docker-images#domain-changes).
+containerd cannot pull container images from `docker.pkg.github.com` due to a [protocol mismatch](https://github.com/containerd/containerd/issues/3291#issuecomment-683700425). DOKS 1.20 and newer use containerd as the container runtime, and are unable to use images from `docker.pkg.github.com`.
 
 ### Example
 
@@ -793,3 +788,7 @@ spec:
   - name: redis
     image: docker.pkg.github.com/redis/redis/redis:6
 ```
+
+### How to Fix
+
+GitHub recommends [migrating to GitHub Container Registry](https://docs.github.com/en/packages/guides/migrating-to-github-container-registry-for-docker-images#domain-changes), which is compatible with containerd.
