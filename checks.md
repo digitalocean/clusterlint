@@ -479,7 +479,7 @@ webhooks:
 
 This check ensures that any pod that references a DigitalOcean Block Storage Volume is owned by a StatefulSet. We want such pods to be owned by a StatefulSet because:
 
-- The [Eviction API](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/#eviction-api) does not respect deployment strategies. It only cares about pod disruption budgets (PDBs). So, if you don’t set it right, you can end up with multiple volume-using pods running concurrently. This can lead to stuck deployments if they happen to come up on different nodes in the best case, and data corruption if they come up on the same node and end up writing to the same volume concurrently. For more context, see [Disruptions](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/) in the Kubernetes documentation.
+- The [Eviction API](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/#eviction-api) does not respect deployment strategies. It only cares about pod disruption budgets (PDBs). So, if you do not set it right, you can end up with multiple volume-using pods running concurrently. This can lead to stuck deployments if they happen to come up on different nodes in the best case, and data corruption if they come up on the same node and end up writing to the same volume concurrently. For more context, see [Disruptions](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/) in the Kubernetes documentation.
 
 - Manual deletes do not care about PDBs at all. So, all pods from a Deployment, for instance, are deleted and brought up at the same time. A StatefulSet, on the other hand, always ensures “at most” guarantees.
 
@@ -507,7 +507,7 @@ spec:
         claim-name: do-csi-pvc
 ```
 
-### How to fix
+### How to Fix
 
 ```yaml
 # Recommended: Ensure that a StatefulSet is used to configure pods referencing DOBS volumes
