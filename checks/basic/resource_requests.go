@@ -37,7 +37,7 @@ func (r *resourceRequirementsCheck) Name() string {
 
 // Groups returns a list of group names this check should be part of.
 func (r *resourceRequirementsCheck) Groups() []string {
-	return []string{"basic"}
+	return []string{"basic", "doks"}
 }
 
 // Description returns a detailed human-readable description of what this check
