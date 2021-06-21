@@ -29,7 +29,7 @@ import (
 func TestResourceRequestsCheckMeta(t *testing.T) {
 	resourceRequirementsCheck := resourceRequirementsCheck{}
 	assert.Equal(t, "resource-requirements", resourceRequirementsCheck.Name())
-	assert.Equal(t, []string{"basic"}, resourceRequirementsCheck.Groups())
+	assert.Equal(t, []string{"basic", "doks"}, resourceRequirementsCheck.Groups())
 	assert.NotEmpty(t, resourceRequirementsCheck.Description())
 }
 
