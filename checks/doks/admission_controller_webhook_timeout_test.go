@@ -220,14 +220,14 @@ func webhookTimeoutErrors() []checks.Diagnostic {
 	diagnostics := []checks.Diagnostic{
 		{
 			Severity: checks.Error,
-			Message:  "Validating webhook with a TimeoutSeconds value greater than 29 seconds will block upgrades.",
+			Message:  "Validating webhook with a TimeoutSeconds value smaller than 1 second or greater than 29 seconds will block upgrades.",
 			Kind:     checks.ValidatingWebhookConfiguration,
 			Object:   &validatingConfig.ObjectMeta,
 			Owners:   validatingConfig.ObjectMeta.GetOwnerReferences(),
 		},
 		{
 			Severity: checks.Error,
-			Message:  "Mutating webhook with a TimeoutSeconds value greater than 29 seconds will block upgrades.",
+			Message:  "Mutating webhook with a TimeoutSeconds value smaller than 1 second or greater than 29 seconds will block upgrades.",
 			Kind:     checks.MutatingWebhookConfiguration,
 			Object:   &mutatingConfig.ObjectMeta,
 			Owners:   mutatingConfig.ObjectMeta.GetOwnerReferences(),
