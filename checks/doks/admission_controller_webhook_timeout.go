@@ -57,11 +57,11 @@ func (w *webhookTimeoutCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, e
 				// unable to configure the TimeoutSeconds value and this value will stay at nil, breaking
 				// upgrades. It's only for versions >= 1.14 that the value will default to 30 seconds.
 				continue
-			} else if *wh.TimeoutSeconds < int32(1) || *wh.TimeoutSeconds >= int32(30) {
+			} else if *wh.TimeoutSeconds < int32(1) || *wh.TimeoutSeconds > int32(29) {
 				// Webhooks with TimeoutSeconds set: less than 1 or greater than or equal to 30 is bad.
 				d := checks.Diagnostic{
 					Severity: checks.Error,
-					Message:  "Validating webhook with a TimeoutSeconds value greater than 29 seconds will block upgrades.",
+					Message:  "Validating webhook with a TimeoutSeconds value smaller than 1 second or greater than 29 seconds will block upgrades.",
 					Kind:     checks.ValidatingWebhookConfiguration,
 					Object:   &config.ObjectMeta,
 					Owners:   config.ObjectMeta.GetOwnerReferences(),
@@ -81,11 +81,11 @@ func (w *webhookTimeoutCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, e
 				// unable to configure the TimeoutSeconds value and this value will stay at nil, breaking
 				// upgrades. It's only for versions >= 1.14 that the value will default to 30 seconds.
 				continue
-			} else if *wh.TimeoutSeconds < int32(1) || *wh.TimeoutSeconds >= int32(30) {
+			} else if *wh.TimeoutSeconds < int32(1) || *wh.TimeoutSeconds > int32(29) {
 				// Webhooks with TimeoutSeconds set: less than 1 or greater than or equal to 30 is bad.
 				d := checks.Diagnostic{
 					Severity: checks.Error,
-					Message:  "Mutating webhook with a TimeoutSeconds value greater than 29 seconds will block upgrades.",
+					Message:  "Mutating webhook with a TimeoutSeconds value smaller than 1 second or greater than 29 seconds will block upgrades.",
 					Kind:     checks.MutatingWebhookConfiguration,
 					Object:   &config.ObjectMeta,
 					Owners:   config.ObjectMeta.GetOwnerReferences(),
