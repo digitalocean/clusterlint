@@ -18,12 +18,14 @@ package kube
 
 import (
 	"context"
+	"fmt"
 
 	"golang.org/x/sync/errgroup"
 	ar "k8s.io/api/admissionregistration/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	st "k8s.io/api/storage/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -95,62 +97,79 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 	})
 	g.Go(func() (err error) {
 		objects.PersistentVolumes, err = client.PersistentVolumes().List(gCtx, opts)
+		err = annotateFetchError("PersistentVolumes", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.Pods, err = client.Pods(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("Pods", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.PodTemplates, err = client.PodTemplates(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("PodTemplates", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.PersistentVolumeClaims, err = client.PersistentVolumeClaims(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("PersistentVolumeClaims", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.ConfigMaps, err = client.ConfigMaps(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("ConfigMaps", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.Secrets, err = client.Secrets(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("Secrets", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.Services, err = client.Services(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("Services", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.ServiceAccounts, err = client.ServiceAccounts(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("ServiceAccounts", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.ResourceQuotas, err = client.ResourceQuotas(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("ResourceQuotas", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.LimitRanges, err = client.LimitRanges(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("LimitRanges", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.SystemNamespace, err = client.Namespaces().Get(gCtx, metav1.NamespaceSystem, metav1.GetOptions{})
+		if err != nil {
+			err = fmt.Errorf("failed to fetch namespace %q: %s", metav1.NamespaceSystem, err)
+		}
 		return
 	})
 	g.Go(func() (err error) {
 		objects.MutatingWebhookConfigurations, err = admissionControllerClient.MutatingWebhookConfigurations().List(gCtx, opts)
+		err = annotateFetchError("MutatingWebhookConfigurations (v1)", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.ValidatingWebhookConfigurations, err = admissionControllerClient.ValidatingWebhookConfigurations().List(gCtx, opts)
+		err = annotateFetchError("ValidatingWebhookConfigurations (v1)", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.Namespaces, err = client.Namespaces().List(gCtx, opts)
+		err = annotateFetchError("Namespaces", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.CronJobs, err = batchClient.CronJobs(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("CronJobs", err)
 		return
 	})
 
@@ -160,6 +179,19 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 	}
 
 	return objects, nil
+}
+
+func annotateFetchError(kind string, err error) error {
+	if err == nil {
+		return nil
+	}
+	if kerrors.IsNotFound(err) {
+		// Resource doesn't exist in this cluster's version, so there aren't any
+		// objects to list and check.
+		return nil
+	}
+
+	return fmt.Errorf("failed to fetch %s: %s", kind, err)
 }
 
 // NewClient builds a kubernetes client to interact with the live cluster.
