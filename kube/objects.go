@@ -25,6 +25,7 @@ import (
 	arv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	st "k8s.io/api/storage/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -192,7 +193,7 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 		return nil, err
 	}
 
-	return objects, nil
+	return objectsWithoutNils(objects), nil
 }
 
 func annotateFetchError(kind string, err error) error {
@@ -206,6 +207,65 @@ func annotateFetchError(kind string, err error) error {
 	}
 
 	return fmt.Errorf("failed to fetch %s: %s", kind, err)
+}
+
+func objectsWithoutNils(objects *Objects) *Objects {
+	if objects.Nodes == nil {
+		objects.Nodes = &v1.NodeList{}
+	}
+	if objects.PersistentVolumes == nil {
+		objects.PersistentVolumes = &v1.PersistentVolumeList{}
+	}
+	if objects.Pods == nil {
+		objects.Pods = &v1.PodList{}
+	}
+	if objects.PodTemplates == nil {
+		objects.PodTemplates = &v1.PodTemplateList{}
+	}
+	if objects.PersistentVolumeClaims == nil {
+		objects.PersistentVolumeClaims = &v1.PersistentVolumeClaimList{}
+	}
+	if objects.ConfigMaps == nil {
+		objects.ConfigMaps = &v1.ConfigMapList{}
+	}
+	if objects.Services == nil {
+		objects.Services = &v1.ServiceList{}
+	}
+	if objects.Secrets == nil {
+		objects.Secrets = &v1.SecretList{}
+	}
+	if objects.ServiceAccounts == nil {
+		objects.ServiceAccounts = &v1.ServiceAccountList{}
+	}
+	if objects.ResourceQuotas == nil {
+		objects.ResourceQuotas = &v1.ResourceQuotaList{}
+	}
+	if objects.LimitRanges == nil {
+		objects.LimitRanges = &v1.LimitRangeList{}
+	}
+	if objects.StorageClasses == nil {
+		objects.StorageClasses = &st.StorageClassList{}
+	}
+	if objects.MutatingWebhookConfigurations == nil {
+		objects.MutatingWebhookConfigurations = &arv1.MutatingWebhookConfigurationList{}
+	}
+	if objects.ValidatingWebhookConfigurations == nil {
+		objects.ValidatingWebhookConfigurations = &arv1.ValidatingWebhookConfigurationList{}
+	}
+	if objects.MutatingWebhookConfigurationsBeta == nil {
+		objects.MutatingWebhookConfigurationsBeta = &arv1beta1.MutatingWebhookConfigurationList{}
+	}
+	if objects.ValidatingWebhookConfigurationsBeta == nil {
+		objects.ValidatingWebhookConfigurationsBeta = &arv1beta1.ValidatingWebhookConfigurationList{}
+	}
+	if objects.Namespaces == nil {
+		objects.Namespaces = &v1.NamespaceList{}
+	}
+	if objects.CronJobs == nil {
+		objects.CronJobs = &batchv1beta1.CronJobList{}
+	}
+
+	return objects
 }
 
 // NewClient builds a kubernetes client to interact with the live cluster.
