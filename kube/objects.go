@@ -21,7 +21,8 @@ import (
 	"fmt"
 
 	"golang.org/x/sync/errgroup"
-	ar "k8s.io/api/admissionregistration/v1"
+	arv1 "k8s.io/api/admissionregistration/v1"
+	arv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	st "k8s.io/api/storage/v1"
@@ -43,24 +44,26 @@ type Identifier struct {
 
 // Objects encapsulates all the objects from a Kubernetes cluster.
 type Objects struct {
-	Nodes                           *corev1.NodeList
-	PersistentVolumes               *corev1.PersistentVolumeList
-	SystemNamespace                 *corev1.Namespace
-	Pods                            *corev1.PodList
-	PodTemplates                    *corev1.PodTemplateList
-	PersistentVolumeClaims          *corev1.PersistentVolumeClaimList
-	ConfigMaps                      *corev1.ConfigMapList
-	Services                        *corev1.ServiceList
-	Secrets                         *corev1.SecretList
-	ServiceAccounts                 *corev1.ServiceAccountList
-	ResourceQuotas                  *corev1.ResourceQuotaList
-	LimitRanges                     *corev1.LimitRangeList
-	StorageClasses                  *st.StorageClassList
-	DefaultStorageClass             *st.StorageClass
-	MutatingWebhookConfigurations   *ar.MutatingWebhookConfigurationList
-	ValidatingWebhookConfigurations *ar.ValidatingWebhookConfigurationList
-	Namespaces                      *corev1.NamespaceList
-	CronJobs                        *batchv1beta1.CronJobList
+	Nodes                               *corev1.NodeList
+	PersistentVolumes                   *corev1.PersistentVolumeList
+	SystemNamespace                     *corev1.Namespace
+	Pods                                *corev1.PodList
+	PodTemplates                        *corev1.PodTemplateList
+	PersistentVolumeClaims              *corev1.PersistentVolumeClaimList
+	ConfigMaps                          *corev1.ConfigMapList
+	Services                            *corev1.ServiceList
+	Secrets                             *corev1.SecretList
+	ServiceAccounts                     *corev1.ServiceAccountList
+	ResourceQuotas                      *corev1.ResourceQuotaList
+	LimitRanges                         *corev1.LimitRangeList
+	StorageClasses                      *st.StorageClassList
+	DefaultStorageClass                 *st.StorageClass
+	MutatingWebhookConfigurations       *arv1.MutatingWebhookConfigurationList
+	ValidatingWebhookConfigurations     *arv1.ValidatingWebhookConfigurationList
+	MutatingWebhookConfigurationsBeta   *arv1beta1.MutatingWebhookConfigurationList
+	ValidatingWebhookConfigurationsBeta *arv1beta1.ValidatingWebhookConfigurationList
+	Namespaces                          *corev1.NamespaceList
+	CronJobs                            *batchv1beta1.CronJobList
 }
 
 // Client encapsulates a client for a Kubernetes cluster.
@@ -73,6 +76,7 @@ type Client struct {
 func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Objects, error) {
 	client := c.KubeClient.CoreV1()
 	admissionControllerClient := c.KubeClient.AdmissionregistrationV1()
+	admissionControllerClientBeta := c.KubeClient.AdmissionregistrationV1beta1()
 	batchClient := c.KubeClient.BatchV1beta1()
 	storageClient := c.KubeClient.StorageV1()
 	opts := metav1.ListOptions{}
@@ -160,6 +164,16 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 	g.Go(func() (err error) {
 		objects.ValidatingWebhookConfigurations, err = admissionControllerClient.ValidatingWebhookConfigurations().List(gCtx, opts)
 		err = annotateFetchError("ValidatingWebhookConfigurations (v1)", err)
+		return
+	})
+	g.Go(func() (err error) {
+		objects.MutatingWebhookConfigurationsBeta, err = admissionControllerClientBeta.MutatingWebhookConfigurations().List(gCtx, opts)
+		err = annotateFetchError("MutatingWebhookConfigurations (v1beta1)", err)
+		return
+	})
+	g.Go(func() (err error) {
+		objects.ValidatingWebhookConfigurationsBeta, err = admissionControllerClientBeta.ValidatingWebhookConfigurations().List(gCtx, opts)
+		err = annotateFetchError("ValidatingWebhookConfigurations (v1beta1)", err)
 		return
 	})
 	g.Go(func() (err error) {
