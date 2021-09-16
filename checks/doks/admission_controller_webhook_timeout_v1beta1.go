@@ -45,6 +45,14 @@ func (w *betaWebhookTimeoutCheck) Description() string {
 
 // Run runs this check on a set of Kubernetes objects.
 func (w *betaWebhookTimeoutCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+	if len(objects.ValidatingWebhookConfigurations.Items) > 0 ||
+		len(objects.MutatingWebhookConfigurations.Items) > 0 {
+		// Skip this check if there are v1 webhook configurations. On clusters
+		// that support both v1beta1 and v1 admission control, the same webhook
+		// configurations will be returned for both versions.
+		return nil, nil
+	}
+
 	var diagnostics []checks.Diagnostic
 
 	for _, config := range objects.ValidatingWebhookConfigurationsBeta.Items {

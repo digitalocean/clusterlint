@@ -22,6 +22,7 @@ import (
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 	"github.com/stretchr/testify/assert"
+	arv1 "k8s.io/api/admissionregistration/v1"
 	ar "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +42,47 @@ func TestBetaWebhookCheckRegistration(t *testing.T) {
 	assert.Equal(t, check, webhookCheck)
 }
 
+func TestBetaWebhookSkipWhenV1Exists(t *testing.T) {
+	v1Objs := webhookTestObjects(
+		arv1.Fail,
+		&metav1.LabelSelector{},
+		arv1.WebhookClientConfig{
+			Service: &arv1.ServiceReference{
+				Namespace: "webhook",
+				Name:      "webhook-service",
+			},
+		},
+		2,
+		[]string{"*"},
+		[]string{"*"},
+	)
+	betaObjs := webhookTestObjectsBeta(
+		ar.Fail,
+		&metav1.LabelSelector{},
+		ar.WebhookClientConfig{
+			Service: &ar.ServiceReference{
+				Namespace: "webhook",
+				Name:      "webhook-service",
+			},
+		},
+		2,
+		[]string{"*"},
+		[]string{"*"},
+	)
+
+	objs := &kube.Objects{
+		MutatingWebhookConfigurations:       v1Objs.MutatingWebhookConfigurations,
+		ValidatingWebhookConfigurations:     v1Objs.ValidatingWebhookConfigurations,
+		MutatingWebhookConfigurationsBeta:   betaObjs.MutatingWebhookConfigurationsBeta,
+		ValidatingWebhookConfigurationsBeta: betaObjs.ValidatingWebhookConfigurationsBeta,
+	}
+
+	webhookCheck := betaWebhookReplacementCheck{}
+	d, err := webhookCheck.Run(objs)
+	assert.NoError(t, err)
+	assert.Empty(t, d)
+}
+
 func TestBetaWebhookError(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -52,6 +94,8 @@ func TestBetaWebhookError(t *testing.T) {
 			objs: &kube.Objects{
 				MutatingWebhookConfigurationsBeta:   &ar.MutatingWebhookConfigurationList{},
 				ValidatingWebhookConfigurationsBeta: &ar.ValidatingWebhookConfigurationList{},
+				MutatingWebhookConfigurations:       &arv1.MutatingWebhookConfigurationList{},
+				ValidatingWebhookConfigurations:     &arv1.ValidatingWebhookConfigurationList{},
 				SystemNamespace:                     &corev1.Namespace{},
 			},
 			expected: nil,
@@ -403,6 +447,8 @@ func webhookTestObjectsBeta(
 				},
 			},
 		},
+		MutatingWebhookConfigurations:   &arv1.MutatingWebhookConfigurationList{},
+		ValidatingWebhookConfigurations: &arv1.ValidatingWebhookConfigurationList{},
 		MutatingWebhookConfigurationsBeta: &ar.MutatingWebhookConfigurationList{
 			Items: []ar.MutatingWebhookConfiguration{
 				{

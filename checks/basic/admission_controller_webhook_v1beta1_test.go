@@ -22,6 +22,7 @@ import (
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
 	"github.com/stretchr/testify/assert"
+	arv1 "k8s.io/api/admissionregistration/v1"
 	ar "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,6 +61,17 @@ func TestBetaWebHookRun(t *testing.T) {
 		Name: "mw_foo",
 	}
 
+	baseMWCv1 := arv1.MutatingWebhookConfiguration{
+		TypeMeta: metav1.TypeMeta{Kind: "MutatingWebhookConfiguration", APIVersion: "v1"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "mwc_foo",
+		},
+		Webhooks: []arv1.MutatingWebhook{},
+	}
+	baseMWv1 := arv1.MutatingWebhook{
+		Name: "mw_foo",
+	}
+
 	baseVWC := ar.ValidatingWebhookConfiguration{
 		TypeMeta: metav1.TypeMeta{Kind: "ValidatingWebhookConfiguration", APIVersion: "v1beta1"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -79,6 +91,8 @@ func TestBetaWebHookRun(t *testing.T) {
 		{
 			name: "no webhook configuration",
 			objs: &kube.Objects{
+				MutatingWebhookConfigurations:       &arv1.MutatingWebhookConfigurationList{},
+				ValidatingWebhookConfigurations:     &arv1.ValidatingWebhookConfigurationList{},
 				MutatingWebhookConfigurationsBeta:   &ar.MutatingWebhookConfigurationList{},
 				ValidatingWebhookConfigurationsBeta: &ar.ValidatingWebhookConfigurationList{},
 				SystemNamespace:                     &corev1.Namespace{},
@@ -88,7 +102,9 @@ func TestBetaWebHookRun(t *testing.T) {
 		{
 			name: "direct url webhooks",
 			objs: &kube.Objects{
-				Namespaces: emptyNamespaceList,
+				Namespaces:                      emptyNamespaceList,
+				MutatingWebhookConfigurations:   &arv1.MutatingWebhookConfigurationList{},
+				ValidatingWebhookConfigurations: &arv1.ValidatingWebhookConfigurationList{},
 				MutatingWebhookConfigurationsBeta: &ar.MutatingWebhookConfigurationList{
 					Items: []ar.MutatingWebhookConfiguration{
 						func() ar.MutatingWebhookConfiguration {
@@ -132,6 +148,8 @@ func TestBetaWebHookRun(t *testing.T) {
 						},
 					},
 				},
+				MutatingWebhookConfigurations:   &arv1.MutatingWebhookConfigurationList{},
+				ValidatingWebhookConfigurations: &arv1.ValidatingWebhookConfigurationList{},
 				MutatingWebhookConfigurationsBeta: &ar.MutatingWebhookConfigurationList{
 					Items: []ar.MutatingWebhookConfiguration{
 						func() ar.MutatingWebhookConfiguration {
@@ -191,7 +209,9 @@ func TestBetaWebHookRun(t *testing.T) {
 						},
 					},
 				},
-				Services: emptyServiceList,
+				Services:                        emptyServiceList,
+				MutatingWebhookConfigurations:   &arv1.MutatingWebhookConfigurationList{},
+				ValidatingWebhookConfigurations: &arv1.ValidatingWebhookConfigurationList{},
 				MutatingWebhookConfigurationsBeta: &ar.MutatingWebhookConfigurationList{
 					Items: []ar.MutatingWebhookConfiguration{
 						func() ar.MutatingWebhookConfiguration {
@@ -238,6 +258,72 @@ func TestBetaWebHookRun(t *testing.T) {
 					Kind:     checks.MutatingWebhookConfiguration,
 				},
 			},
+		},
+		{
+			name: "check skipped when v1beta1 and v1 coexist",
+			objs: &kube.Objects{
+				Namespaces: &corev1.NamespaceList{
+					Items: []corev1.Namespace{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "webhook",
+							},
+						},
+					},
+				},
+				Services:                        emptyServiceList,
+				ValidatingWebhookConfigurations: &arv1.ValidatingWebhookConfigurationList{},
+				MutatingWebhookConfigurations: &arv1.MutatingWebhookConfigurationList{
+					Items: []arv1.MutatingWebhookConfiguration{
+						func() arv1.MutatingWebhookConfiguration {
+							mwc := baseMWCv1
+							mw := baseMWv1
+							mw.ClientConfig = arv1.WebhookClientConfig{
+								Service: &arv1.ServiceReference{
+									Namespace: "webhook",
+									Name:      "service",
+								},
+							}
+							mwc.Webhooks = append(mwc.Webhooks, mw)
+							return mwc
+						}(),
+					},
+				},
+				MutatingWebhookConfigurationsBeta: &ar.MutatingWebhookConfigurationList{
+					Items: []ar.MutatingWebhookConfiguration{
+						func() ar.MutatingWebhookConfiguration {
+							mwc := baseMWC
+							mw := baseMW
+							mw.ClientConfig = ar.WebhookClientConfig{
+								Service: &ar.ServiceReference{
+									Namespace: "webhook",
+									Name:      "service",
+								},
+							}
+							mwc.Webhooks = append(mwc.Webhooks, mw)
+							return mwc
+						}(),
+					},
+				},
+				ValidatingWebhookConfigurationsBeta: &ar.ValidatingWebhookConfigurationList{
+					Items: []ar.ValidatingWebhookConfiguration{
+						func() ar.ValidatingWebhookConfiguration {
+							vwc := baseVWC
+							vw := baseVW
+							vw.ClientConfig = ar.WebhookClientConfig{
+								Service: &ar.ServiceReference{
+									Namespace: "webhook",
+									Name:      "service",
+								},
+							}
+							vwc.Webhooks = append(vwc.Webhooks, vw)
+							return vwc
+						}(),
+					},
+				},
+				SystemNamespace: &corev1.Namespace{},
+			},
+			expected: []checks.Diagnostic{},
 		},
 	}
 
