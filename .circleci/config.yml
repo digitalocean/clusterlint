@@ -25,6 +25,12 @@ jobs:
     steps:
       - checkout
       - run: go test -race -cover ./...
+  smoke-test:
+    docker:
+      - image: golang:1.17
+    steps:
+      - checkout
+      - run: go run ./cmd/clusterlint --version
 workflows:
   version: 2
   all:
@@ -33,3 +39,4 @@ workflows:
       - vet
       - lint
       - test
+      - smoke-test
