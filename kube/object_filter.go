@@ -17,11 +17,10 @@ limitations under the License.
 package kube
 
 import (
-	// Load client-go authentication plugins
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 // ObjectFilter stores k8s object's fields that needs to be included or excluded while running checks

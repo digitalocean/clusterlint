@@ -19,44 +19,81 @@ package kube
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
+	ktesting "k8s.io/client-go/testing"
 )
 
 func TestFetchObjects(t *testing.T) {
-	api := &Client{
-		KubeClient: fake.NewSimpleClientset(),
+	tests := []struct {
+		name        string
+		fakeMutator func(cs *fake.Clientset)
+	}{
+		{
+			name: "happy path",
+		},
+		{
+			name: "resources not found",
+			fakeMutator: func(cs *fake.Clientset) {
+				notFoundReactionFunc := func(action ktesting.Action) (bool, runtime.Object, error) {
+					return true, nil, &kerrors.StatusError{
+						ErrStatus: metav1.Status{
+							Reason:  metav1.StatusReasonNotFound,
+							Message: fmt.Sprintf("%s not found", action.GetResource().Resource),
+						},
+					}
+				}
+				cs.PrependReactor("list", "mutatingwebhookconfigurations", notFoundReactionFunc)
+				cs.PrependReactor("list", "validatingwebhookconfigurations", notFoundReactionFunc)
+			},
+		},
 	}
 
-	api.KubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   "kube-system",
-			Labels: map[string]string{"doks_key": "bar"}},
-	}, metav1.CreateOptions{})
+	for _, test := range tests {
+		cs := fake.NewSimpleClientset()
+		if test.fakeMutator != nil {
+			test.fakeMutator(cs)
+		}
 
-	actual, err := api.FetchObjects(context.Background(), ObjectFilter{})
-	assert.NoError(t, err)
+		api := &Client{
+			KubeClient: cs,
+		}
 
-	assert.NotNil(t, actual.Nodes)
-	assert.NotNil(t, actual.PersistentVolumes)
-	assert.NotNil(t, actual.Pods)
-	assert.NotNil(t, actual.PodTemplates)
-	assert.NotNil(t, actual.PersistentVolumeClaims)
-	assert.NotNil(t, actual.ConfigMaps)
-	assert.NotNil(t, actual.Services)
-	assert.NotNil(t, actual.Secrets)
-	assert.NotNil(t, actual.ServiceAccounts)
-	assert.NotNil(t, actual.ResourceQuotas)
-	assert.NotNil(t, actual.LimitRanges)
-	assert.NotNil(t, actual.ValidatingWebhookConfigurations)
-	assert.NotNil(t, actual.MutatingWebhookConfigurations)
-	assert.NotNil(t, actual.SystemNamespace)
+		api.KubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
+			TypeMeta: metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   "kube-system",
+				Labels: map[string]string{"doks_key": "bar"}},
+		}, metav1.CreateOptions{})
+
+		actual, err := api.FetchObjects(context.Background(), ObjectFilter{})
+		assert.NoError(t, err)
+
+		assert.NotNil(t, actual.Nodes)
+		assert.NotNil(t, actual.PersistentVolumes)
+		assert.NotNil(t, actual.Pods)
+		assert.NotNil(t, actual.PodTemplates)
+		assert.NotNil(t, actual.PersistentVolumeClaims)
+		assert.NotNil(t, actual.ConfigMaps)
+		assert.NotNil(t, actual.Services)
+		assert.NotNil(t, actual.Secrets)
+		assert.NotNil(t, actual.ServiceAccounts)
+		assert.NotNil(t, actual.ResourceQuotas)
+		assert.NotNil(t, actual.LimitRanges)
+		assert.NotNil(t, actual.ValidatingWebhookConfigurations)
+		assert.NotNil(t, actual.MutatingWebhookConfigurations)
+		assert.NotNil(t, actual.SystemNamespace)
+		assert.NotNil(t, actual.CronJobs)
+	}
+
 }
 
 func TestNewClientErrors(t *testing.T) {
@@ -103,4 +140,38 @@ users:
 		},
 	}, metav1.CreateOptions{})
 	assert.Contains(t, err.Error(), "fail")
+}
+
+func TestAnnotateFetchError(t *testing.T) {
+	kindName := "kind"
+
+	tests := []struct {
+		name    string
+		inErr   error
+		wantErr error
+	}{
+		{
+			name:    "no error",
+			inErr:   nil,
+			wantErr: nil,
+		},
+		{
+			name: "not found error",
+			inErr: &kerrors.StatusError{
+				ErrStatus: metav1.Status{
+					Reason: metav1.StatusReasonNotFound,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name:    "other error",
+			inErr:   errors.New("other error"),
+			wantErr: fmt.Errorf("failed to fetch %s: other error", kindName),
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.wantErr, annotateFetchError(kindName, test.inErr))
+	}
 }

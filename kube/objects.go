@@ -18,12 +18,16 @@ package kube
 
 import (
 	"context"
+	"fmt"
 
 	"golang.org/x/sync/errgroup"
-	ar "k8s.io/api/admissionregistration/v1"
+	arv1 "k8s.io/api/admissionregistration/v1"
+	arv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	st "k8s.io/api/storage/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -41,24 +45,26 @@ type Identifier struct {
 
 // Objects encapsulates all the objects from a Kubernetes cluster.
 type Objects struct {
-	Nodes                           *corev1.NodeList
-	PersistentVolumes               *corev1.PersistentVolumeList
-	SystemNamespace                 *corev1.Namespace
-	Pods                            *corev1.PodList
-	PodTemplates                    *corev1.PodTemplateList
-	PersistentVolumeClaims          *corev1.PersistentVolumeClaimList
-	ConfigMaps                      *corev1.ConfigMapList
-	Services                        *corev1.ServiceList
-	Secrets                         *corev1.SecretList
-	ServiceAccounts                 *corev1.ServiceAccountList
-	ResourceQuotas                  *corev1.ResourceQuotaList
-	LimitRanges                     *corev1.LimitRangeList
-	StorageClasses                  *st.StorageClassList
-	DefaultStorageClass             *st.StorageClass
-	MutatingWebhookConfigurations   *ar.MutatingWebhookConfigurationList
-	ValidatingWebhookConfigurations *ar.ValidatingWebhookConfigurationList
-	Namespaces                      *corev1.NamespaceList
-	CronJobs                        *batchv1beta1.CronJobList
+	Nodes                               *corev1.NodeList
+	PersistentVolumes                   *corev1.PersistentVolumeList
+	SystemNamespace                     *corev1.Namespace
+	Pods                                *corev1.PodList
+	PodTemplates                        *corev1.PodTemplateList
+	PersistentVolumeClaims              *corev1.PersistentVolumeClaimList
+	ConfigMaps                          *corev1.ConfigMapList
+	Services                            *corev1.ServiceList
+	Secrets                             *corev1.SecretList
+	ServiceAccounts                     *corev1.ServiceAccountList
+	ResourceQuotas                      *corev1.ResourceQuotaList
+	LimitRanges                         *corev1.LimitRangeList
+	StorageClasses                      *st.StorageClassList
+	DefaultStorageClass                 *st.StorageClass
+	MutatingWebhookConfigurations       *arv1.MutatingWebhookConfigurationList
+	ValidatingWebhookConfigurations     *arv1.ValidatingWebhookConfigurationList
+	MutatingWebhookConfigurationsBeta   *arv1beta1.MutatingWebhookConfigurationList
+	ValidatingWebhookConfigurationsBeta *arv1beta1.ValidatingWebhookConfigurationList
+	Namespaces                          *corev1.NamespaceList
+	CronJobs                            *batchv1beta1.CronJobList
 }
 
 // Client encapsulates a client for a Kubernetes cluster.
@@ -71,6 +77,7 @@ type Client struct {
 func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Objects, error) {
 	client := c.KubeClient.CoreV1()
 	admissionControllerClient := c.KubeClient.AdmissionregistrationV1()
+	admissionControllerClientBeta := c.KubeClient.AdmissionregistrationV1beta1()
 	batchClient := c.KubeClient.BatchV1beta1()
 	storageClient := c.KubeClient.StorageV1()
 	opts := metav1.ListOptions{}
@@ -95,62 +102,89 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 	})
 	g.Go(func() (err error) {
 		objects.PersistentVolumes, err = client.PersistentVolumes().List(gCtx, opts)
+		err = annotateFetchError("PersistentVolumes", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.Pods, err = client.Pods(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("Pods", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.PodTemplates, err = client.PodTemplates(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("PodTemplates", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.PersistentVolumeClaims, err = client.PersistentVolumeClaims(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("PersistentVolumeClaims", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.ConfigMaps, err = client.ConfigMaps(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("ConfigMaps", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.Secrets, err = client.Secrets(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("Secrets", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.Services, err = client.Services(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("Services", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.ServiceAccounts, err = client.ServiceAccounts(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("ServiceAccounts", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.ResourceQuotas, err = client.ResourceQuotas(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("ResourceQuotas", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.LimitRanges, err = client.LimitRanges(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("LimitRanges", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.SystemNamespace, err = client.Namespaces().Get(gCtx, metav1.NamespaceSystem, metav1.GetOptions{})
+		if err != nil {
+			err = fmt.Errorf("failed to fetch namespace %q: %s", metav1.NamespaceSystem, err)
+		}
 		return
 	})
 	g.Go(func() (err error) {
 		objects.MutatingWebhookConfigurations, err = admissionControllerClient.MutatingWebhookConfigurations().List(gCtx, opts)
+		err = annotateFetchError("MutatingWebhookConfigurations (v1)", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.ValidatingWebhookConfigurations, err = admissionControllerClient.ValidatingWebhookConfigurations().List(gCtx, opts)
+		err = annotateFetchError("ValidatingWebhookConfigurations (v1)", err)
+		return
+	})
+	g.Go(func() (err error) {
+		objects.MutatingWebhookConfigurationsBeta, err = admissionControllerClientBeta.MutatingWebhookConfigurations().List(gCtx, opts)
+		err = annotateFetchError("MutatingWebhookConfigurations (v1beta1)", err)
+		return
+	})
+	g.Go(func() (err error) {
+		objects.ValidatingWebhookConfigurationsBeta, err = admissionControllerClientBeta.ValidatingWebhookConfigurations().List(gCtx, opts)
+		err = annotateFetchError("ValidatingWebhookConfigurations (v1beta1)", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.Namespaces, err = client.Namespaces().List(gCtx, opts)
+		err = annotateFetchError("Namespaces", err)
 		return
 	})
 	g.Go(func() (err error) {
 		objects.CronJobs, err = batchClient.CronJobs(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("CronJobs", err)
 		return
 	})
 
@@ -159,7 +193,79 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 		return nil, err
 	}
 
-	return objects, nil
+	return objectsWithoutNils(objects), nil
+}
+
+func annotateFetchError(kind string, err error) error {
+	if err == nil {
+		return nil
+	}
+	if kerrors.IsNotFound(err) {
+		// Resource doesn't exist in this cluster's version, so there aren't any
+		// objects to list and check.
+		return nil
+	}
+
+	return fmt.Errorf("failed to fetch %s: %s", kind, err)
+}
+
+func objectsWithoutNils(objects *Objects) *Objects {
+	if objects.Nodes == nil {
+		objects.Nodes = &v1.NodeList{}
+	}
+	if objects.PersistentVolumes == nil {
+		objects.PersistentVolumes = &v1.PersistentVolumeList{}
+	}
+	if objects.Pods == nil {
+		objects.Pods = &v1.PodList{}
+	}
+	if objects.PodTemplates == nil {
+		objects.PodTemplates = &v1.PodTemplateList{}
+	}
+	if objects.PersistentVolumeClaims == nil {
+		objects.PersistentVolumeClaims = &v1.PersistentVolumeClaimList{}
+	}
+	if objects.ConfigMaps == nil {
+		objects.ConfigMaps = &v1.ConfigMapList{}
+	}
+	if objects.Services == nil {
+		objects.Services = &v1.ServiceList{}
+	}
+	if objects.Secrets == nil {
+		objects.Secrets = &v1.SecretList{}
+	}
+	if objects.ServiceAccounts == nil {
+		objects.ServiceAccounts = &v1.ServiceAccountList{}
+	}
+	if objects.ResourceQuotas == nil {
+		objects.ResourceQuotas = &v1.ResourceQuotaList{}
+	}
+	if objects.LimitRanges == nil {
+		objects.LimitRanges = &v1.LimitRangeList{}
+	}
+	if objects.StorageClasses == nil {
+		objects.StorageClasses = &st.StorageClassList{}
+	}
+	if objects.MutatingWebhookConfigurations == nil {
+		objects.MutatingWebhookConfigurations = &arv1.MutatingWebhookConfigurationList{}
+	}
+	if objects.ValidatingWebhookConfigurations == nil {
+		objects.ValidatingWebhookConfigurations = &arv1.ValidatingWebhookConfigurationList{}
+	}
+	if objects.MutatingWebhookConfigurationsBeta == nil {
+		objects.MutatingWebhookConfigurationsBeta = &arv1beta1.MutatingWebhookConfigurationList{}
+	}
+	if objects.ValidatingWebhookConfigurationsBeta == nil {
+		objects.ValidatingWebhookConfigurationsBeta = &arv1beta1.ValidatingWebhookConfigurationList{}
+	}
+	if objects.Namespaces == nil {
+		objects.Namespaces = &v1.NamespaceList{}
+	}
+	if objects.CronJobs == nil {
+		objects.CronJobs = &batchv1beta1.CronJobList{}
+	}
+
+	return objects
 }
 
 // NewClient builds a kubernetes client to interact with the live cluster.
