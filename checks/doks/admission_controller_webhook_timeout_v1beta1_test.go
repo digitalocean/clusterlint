@@ -133,7 +133,7 @@ func TestBetaWebhookTimeoutError(t *testing.T) {
 				toIntP(30),
 				2,
 			),
-			expected: webhookTimeoutErrors(),
+			expected: webhookTimeoutErrorsBeta(),
 		},
 		{
 			name: "TimeoutSeconds value is set to 31 seconds",
@@ -147,7 +147,7 @@ func TestBetaWebhookTimeoutError(t *testing.T) {
 				toIntP(31),
 				2,
 			),
-			expected: webhookTimeoutErrors(),
+			expected: webhookTimeoutErrorsBeta(),
 		},
 		{
 			name: "TimeoutSeconds value is set to nil",
