@@ -141,3 +141,37 @@ users:
 	}, metav1.CreateOptions{})
 	assert.Contains(t, err.Error(), "fail")
 }
+
+func TestAnnotateFetchError(t *testing.T) {
+	kindName := "kind"
+
+	tests := []struct {
+		name    string
+		inErr   error
+		wantErr error
+	}{
+		{
+			name:    "no error",
+			inErr:   nil,
+			wantErr: nil,
+		},
+		{
+			name: "not found error",
+			inErr: &kerrors.StatusError{
+				ErrStatus: metav1.Status{
+					Reason: metav1.StatusReasonNotFound,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name:    "other error",
+			inErr:   errors.New("other error"),
+			wantErr: fmt.Errorf("failed to fetch %s: other error", kindName),
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.wantErr, annotateFetchError(kindName, test.inErr))
+	}
+}
