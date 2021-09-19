@@ -91,6 +91,7 @@ func TestFetchObjects(t *testing.T) {
 		assert.NotNil(t, actual.ValidatingWebhookConfigurations)
 		assert.NotNil(t, actual.MutatingWebhookConfigurations)
 		assert.NotNil(t, actual.SystemNamespace)
+		assert.NotNil(t, actual.CronJobs)
 	}
 
 }
