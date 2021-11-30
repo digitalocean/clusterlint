@@ -39,6 +39,14 @@ clusterlint list [options]  // list all checks available
 clusterlint run [options]  // run all or specific checks
 ```
 
+### Running in-cluster
+
+If you're running clusterlint from within a Pod, you can use the `--in-cluster` flag to access the Kubernetes API from the Pod.
+
+```
+clusterlint --in-cluster run
+```
+
 ### Specific checks and groups
 
 All checks that clusterlint performs are categorized into groups. A check can belong to multiple groups. This framework allows one to only run specific checks on a cluster. For instance, if a cluster is running on DOKS, then, running checks specific to AWS does not make sense. Clusterlint can blacklist aws related checks, if any while running against a DOKS cluster.
