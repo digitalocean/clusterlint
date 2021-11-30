@@ -268,6 +268,39 @@ func objectsWithoutNils(objects *Objects) *Objects {
 	return objects
 }
 
+func NewClientConfigFromKubeConfig(opts *options) (*rest.Config, error) {
+	config := &rest.Config{}
+
+	err := opts.validate()
+	if err != nil {
+		return nil, err
+	}
+
+	if opts.yaml != nil {
+		config, err = clientcmd.RESTConfigFromKubeConfig(opts.yaml)
+	} else {
+		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+		if len(opts.paths) != 0 {
+			loadingRules.Precedence = opts.paths
+		}
+		configOverrides := &clientcmd.ConfigOverrides{}
+		if opts.kubeContext != "" {
+			configOverrides.CurrentContext = opts.kubeContext
+		}
+		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	config.Timeout = opts.timeout
+	if opts.transportWrapper != nil {
+		config.Wrap(opts.transportWrapper)
+	}
+
+	return config, nil
+}
+
 // NewClient builds a kubernetes client to interact with the live cluster.
 // The kube config file path or the kubeconfig yaml must be specified
 // If not specified, defaults are assumed - configPath: ~/.kube/config, configContext: current context
@@ -282,31 +315,14 @@ func NewClient(opts ...Option) (*Client, error) {
 
 	var config *rest.Config
 	var err error
-	err = defOpts.validate()
-	if err != nil {
-		return nil, err
-	}
 
-	if defOpts.yaml != nil {
-		config, err = clientcmd.RESTConfigFromKubeConfig(defOpts.yaml)
+	if defOpts.inCluster {
+		config, err = rest.InClusterConfig()
 	} else {
-		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-		if len(defOpts.paths) != 0 {
-			loadingRules.Precedence = defOpts.paths
-		}
-		configOverrides := &clientcmd.ConfigOverrides{}
-		if defOpts.kubeContext != "" {
-			configOverrides.CurrentContext = defOpts.kubeContext
-		}
-		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides).ClientConfig()
+		config, err = NewClientConfigFromKubeConfig(defOpts)
 	}
-
 	if err != nil {
 		return nil, err
-	}
-	config.Timeout = defOpts.timeout
-	if defOpts.transportWrapper != nil {
-		config.Wrap(defOpts.transportWrapper)
 	}
 
 	client, err := kubernetes.NewForConfig(config)

@@ -106,6 +106,11 @@ func TestNewClientErrors(t *testing.T) {
 		_, err := NewClient(WithMergedConfigFiles([]string{"some-path"}), WithYaml([]byte("yaml")))
 		assert.Equal(t, errors.New("cannot specify yaml and kubeconfig file paths"), err)
 	})
+
+	t.Run("in-cluster access enabled", func(t *testing.T) {
+		_, err := NewClient(InCluster())
+		assert.Equal(t, errors.New("unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT must be defined"), err)
+	})
 }
 
 type failTransport struct{}

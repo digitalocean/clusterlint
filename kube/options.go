@@ -30,6 +30,7 @@ type options struct {
 	yaml             []byte
 	transportWrapper TransportWrapper
 	timeout          time.Duration
+	inCluster        bool
 }
 
 // Option function that allows injecting options while building kube.Client.
@@ -82,6 +83,14 @@ type TransportWrapper = func(http.RoundTripper) http.RoundTripper
 func WithTransportWrapper(f TransportWrapper) Option {
 	return func(o *options) error {
 		o.transportWrapper = f
+		return nil
+	}
+}
+
+// InCluster indicates that we are accessing the Kubernetes API from a Pod
+func InCluster() Option {
+	return func(o *options) error {
+		o.inCluster = true
 		return nil
 	}
 }
