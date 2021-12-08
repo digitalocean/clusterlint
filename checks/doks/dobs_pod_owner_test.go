@@ -167,6 +167,58 @@ func TestDobsPodOwnerWarning(t *testing.T) {
 			},
 		},
 		{
+			name: "dobs pods owned by multiple deployments",
+			objs: multiDeployment(),
+			expected: []checks.Diagnostic{
+				{
+					Severity: checks.Warning,
+					Message:  "Pod referencing DOBS volumes must be owned by StatefulSet",
+					Kind:     checks.Pod,
+					Object: &metav1.ObjectMeta{
+						Name:      "foo",
+						Namespace: metav1.NamespaceDefault,
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								APIVersion: "apps/v1",
+								Kind:       "Deployment",
+								Name:       "web-app-1",
+							},
+						},
+					},
+					Owners: []metav1.OwnerReference{
+						{
+							APIVersion: "apps/v1",
+							Kind:       "Deployment",
+							Name:       "web-app-1",
+						},
+					},
+				},
+				{
+					Severity: checks.Warning,
+					Message:  "Pod referencing DOBS volumes must be owned by StatefulSet",
+					Kind:     checks.Pod,
+					Object: &metav1.ObjectMeta{
+						Name:      "bar",
+						Namespace: metav1.NamespaceDefault,
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								APIVersion: "apps/v1",
+								Kind:       "Deployment",
+								Name:       "web-app-2",
+							},
+						},
+					},
+					Owners: []metav1.OwnerReference{
+						{
+							APIVersion: "apps/v1",
+							Kind:       "Deployment",
+							Name:       "web-app-2",
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "dobs pod owned by deployment -- with legacy driver",
 			objs: deployment(pvcDobs("", LegacyCSIDriver)),
 			expected: []checks.Diagnostic{
@@ -261,6 +313,96 @@ func deployment(objs *kube.Objects) *kube.Objects {
 			Name:       "web-app",
 		},
 	}
+	return objs
+}
+
+func multiDeployment() *kube.Objects {
+	objs := &kube.Objects{
+		Pods: &corev1.PodList{
+			Items: []corev1.Pod{
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: metav1.NamespaceDefault},
+					Spec: corev1.PodSpec{
+						Volumes: []corev1.Volume{
+							{
+								Name: "def-pvc-source-1",
+								VolumeSource: corev1.VolumeSource{
+									PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+										ClaimName: "def-pvc-1",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "bar", Namespace: metav1.NamespaceDefault},
+					Spec: corev1.PodSpec{
+						Volumes: []corev1.Volume{
+							{
+								Name: "def-pvc-source-2",
+								VolumeSource: corev1.VolumeSource{
+									PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+										ClaimName: "def-pvc-2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		PersistentVolumeClaims: &corev1.PersistentVolumeClaimList{
+			Items: []corev1.PersistentVolumeClaim{
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "PersistentVolumeClaim", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "def-pvc-1", Namespace: metav1.NamespaceDefault},
+					Spec: corev1.PersistentVolumeClaimSpec{
+						VolumeName:       "dobs-v1",
+					},
+				},
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "PersistentVolumeClaim", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "def-pvc-2", Namespace: metav1.NamespaceDefault},
+					Spec: corev1.PersistentVolumeClaimSpec{
+						VolumeName:       "dobs-v2",
+					},
+				},
+			},
+		},
+		StorageClasses: &st.StorageClassList{
+			Items: []st.StorageClass{
+				{
+					TypeMeta:    metav1.TypeMeta{Kind: "StorageClass", APIVersion: "storage.k8s.io/v1"},
+					ObjectMeta:  metav1.ObjectMeta{Name: DOBlockStorageName, Namespace: metav1.NamespaceDefault},
+					Provisioner: DOCSIDriver,
+				},
+			},
+		},
+		DefaultStorageClass: &st.StorageClass{
+			TypeMeta:    metav1.TypeMeta{Kind: "StorageClass", APIVersion: "storage.k8s.io/v1"},
+			ObjectMeta:  metav1.ObjectMeta{Name: DOBlockStorageName, Namespace: metav1.NamespaceDefault},
+			Provisioner: DOCSIDriver,
+		},
+	}
+
+	objs.Pods.Items[0].OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+			Name:       "web-app-1",
+		},
+	}
+	objs.Pods.Items[1].OwnerReferences = []metav1.OwnerReference{
+		{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+			Name:       "web-app-2",
+		},
+	}
+
 	return objs
 }
 
