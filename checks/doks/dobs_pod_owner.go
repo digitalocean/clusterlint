@@ -67,6 +67,7 @@ func (p *dobsPodOwner) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 		}
 	}
 	for _, pod := range dobsPods {
+		pod := pod
 		if pod.OwnerReferences != nil && ownedByStatefulSet(pod.OwnerReferences) {
 			continue
 		}
