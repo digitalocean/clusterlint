@@ -47,6 +47,31 @@ If you're running clusterlint from within a Pod, you can use the `--in-cluster` 
 clusterlint --in-cluster run
 ```
 
+Here's a simple example of CronJob definition to run clusterlint in the default namespace without RBAC : 
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: clusterlint-cron
+spec:
+  schedule: "0 */1 * * *"
+  concurrencyPolicy: Replace
+  failedJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: clusterlint
+              image: docker.io/clusterlint:latest
+              imagePullPolicy: IfNotPresent
+          restartPolicy: Never
+```
+
+If you're using RBAC, see [docs/RBAC.md](docs/RBAC.md).
+
 ### Specific checks and groups
 
 All checks that clusterlint performs are categorized into groups. A check can belong to multiple groups. This framework allows one to only run specific checks on a cluster. For instance, if a cluster is running on DOKS, then, running checks specific to AWS does not make sense. Clusterlint can blacklist aws related checks, if any while running against a DOKS cluster.
