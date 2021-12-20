@@ -99,5 +99,8 @@ func (o *options) validate() error {
 	if o.yaml != nil && len(o.paths) != 0 {
 		return errors.New("cannot specify yaml and kubeconfig file paths")
 	}
+	if (o.yaml != nil || len(o.paths) != 0) && o.inCluster {
+		return errors.New("cannot specify yaml or kubeconfig file paths when running in-cluster mode")
+	}
 	return nil
 }

@@ -107,6 +107,16 @@ func TestNewClientErrors(t *testing.T) {
 		assert.Equal(t, errors.New("cannot specify yaml and kubeconfig file paths"), err)
 	})
 
+	t.Run("both yaml and in-cluster specified", func(t *testing.T) {
+		_, err := NewClient(WithYaml([]byte("yaml")), InCluster())
+		assert.Equal(t, errors.New("cannot specify yaml or kubeconfig file paths when running in-cluster mode"), err)
+	})
+
+	t.Run("both KUBECONFIG and in-cluster specified", func(t *testing.T) {
+		_, err := NewClient(WithMergedConfigFiles([]string{"some-path"}), InCluster())
+		assert.Equal(t, errors.New("cannot specify yaml or kubeconfig file paths when running in-cluster mode"), err)
+	})
+
 	t.Run("in-cluster access enabled", func(t *testing.T) {
 		_, err := NewClient(InCluster())
 		assert.Equal(t, errors.New("unable to load in-cluster configuration, KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT must be defined"), err)

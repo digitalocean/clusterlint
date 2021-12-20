@@ -269,12 +269,8 @@ func objectsWithoutNils(objects *Objects) *Objects {
 }
 
 func NewClientConfigFromKubeConfig(opts *options) (*rest.Config, error) {
+	var err error
 	config := &rest.Config{}
-
-	err := opts.validate()
-	if err != nil {
-		return nil, err
-	}
 
 	if opts.yaml != nil {
 		config, err = clientcmd.RESTConfigFromKubeConfig(opts.yaml)
@@ -292,10 +288,6 @@ func NewClientConfigFromKubeConfig(opts *options) (*rest.Config, error) {
 
 	if err != nil {
 		return nil, err
-	}
-	config.Timeout = opts.timeout
-	if opts.transportWrapper != nil {
-		config.Wrap(opts.transportWrapper)
 	}
 
 	return config, nil
@@ -316,6 +308,11 @@ func NewClient(opts ...Option) (*Client, error) {
 	var config *rest.Config
 	var err error
 
+	err = defOpts.validate()
+	if err != nil {
+		return nil, err
+	}
+
 	if defOpts.inCluster {
 		config, err = rest.InClusterConfig()
 	} else {
@@ -323,6 +320,11 @@ func NewClient(opts ...Option) (*Client, error) {
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	config.Timeout = defOpts.timeout
+	if defOpts.transportWrapper != nil {
+		config.Wrap(defOpts.transportWrapper)
 	}
 
 	client, err := kubernetes.NewForConfig(config)
