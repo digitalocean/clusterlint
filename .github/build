@@ -6,6 +6,7 @@ export GO111MODULE=on
 env GOOS=linux GOARCH=amd64 go build -mod=vendor -o clusterlint ./cmd/clusterlint; tar -czvf clusterlint-$t-linux-amd64.tar.gz ./clusterlint
 env GOOS=linux GOARCH=386 go build -mod=vendor -o clusterlint ./cmd/clusterlint; tar -czvf clusterlint-$t-linux-386.tar.gz ./clusterlint
 env GOOS=darwin GOARCH=amd64 go build -mod=vendor -o clusterlint ./cmd/clusterlint; tar -czvf clusterlint-$t-darwin-amd64.tar.gz ./clusterlint
+env GOOS=darwin GOARCH=arm64 go build -mod=vendor -o clusterlint ./cmd/clusterlint; tar -czvf clusterlint-$t-darwin-arm64.tar.gz ./clusterlint
 env GOOS=windows GOARCH=amd64 go build -mod=vendor -o clusterlint.exe ./cmd/clusterlint; tar -czvf clusterlint-$t-windows-amd64.tar.gz ./clusterlint
 env GOOS=windows GOARCH=386 go build -mod=vendor -o clusterlint.exe ./cmd/clusterlint; tar -czvf clusterlint-$t-windows-386.tar.gz ./clusterlint
 sha256sum clusterlint-$t-linux-amd64.tar.gz >> clusterlint-$t-checksums.sha256
