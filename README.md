@@ -41,6 +41,13 @@ clusterlint run [options]  // run all or specific checks
 
 ### Running in-cluster
 
+Build the docker image to run clusterlint from within a cluster by doing:
+
+```shell
+docker build -t <hub_username>/clusterlint:<tag> .
+docker push <hub_username>/clusterlint:<tag>
+```
+
 If you're running clusterlint from within a Pod, you can use the `--in-cluster` flag to access the Kubernetes API from the Pod.
 
 ```
@@ -65,7 +72,8 @@ spec:
         spec:
           containers:
             - name: clusterlint
-              image: docker.io/clusterlint:latest
+              image: docker.io/<hub_username>/clusterlint:<tag>
+              command: ['/clusterlint', '--in-cluster', 'run']
               imagePullPolicy: IfNotPresent
           restartPolicy: Never
 ```
