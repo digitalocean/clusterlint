@@ -58,6 +58,10 @@ func main() {
 			Name:  "plugins",
 			Usage: "paths of Go plugins to load containing local checks",
 		},
+		cli.BoolFlag{
+			Name:  "in-cluster",
+			Usage: "Enable accessing the Kubernetes API from a Pod",
+		},
 	}
 	app.Commands = []cli.Command{
 		{
@@ -169,7 +173,19 @@ func runChecks(c *cli.Context) error {
 		kubeconfigFilePaths = strings.Split(value, delimiter)
 	}
 
-	client, err := kube.NewClient(kube.WithMergedConfigFiles(kubeconfigFilePaths), kube.WithKubeContext(c.GlobalString("context")), kube.WithTimeout(c.GlobalDuration("timeout")))
+	opts := make([]kube.Option, 0)
+
+	opts = append(opts,
+		kube.WithMergedConfigFiles(kubeconfigFilePaths),
+		kube.WithKubeContext(c.GlobalString("context")),
+		kube.WithTimeout(c.GlobalDuration("timeout")),
+	)
+
+	if c.GlobalBool("in-cluster") {
+		opts = append(opts, kube.InCluster())
+	}
+
+	client, err := kube.NewClient(opts...)
 	if err != nil {
 		return err
 	}

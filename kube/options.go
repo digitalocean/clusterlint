@@ -30,6 +30,7 @@ type options struct {
 	yaml             []byte
 	transportWrapper TransportWrapper
 	timeout          time.Duration
+	inCluster        bool
 }
 
 // Option function that allows injecting options while building kube.Client.
@@ -86,9 +87,20 @@ func WithTransportWrapper(f TransportWrapper) Option {
 	}
 }
 
+// InCluster indicates that we are accessing the Kubernetes API from a Pod
+func InCluster() Option {
+	return func(o *options) error {
+		o.inCluster = true
+		return nil
+	}
+}
+
 func (o *options) validate() error {
 	if o.yaml != nil && len(o.paths) != 0 {
 		return errors.New("cannot specify yaml and kubeconfig file paths")
+	}
+	if (o.yaml != nil || len(o.paths) != 0) && o.inCluster {
+		return errors.New("cannot specify yaml or kubeconfig file paths when running in-cluster mode")
 	}
 	return nil
 }
