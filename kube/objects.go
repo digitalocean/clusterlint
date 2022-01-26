@@ -22,7 +22,6 @@ import (
 
 	"golang.org/x/sync/errgroup"
 	arv1 "k8s.io/api/admissionregistration/v1"
-	arv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
@@ -61,8 +60,6 @@ type Objects struct {
 	DefaultStorageClass                 *st.StorageClass
 	MutatingWebhookConfigurations       *arv1.MutatingWebhookConfigurationList
 	ValidatingWebhookConfigurations     *arv1.ValidatingWebhookConfigurationList
-	MutatingWebhookConfigurationsBeta   *arv1beta1.MutatingWebhookConfigurationList
-	ValidatingWebhookConfigurationsBeta *arv1beta1.ValidatingWebhookConfigurationList
 	Namespaces                          *corev1.NamespaceList
 	CronJobs                            *batchv1beta1.CronJobList
 }
@@ -77,7 +74,6 @@ type Client struct {
 func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Objects, error) {
 	client := c.KubeClient.CoreV1()
 	admissionControllerClient := c.KubeClient.AdmissionregistrationV1()
-	admissionControllerClientBeta := c.KubeClient.AdmissionregistrationV1beta1()
 	batchClient := c.KubeClient.BatchV1beta1()
 	storageClient := c.KubeClient.StorageV1()
 	opts := metav1.ListOptions{}
@@ -168,16 +164,6 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 		return
 	})
 	g.Go(func() (err error) {
-		objects.MutatingWebhookConfigurationsBeta, err = admissionControllerClientBeta.MutatingWebhookConfigurations().List(gCtx, opts)
-		err = annotateFetchError("MutatingWebhookConfigurations (v1beta1)", err)
-		return
-	})
-	g.Go(func() (err error) {
-		objects.ValidatingWebhookConfigurationsBeta, err = admissionControllerClientBeta.ValidatingWebhookConfigurations().List(gCtx, opts)
-		err = annotateFetchError("ValidatingWebhookConfigurations (v1beta1)", err)
-		return
-	})
-	g.Go(func() (err error) {
 		objects.Namespaces, err = client.Namespaces().List(gCtx, opts)
 		err = annotateFetchError("Namespaces", err)
 		return
@@ -251,12 +237,6 @@ func objectsWithoutNils(objects *Objects) *Objects {
 	}
 	if objects.ValidatingWebhookConfigurations == nil {
 		objects.ValidatingWebhookConfigurations = &arv1.ValidatingWebhookConfigurationList{}
-	}
-	if objects.MutatingWebhookConfigurationsBeta == nil {
-		objects.MutatingWebhookConfigurationsBeta = &arv1beta1.MutatingWebhookConfigurationList{}
-	}
-	if objects.ValidatingWebhookConfigurationsBeta == nil {
-		objects.ValidatingWebhookConfigurationsBeta = &arv1beta1.ValidatingWebhookConfigurationList{}
 	}
 	if objects.Namespaces == nil {
 		objects.Namespaces = &v1.NamespaceList{}
