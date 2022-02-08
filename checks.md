@@ -1,4 +1,4 @@
-[Clusterlint](https://github.com/digitalocean/clusterlint) flags issues with workloads deployed in a cluster. These issues might cause workload downtime during maintenance or upgrade to a new Kubernetes version, and could complicate the maintenance or upgrade itself.
+[Clusterlint](https://github.com/digitalocean/clusterlint) flags issues with workloads deployed in a cluster. These issues might cause workload downtime during maintenance or upgrade to a new Kubernetes version, and could complicate the maintenance or upgrade itself. DigitalOcean runs a cluster linter check before a cluster upgrade. You can also run these checks yourself from the **Operational Readiness Check** section of a cluster's **Overview** node.
 
 ## Default Namespace
 
