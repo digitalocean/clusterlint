@@ -79,6 +79,7 @@ func TestNodeLabels(t *testing.T) {
 				Kind:     checks.Node,
 				Details:  "Custom node labels: [example.com/another-label example.com/custom-label]",
 				Object: &metav1.ObjectMeta{
+					Name: "bad-node",
 					Labels: map[string]string{
 						"doks.digitalocean.com/foo":                "bar",
 						"doks.digitalocean.com/baz":                "xyzzy",
@@ -98,11 +99,24 @@ func TestNodeLabels(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			objects := &kube.Objects{
 				Nodes: &corev1.NodeList{
-					Items: []corev1.Node{{
-						ObjectMeta: metav1.ObjectMeta{
-							Labels: test.nodeLabels,
+					Items: []corev1.Node{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "good-node",
+							},
 						},
-					}},
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:   "bad-node",
+								Labels: test.nodeLabels,
+							},
+						},
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "another-good-node",
+							},
+						},
+					},
 				},
 			}
 
