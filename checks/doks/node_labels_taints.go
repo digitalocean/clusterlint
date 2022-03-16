@@ -51,6 +51,7 @@ func (*nodeLabelsTaintsCheck) Description() string {
 func (c *nodeLabelsTaintsCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
 	for _, node := range objects.Nodes.Items {
+		node := node
 		var customLabels, customTaints []string
 		for labelKey := range node.Labels {
 			if !isKubernetesLabel(labelKey) && !isDOKSLabel(labelKey) {
