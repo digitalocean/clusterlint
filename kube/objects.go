@@ -19,6 +19,7 @@ package kube
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"golang.org/x/sync/errgroup"
 	arv1 "k8s.io/api/admissionregistration/v1"
@@ -28,6 +29,7 @@ import (
 	st "k8s.io/api/storage/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -44,29 +46,36 @@ type Identifier struct {
 
 // Objects encapsulates all the objects from a Kubernetes cluster.
 type Objects struct {
-	Nodes                               *corev1.NodeList
-	PersistentVolumes                   *corev1.PersistentVolumeList
-	SystemNamespace                     *corev1.Namespace
-	Pods                                *corev1.PodList
-	PodTemplates                        *corev1.PodTemplateList
-	PersistentVolumeClaims              *corev1.PersistentVolumeClaimList
-	ConfigMaps                          *corev1.ConfigMapList
-	Services                            *corev1.ServiceList
-	Secrets                             *corev1.SecretList
-	ServiceAccounts                     *corev1.ServiceAccountList
-	ResourceQuotas                      *corev1.ResourceQuotaList
-	LimitRanges                         *corev1.LimitRangeList
-	StorageClasses                      *st.StorageClassList
-	DefaultStorageClass                 *st.StorageClass
-	MutatingWebhookConfigurations       *arv1.MutatingWebhookConfigurationList
-	ValidatingWebhookConfigurations     *arv1.ValidatingWebhookConfigurationList
-	Namespaces                          *corev1.NamespaceList
-	CronJobs                            *batchv1beta1.CronJobList
+	Nodes                           *corev1.NodeList
+	PersistentVolumes               *corev1.PersistentVolumeList
+	SystemNamespace                 *corev1.Namespace
+	Pods                            *corev1.PodList
+	PodTemplates                    *corev1.PodTemplateList
+	PersistentVolumeClaims          *corev1.PersistentVolumeClaimList
+	ConfigMaps                      *corev1.ConfigMapList
+	Services                        *corev1.ServiceList
+	Secrets                         *corev1.SecretList
+	ServiceAccounts                 *corev1.ServiceAccountList
+	ResourceQuotas                  *corev1.ResourceQuotaList
+	LimitRanges                     *corev1.LimitRangeList
+	StorageClasses                  *st.StorageClassList
+	DefaultStorageClass             *st.StorageClass
+	MutatingWebhookConfigurations   *arv1.MutatingWebhookConfigurationList
+	ValidatingWebhookConfigurations *arv1.ValidatingWebhookConfigurationList
+	Namespaces                      *corev1.NamespaceList
+	CronJobs                        *batchv1beta1.CronJobList
 }
 
 // Client encapsulates a client for a Kubernetes cluster.
 type Client struct {
 	KubeClient kubernetes.Interface
+	httpClient *http.Client
+}
+
+func (c *Client) Close() {
+	if c.httpClient != nil {
+		utilnet.CloseIdleConnectionsFor(c.httpClient.Transport)
+	}
 }
 
 // FetchObjects returns the objects from a Kubernetes cluster.
@@ -307,12 +316,20 @@ func NewClient(opts ...Option) (*Client, error) {
 		config.Wrap(defOpts.transportWrapper)
 	}
 
-	client, err := kubernetes.NewForConfig(config)
+	// disable transport caching
+	// see: https://github.com/kubernetes/kubernetes/issues/109289
+	config.Proxy = http.ProxyFromEnvironment
+	httpClient, err := rest.HTTPClientFor(config)
+	if err != nil {
+		return nil, err
+	}
+	client, err := kubernetes.NewForConfigAndClient(config, httpClient)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Client{
 		KubeClient: client,
+		httpClient: httpClient,
 	}, nil
 }
