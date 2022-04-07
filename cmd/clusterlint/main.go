@@ -189,6 +189,7 @@ func runChecks(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	defer client.Close()
 
 	filter, err := checks.NewCheckFilter(c.StringSlice("g"), c.StringSlice("G"), c.StringSlice("c"), c.StringSlice("C"))
 	if err != nil {
