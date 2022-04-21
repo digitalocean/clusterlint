@@ -664,7 +664,7 @@ This check reports all the secret names in the cluster that are not referenced b
 kubectl delete secret <unused secret name>
 ```
 
-## Resource Requests and Limits
+## Resource Requirements
 
 - Name: `resource-requirements`
 - Groups: `basic`
