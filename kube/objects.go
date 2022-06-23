@@ -21,8 +21,9 @@ import (
 	"fmt"
 	"net/http"
 
-	csiv2types "github.com/kubernetes-csi/external-snapshotter/v2/pkg/apis/volumesnapshot/v1beta1"
-	csiv2 "github.com/kubernetes-csi/external-snapshotter/v2/pkg/client/clientset/versioned"
+	csitypes "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1"
+	csitypesbeta "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1beta1"
+	csi "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
 	"golang.org/x/sync/errgroup"
 	arv1 "k8s.io/api/admissionregistration/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -60,7 +61,8 @@ type Objects struct {
 	ServiceAccounts                 *corev1.ServiceAccountList
 	ResourceQuotas                  *corev1.ResourceQuotaList
 	LimitRanges                     *corev1.LimitRangeList
-	VolumeSnapshots                 *csiv2types.VolumeSnapshotList
+	VolumeSnapshotsV1               *csitypes.VolumeSnapshotList
+	VolumeSnapshotsBeta             *csitypesbeta.VolumeSnapshotList
 	StorageClasses                  *st.StorageClassList
 	DefaultStorageClass             *st.StorageClass
 	MutatingWebhookConfigurations   *arv1.MutatingWebhookConfigurationList
@@ -72,7 +74,7 @@ type Objects struct {
 // Client encapsulates a client for a Kubernetes cluster.
 type Client struct {
 	KubeClient kubernetes.Interface
-	CSIClient  csiv2.Interface
+	CSIClient  csi.Interface
 	httpClient *http.Client
 }
 
@@ -89,7 +91,8 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 	admissionControllerClient := c.KubeClient.AdmissionregistrationV1()
 	batchClient := c.KubeClient.BatchV1beta1()
 	storageClient := c.KubeClient.StorageV1()
-	csiClient := c.CSIClient.SnapshotV1beta1()
+	csiClient := c.CSIClient.SnapshotV1()
+	csiBetaClient := c.CSIClient.SnapshotV1beta1()
 	opts := metav1.ListOptions{}
 	objects := &Objects{}
 
@@ -188,11 +191,15 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 		return
 	})
 	g.Go(func() (err error) {
-		objects.VolumeSnapshots, err = csiClient.VolumeSnapshots(corev1.NamespaceAll).List(filter.NamespaceOptions(opts))
-		err = annotateFetchError("VolumeSnapshots", err)
+		objects.VolumeSnapshotsV1, err = csiClient.VolumeSnapshots(corev1.NamespaceAll).List(ctx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("VolumeSnapshotsV1", err)
 		return
 	})
-
+	g.Go(func() (err error) {
+		objects.VolumeSnapshotsBeta, err = csiBetaClient.VolumeSnapshots(corev1.NamespaceAll).List(ctx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("VolumeSnapshotsBeta", err)
+		return
+	})
 	err := g.Wait()
 	if err != nil {
 		return nil, err
@@ -263,8 +270,11 @@ func objectsWithoutNils(objects *Objects) *Objects {
 	if objects.CronJobs == nil {
 		objects.CronJobs = &batchv1beta1.CronJobList{}
 	}
-	if objects.VolumeSnapshots == nil {
-		objects.VolumeSnapshots = &csiv2types.VolumeSnapshotList{}
+	if objects.VolumeSnapshotsV1 == nil {
+		objects.VolumeSnapshotsV1 = &csitypes.VolumeSnapshotList{}
+	}
+	if objects.VolumeSnapshotsBeta == nil {
+		objects.VolumeSnapshotsBeta = &csitypesbeta.VolumeSnapshotList{}
 	}
 
 	return objects
@@ -340,7 +350,7 @@ func NewClient(opts ...Option) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	csiClient, err := csiv2.NewForConfig(config)
+	csiClient, err := csi.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
