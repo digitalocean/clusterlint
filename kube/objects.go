@@ -263,6 +263,9 @@ func objectsWithoutNils(objects *Objects) *Objects {
 	if objects.CronJobs == nil {
 		objects.CronJobs = &batchv1beta1.CronJobList{}
 	}
+	if objects.VolumeSnapshots == nil {
+		objects.VolumeSnapshots = &csiv2types.VolumeSnapshotList{}
+	}
 
 	return objects
 }
