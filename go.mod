@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/fatih/color v1.12.0
+	github.com/kubernetes-csi/external-snapshotter/v2 v2.1.5
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.19.1
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -30,7 +31,7 @@ require (
 	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
-	github.com/imdario/mergo v0.3.5 // indirect
+	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect

@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"net/http"
 
+	csiv2types "github.com/kubernetes-csi/external-snapshotter/v2/pkg/apis/volumesnapshot/v1beta1"
+	csiv2 "github.com/kubernetes-csi/external-snapshotter/v2/pkg/client/clientset/versioned"
 	"golang.org/x/sync/errgroup"
 	arv1 "k8s.io/api/admissionregistration/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -58,6 +60,7 @@ type Objects struct {
 	ServiceAccounts                 *corev1.ServiceAccountList
 	ResourceQuotas                  *corev1.ResourceQuotaList
 	LimitRanges                     *corev1.LimitRangeList
+	VolumeSnapshots                 *csiv2types.VolumeSnapshotList
 	StorageClasses                  *st.StorageClassList
 	DefaultStorageClass             *st.StorageClass
 	MutatingWebhookConfigurations   *arv1.MutatingWebhookConfigurationList
@@ -69,6 +72,7 @@ type Objects struct {
 // Client encapsulates a client for a Kubernetes cluster.
 type Client struct {
 	KubeClient kubernetes.Interface
+	CSIClient  csiv2.Interface
 	httpClient *http.Client
 }
 
@@ -85,6 +89,7 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 	admissionControllerClient := c.KubeClient.AdmissionregistrationV1()
 	batchClient := c.KubeClient.BatchV1beta1()
 	storageClient := c.KubeClient.StorageV1()
+	csiClient := c.CSIClient.SnapshotV1beta1()
 	opts := metav1.ListOptions{}
 	objects := &Objects{}
 
@@ -180,6 +185,11 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 	g.Go(func() (err error) {
 		objects.CronJobs, err = batchClient.CronJobs(corev1.NamespaceAll).List(gCtx, filter.NamespaceOptions(opts))
 		err = annotateFetchError("CronJobs", err)
+		return
+	})
+	g.Go(func() (err error) {
+		objects.VolumeSnapshots, err = csiClient.VolumeSnapshots(corev1.NamespaceAll).List(filter.NamespaceOptions(opts))
+		err = annotateFetchError("VolumeSnapshots", err)
 		return
 	})
 
@@ -327,9 +337,13 @@ func NewClient(opts ...Option) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	csiClient, err := csiv2.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
 	return &Client{
 		KubeClient: client,
+		CSIClient:  csiClient,
 		httpClient: httpClient,
 	}, nil
 }
