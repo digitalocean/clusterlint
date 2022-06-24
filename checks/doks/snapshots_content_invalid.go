@@ -40,7 +40,7 @@ func (i *invalidSnapshotContentCheck) Groups() []string {
 // Description returns a detailed human-readable description of what this check
 // does.
 func (i *invalidSnapshotContentCheck) Description() string {
-	return "Checks if there are invalid volume snapshot contentsthat would fail webhook validation"
+	return "Checks if there are invalid volume snapshot contents that would fail webhook validation"
 }
 
 // Run runs this check on a set of Kubernetes objects. It can return warnings
@@ -48,8 +48,8 @@ func (i *invalidSnapshotContentCheck) Description() string {
 // error value indicating that the check failed to run.
 func (i *invalidSnapshotContentCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
-	errMsg := "Snapshot contents has been marked as invalid by CSI validation - check persistentVolumeClaimName and volumeSnapshotContentName are not both set"
-	ssLabelKey := "snapshot.storage.kubernetes.io/invalid-snapshot-resource"
+	errMsg := "Snapshot content has been marked as invalid by CSI validation - check volumeHandle and snapshotHandle are not both set"
+	ssLabelKey := "snapshot.storage.sigs.k8s.io/invalid-snapshot-content-resource"
 	for _, snapshot := range objects.VolumeSnapshotsV1Content.Items {
 		snapshotLabels := snapshot.Labels
 		if _, ok := snapshotLabels[ssLabelKey]; ok {

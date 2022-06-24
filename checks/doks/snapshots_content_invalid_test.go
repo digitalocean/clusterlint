@@ -48,7 +48,18 @@ func TestInvalidSnapshotContents(t *testing.T) {
 		name     string
 		objs     *kube.Objects
 		expected []checks.Diagnostic
-	}{}
+	}{
+		{
+			name:     "valid snapshot contents",
+			objs:     validSnapshotContent(),
+			expected: nil,
+		},
+		{
+			name:     "invalid snapshots contents",
+			objs:     invalidSnapshotContents(),
+			expected: expectedSnapshotContentErrors(invalidSnapshotContents(), invalidSnapshotContentCheck.Name()),
+		},
+	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -59,7 +70,7 @@ func TestInvalidSnapshotContents(t *testing.T) {
 	}
 }
 
-func emptyValidSnapshotContent() *kube.Objects {
+func validSnapshotContent() *kube.Objects {
 	objs := &kube.Objects{
 		VolumeSnapshotsV1: &csitypes.VolumeSnapshotList{},
 		VolumeSnapshotsV1Content: &csitypes.VolumeSnapshotContentList{
@@ -87,7 +98,7 @@ func emptyValidSnapshotContent() *kube.Objects {
 	return objs
 }
 
-func emptyInvalidSnapshotContents() *kube.Objects {
+func invalidSnapshotContents() *kube.Objects {
 	objs := &kube.Objects{
 		VolumeSnapshotsV1Content: &csitypes.VolumeSnapshotContentList{
 			TypeMeta: metav1.TypeMeta{},
