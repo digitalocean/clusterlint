@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"testing"
 
+	csi "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned/fake"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -59,12 +60,14 @@ func TestFetchObjects(t *testing.T) {
 
 	for _, test := range tests {
 		cs := fake.NewSimpleClientset()
+		csifake := csi.NewSimpleClientset()
 		if test.fakeMutator != nil {
 			test.fakeMutator(cs)
 		}
 
 		api := &Client{
 			KubeClient: cs,
+			CSIClient:  csifake,
 		}
 
 		api.KubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
