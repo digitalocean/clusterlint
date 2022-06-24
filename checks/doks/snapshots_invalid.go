@@ -22,7 +22,7 @@ import (
 )
 
 func init() {
-	checks.Register(&podSelectorCheck{})
+	checks.Register(&invalidSnapshotCheck{})
 }
 
 type invalidSnapshotCheck struct{}
