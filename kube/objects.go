@@ -62,7 +62,9 @@ type Objects struct {
 	ResourceQuotas                  *corev1.ResourceQuotaList
 	LimitRanges                     *corev1.LimitRangeList
 	VolumeSnapshotsV1               *csitypes.VolumeSnapshotList
+	VolumeSnapshotsV1Content        *csitypes.VolumeSnapshotContentList
 	VolumeSnapshotsBeta             *csitypesbeta.VolumeSnapshotList
+	VolumeSnapshotsBetaContent      *csitypesbeta.VolumeSnapshotContentList
 	StorageClasses                  *st.StorageClassList
 	DefaultStorageClass             *st.StorageClass
 	MutatingWebhookConfigurations   *arv1.MutatingWebhookConfigurationList
@@ -196,8 +198,18 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 		return
 	})
 	g.Go(func() (err error) {
+		objects.VolumeSnapshotsV1Content, err = csiClient.VolumeSnapshotContents().List(ctx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("VolumeSnapshotsV1Contents", err)
+		return
+	})
+	g.Go(func() (err error) {
 		objects.VolumeSnapshotsBeta, err = csiBetaClient.VolumeSnapshots(corev1.NamespaceAll).List(ctx, filter.NamespaceOptions(opts))
 		err = annotateFetchError("VolumeSnapshotsBeta", err)
+		return
+	})
+	g.Go(func() (err error) {
+		objects.VolumeSnapshotsBetaContent, err = csiBetaClient.VolumeSnapshotContents().List(ctx, filter.NamespaceOptions(opts))
+		err = annotateFetchError("VolumeSnapshotsBetaContents", err)
 		return
 	})
 	err := g.Wait()
@@ -273,10 +285,15 @@ func objectsWithoutNils(objects *Objects) *Objects {
 	if objects.VolumeSnapshotsV1 == nil {
 		objects.VolumeSnapshotsV1 = &csitypes.VolumeSnapshotList{}
 	}
+	if objects.VolumeSnapshotsV1Content == nil {
+		objects.VolumeSnapshotsV1Content = &csitypes.VolumeSnapshotContentList{}
+	}
 	if objects.VolumeSnapshotsBeta == nil {
 		objects.VolumeSnapshotsBeta = &csitypesbeta.VolumeSnapshotList{}
 	}
-
+	if objects.VolumeSnapshotsBetaContent == nil {
+		objects.VolumeSnapshotsBetaContent = &csitypesbeta.VolumeSnapshotContentList{}
+	}
 	return objects
 }
 

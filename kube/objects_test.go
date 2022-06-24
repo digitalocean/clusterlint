@@ -97,6 +97,8 @@ func TestFetchObjects(t *testing.T) {
 		assert.NotNil(t, actual.CronJobs)
 		assert.NotNil(t, actual.VolumeSnapshotsV1)
 		assert.NotNil(t, actual.VolumeSnapshotsBeta)
+		assert.NotNil(t, actual.VolumeSnapshotsV1Content)
+		assert.NotNil(t, actual.VolumeSnapshotsBetaContent)
 	}
 
 }

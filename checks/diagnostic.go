@@ -80,6 +80,8 @@ const (
 	Node Kind = "node"
 	// VolumeSnapshot identifies a volume snapshot object
 	VolumeSnapshot Kind = "volume snapshot"
+	// VolumeSnapshotContent identifies a volume snapshot content object
+	VolumeSnapshotContent Kind = "volume snapshot content"
 	// CronJob identifies Kubernetes objects of kind `cron job`
 	CronJob Kind = "cron job"
 )

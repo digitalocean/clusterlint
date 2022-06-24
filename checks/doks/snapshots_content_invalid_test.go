@@ -28,67 +28,58 @@ import (
 	"github.com/digitalocean/clusterlint/kube"
 )
 
-func TestInvalidSnapshotCheckMeta(t *testing.T) {
-	invalidSnapshotCheck := invalidSnapshotCheck{}
-	assert.Equal(t, "invalid-volume-snapshot", invalidSnapshotCheck.Name())
-	assert.Equal(t, []string{"doks"}, invalidSnapshotCheck.Groups())
-	assert.NotEmpty(t, invalidSnapshotCheck.Description())
+func TestInvalidSnapshotContentCheckMeta(t *testing.T) {
+	invalidSnapshotContentCheck := invalidSnapshotContentCheck{}
+	assert.Equal(t, "invalid-volume-snapshot-content", invalidSnapshotContentCheck.Name())
+	assert.Equal(t, []string{"doks"}, invalidSnapshotContentCheck.Groups())
+	assert.NotEmpty(t, invalidSnapshotContentCheck.Description())
 }
 
-func TestInvalidSnapshotCheckRegistration(t *testing.T) {
-	invalidSnapshotCheck := &invalidSnapshotCheck{}
-	check, err := checks.Get("invalid-volume-snapshot")
+func TestInvalidSnapshotContentCheckRegistration(t *testing.T) {
+	invalidSnapshotContentCheck := &invalidSnapshotContentCheck{}
+	check, err := checks.Get("invalid-volume-snapshot-content")
 	assert.NoError(t, err)
-	assert.Equal(t, check, invalidSnapshotCheck)
+	assert.Equal(t, check, invalidSnapshotContentCheck)
 }
 
-func TestInvalidSnapshots(t *testing.T) {
-	invalidSnapshotCheck := invalidSnapshotCheck{}
+func TestInvalidSnapshotContents(t *testing.T) {
+	invalidSnapshotContentCheck := invalidSnapshotContentCheck{}
 	tests := []struct {
 		name     string
 		objs     *kube.Objects
 		expected []checks.Diagnostic
-	}{
-		{
-			name:     "valid snapshot",
-			objs:     validSnapshots(),
-			expected: nil,
-		},
-		{
-			name:     "invalid snapshots",
-			objs:     invalidSnapshots(),
-			expected: expectedSnapshotErrors(invalidSnapshots(), invalidSnapshotCheck.Name()),
-		},
-	}
+	}{}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			d, err := invalidSnapshotCheck.Run(test.objs)
+			d, err := invalidSnapshotContentCheck.Run(test.objs)
 			assert.NoError(t, err)
 			assert.ElementsMatch(t, test.expected, d)
 		})
 	}
 }
 
-func validSnapshots() *kube.Objects {
+func emptyValidSnapshotContent() *kube.Objects {
 	objs := &kube.Objects{
-		VolumeSnapshotsV1: &csitypes.VolumeSnapshotList{
+		VolumeSnapshotsV1: &csitypes.VolumeSnapshotList{},
+		VolumeSnapshotsV1Content: &csitypes.VolumeSnapshotContentList{
 			TypeMeta: metav1.TypeMeta{},
-			Items: []csitypes.VolumeSnapshot{
+			Items: []csitypes.VolumeSnapshotContent{
 				{
 					TypeMeta:   metav1.TypeMeta{},
 					ObjectMeta: metav1.ObjectMeta{},
-					Spec:       csitypes.VolumeSnapshotSpec{},
+					Spec:       csitypes.VolumeSnapshotContentSpec{},
 				},
 			},
 		},
-		VolumeSnapshotsBeta: &csitypesbeta.VolumeSnapshotList{
+		VolumeSnapshotsBeta: &csitypesbeta.VolumeSnapshotList{},
+		VolumeSnapshotsBetaContent: &csitypesbeta.VolumeSnapshotContentList{
 			TypeMeta: metav1.TypeMeta{},
-			Items: []csitypesbeta.VolumeSnapshot{
+			Items: []csitypesbeta.VolumeSnapshotContent{
 				{
 					TypeMeta:   metav1.TypeMeta{},
 					ObjectMeta: metav1.ObjectMeta{},
-					Spec:       csitypesbeta.VolumeSnapshotSpec{},
+					Spec:       csitypesbeta.VolumeSnapshotContentSpec{},
 				},
 			},
 		},
@@ -96,33 +87,33 @@ func validSnapshots() *kube.Objects {
 	return objs
 }
 
-func invalidSnapshots() *kube.Objects {
+func emptyInvalidSnapshotContents() *kube.Objects {
 	objs := &kube.Objects{
-		VolumeSnapshotsV1: &csitypes.VolumeSnapshotList{
+		VolumeSnapshotsV1Content: &csitypes.VolumeSnapshotContentList{
 			TypeMeta: metav1.TypeMeta{},
-			Items: []csitypes.VolumeSnapshot{
+			Items: []csitypes.VolumeSnapshotContent{
 				{
 					TypeMeta: metav1.TypeMeta{},
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							"snapshot.storage.kubernetes.io/invalid-snapshot-resource": "",
+							"snapshot.storage.sigs.k8s.io/invalid-snapshot-content-resource": "",
 						},
 					},
-					Spec: csitypes.VolumeSnapshotSpec{},
+					Spec: csitypes.VolumeSnapshotContentSpec{},
 				},
 			},
 		},
-		VolumeSnapshotsBeta: &csitypesbeta.VolumeSnapshotList{
+		VolumeSnapshotsBetaContent: &csitypesbeta.VolumeSnapshotContentList{
 			TypeMeta: metav1.TypeMeta{},
-			Items: []csitypesbeta.VolumeSnapshot{
+			Items: []csitypesbeta.VolumeSnapshotContent{
 				{
 					TypeMeta: metav1.TypeMeta{},
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							"snapshot.storage.kubernetes.io/invalid-snapshot-resource": "",
+							"snapshot.storage.sigs.k8s.io/invalid-snapshot-content-resource": "",
 						},
 					},
-					Spec: csitypesbeta.VolumeSnapshotSpec{},
+					Spec: csitypesbeta.VolumeSnapshotContentSpec{},
 				},
 			},
 		},
@@ -130,22 +121,22 @@ func invalidSnapshots() *kube.Objects {
 	return objs
 }
 
-func expectedSnapshotErrors(objs *kube.Objects, name string) []checks.Diagnostic {
-	v1snap := objs.VolumeSnapshotsV1.Items[0]
-	betasnap := objs.VolumeSnapshotsBeta.Items[0]
-	errMsg := "Snapshot has been marked as invalid by CSI validation - check persistentVolumeClaimName and volumeSnapshotContentName are not both set"
+func expectedSnapshotContentErrors(objs *kube.Objects, name string) []checks.Diagnostic {
+	v1snap := objs.VolumeSnapshotsV1Content.Items[0]
+	betasnap := objs.VolumeSnapshotsBetaContent.Items[0]
+	errMsg := "Snapshot content has been marked as invalid by CSI validation - check volumeHandle and snapshotHandle are not both set"
 	diagnostics := []checks.Diagnostic{
 		{
 			Severity: checks.Error,
 			Message:  errMsg,
-			Kind:     checks.VolumeSnapshot,
+			Kind:     checks.VolumeSnapshotContent,
 			Object:   &v1snap.ObjectMeta,
 			Owners:   v1snap.ObjectMeta.GetOwnerReferences(),
 		},
 		{
 			Severity: checks.Error,
 			Message:  errMsg,
-			Kind:     checks.VolumeSnapshot,
+			Kind:     checks.VolumeSnapshotContent,
 			Object:   &betasnap.ObjectMeta,
 			Owners:   betasnap.ObjectMeta.GetOwnerReferences(),
 		},

@@ -22,54 +22,54 @@ import (
 )
 
 func init() {
-	checks.Register(&invalidSnapshotCheck{})
+	checks.Register(&invalidSnapshotContentCheck{})
 }
 
-type invalidSnapshotCheck struct{}
+type invalidSnapshotContentCheck struct{}
 
 // Name returns a unique name for this check.
-func (i *invalidSnapshotCheck) Name() string {
-	return "invalid-volume-snapshot"
+func (i *invalidSnapshotContentCheck) Name() string {
+	return "invalid-volume-snapshot-content"
 }
 
 // Groups returns a list of group names this check should be part of.
-func (i *invalidSnapshotCheck) Groups() []string {
+func (i *invalidSnapshotContentCheck) Groups() []string {
 	return []string{"doks"}
 }
 
 // Description returns a detailed human-readable description of what this check
 // does.
-func (i *invalidSnapshotCheck) Description() string {
-	return "Checks if there are invalid volume snapshots that would fail webhook validation"
+func (i *invalidSnapshotContentCheck) Description() string {
+	return "Checks if there are invalid volume snapshot contentsthat would fail webhook validation"
 }
 
 // Run runs this check on a set of Kubernetes objects. It can return warnings
 // (low-priority problems) and errors (high-priority problems) as well as an
 // error value indicating that the check failed to run.
-func (i *invalidSnapshotCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
+func (i *invalidSnapshotContentCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
-	errMsg := "Snapshot has been marked as invalid by CSI validation - check persistentVolumeClaimName and volumeSnapshotContentName are not both set"
+	errMsg := "Snapshot contents has been marked as invalid by CSI validation - check persistentVolumeClaimName and volumeSnapshotContentName are not both set"
 	ssLabelKey := "snapshot.storage.kubernetes.io/invalid-snapshot-resource"
-	for _, snapshot := range objects.VolumeSnapshotsV1.Items {
+	for _, snapshot := range objects.VolumeSnapshotsV1Content.Items {
 		snapshotLabels := snapshot.Labels
 		if _, ok := snapshotLabels[ssLabelKey]; ok {
 			d := checks.Diagnostic{
 				Severity: checks.Error,
 				Message:  errMsg,
-				Kind:     checks.VolumeSnapshot,
+				Kind:     checks.VolumeSnapshotContent,
 				Object:   &snapshot.ObjectMeta,
 				Owners:   snapshot.ObjectMeta.GetOwnerReferences(),
 			}
 			diagnostics = append(diagnostics, d)
 		}
 	}
-	for _, snapshot := range objects.VolumeSnapshotsBeta.Items {
+	for _, snapshot := range objects.VolumeSnapshotsBetaContent.Items {
 		snapshotLabels := snapshot.Labels
 		if _, ok := snapshotLabels[ssLabelKey]; ok {
 			d := checks.Diagnostic{
 				Severity: checks.Error,
 				Message:  errMsg,
-				Kind:     checks.VolumeSnapshot,
+				Kind:     checks.VolumeSnapshotContent,
 				Object:   &snapshot.ObjectMeta,
 				Owners:   snapshot.ObjectMeta.GetOwnerReferences(),
 			}
