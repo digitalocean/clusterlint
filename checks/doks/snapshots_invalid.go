@@ -48,5 +48,33 @@ func (i *invalidSnapshotCheck) Description() string {
 // error value indicating that the check failed to run.
 func (i *invalidSnapshotCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 	var diagnostics []checks.Diagnostic
+	errMsg := "Snapshot has been marked as invalid by CSI validation - check persistentVolumeClaimName and volumeSnapshotContentName are not both set"
+	labelKey := "snapshot.storage.kubernetes.io/invalid-snapshot-resource"
+	for _, snapshot := range objects.VolumeSnapshotsV1.Items {
+		snapshotLabels := snapshot.Labels
+		if _, ok := snapshotLabels[labelKey]; ok {
+			d := checks.Diagnostic{
+				Severity: checks.Error,
+				Message:  errMsg,
+				Kind:     checks.VolumeSnapshot,
+				Object:   &snapshot.ObjectMeta,
+				Owners:   snapshot.ObjectMeta.GetOwnerReferences(),
+			}
+			diagnostics = append(diagnostics, d)
+		}
+	}
+	for _, snapshot := range objects.VolumeSnapshotsBeta.Items {
+		snapshotLabels := snapshot.Labels
+		if _, ok := snapshotLabels[labelKey]; ok {
+			d := checks.Diagnostic{
+				Severity: checks.Error,
+				Message:  errMsg,
+				Kind:     checks.VolumeSnapshot,
+				Object:   &snapshot.ObjectMeta,
+				Owners:   snapshot.ObjectMeta.GetOwnerReferences(),
+			}
+			diagnostics = append(diagnostics, d)
+		}
+	}
 	return diagnostics, nil
 }

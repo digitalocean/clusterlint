@@ -78,6 +78,8 @@ const (
 	MutatingWebhookConfiguration Kind = "mutating webhook configuration"
 	// Node identifies a Kubernetes node object.
 	Node Kind = "node"
+	// VolumeSnapshot identifies a volume snapshot object
+	VolumeSnapshot Kind = "volume snapshot"
 	// CronJob identifies Kubernetes objects of kind `cron job`
 	CronJob Kind = "cron job"
 )
