@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/digitalocean/clusterlint/kube"
+	csi "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned/fake"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,20 +29,20 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	tests := []struct{
-		name string
-		check string
-		expectedErr string
+	tests := []struct {
+		name                string
+		check               string
+		expectedErr         string
 		expectedDiagnostics int
 	}{
 		{
-			name: "test failure",
-			check: "always-fail",
+			name:                "test failure",
+			check:               "always-fail",
 			expectedDiagnostics: 1,
 		},
 		{
-			name: "test panic",
-			check: "panic-check",
+			name:        "test panic",
+			check:       "panic-check",
 			expectedErr: "Recovered from panic in check 'panic-check':",
 		},
 	}
@@ -55,6 +56,7 @@ func TestRun(t *testing.T) {
 
 			client := &kube.Client{
 				KubeClient: fake.NewSimpleClientset(),
+				CSIClient:  csi.NewSimpleClientset(),
 			}
 			client.KubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
@@ -108,7 +110,7 @@ func (nc *alwaysFail) Run(*kube.Objects) ([]Diagnostic, error) {
 	}}, nil
 }
 
-type panicCheck struct {}
+type panicCheck struct{}
 
 // Name returns a unique name for this check.
 func (nc *panicCheck) Name() string {
