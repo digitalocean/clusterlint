@@ -72,7 +72,6 @@ func TestInvalidSnapshotContents(t *testing.T) {
 
 func validSnapshotContent() *kube.Objects {
 	objs := &kube.Objects{
-		VolumeSnapshotsV1: &csitypes.VolumeSnapshotList{},
 		VolumeSnapshotsV1Content: &csitypes.VolumeSnapshotContentList{
 			TypeMeta: metav1.TypeMeta{},
 			Items: []csitypes.VolumeSnapshotContent{
@@ -83,7 +82,6 @@ func validSnapshotContent() *kube.Objects {
 				},
 			},
 		},
-		VolumeSnapshotsBeta: &csitypesbeta.VolumeSnapshotList{},
 		VolumeSnapshotsBetaContent: &csitypesbeta.VolumeSnapshotContentList{
 			TypeMeta: metav1.TypeMeta{},
 			Items: []csitypesbeta.VolumeSnapshotContent{
