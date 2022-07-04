@@ -1,5 +1,5 @@
 /*
-Copyright 2019 DigitalOcean
+Copyright 2022 DigitalOcean
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ package kube
 
 import (
 	"fmt"
+	"testing"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 )

@@ -1,5 +1,5 @@
 /*
-Copyright 2019 DigitalOcean
+Copyright 2022 DigitalOcean
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ func initSecret() *kube.Objects {
 		ServiceAccounts: &corev1.ServiceAccountList{
 			Items: []corev1.ServiceAccount{
 				{
-					TypeMeta: metav1.TypeMeta{Kind: "ServiceAccount", APIVersion: "v1"},
+					TypeMeta:   metav1.TypeMeta{Kind: "ServiceAccount", APIVersion: "v1"},
 					ObjectMeta: metav1.ObjectMeta{Name: "default", Namespace: "k8s"},
 				},
 			},
@@ -303,7 +303,7 @@ func saSecretRefs() *kube.Objects {
 	objs := initSecret()
 	objs.ServiceAccounts.Items[0].Secrets = []corev1.ObjectReference{
 		{
-			Name: "secret_foo",
+			Name:      "secret_foo",
 			Namespace: "k8s",
 		},
 	}

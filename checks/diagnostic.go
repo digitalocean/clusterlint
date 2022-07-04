@@ -1,5 +1,5 @@
 /*
-Copyright 2019 DigitalOcean
+Copyright 2022 DigitalOcean
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -78,6 +78,10 @@ const (
 	MutatingWebhookConfiguration Kind = "mutating webhook configuration"
 	// Node identifies a Kubernetes node object.
 	Node Kind = "node"
+	// VolumeSnapshot identifies a volume snapshot object
+	VolumeSnapshot Kind = "volume snapshot"
+	// VolumeSnapshotContent identifies a volume snapshot content object
+	VolumeSnapshotContent Kind = "volume snapshot content"
 	// CronJob identifies Kubernetes objects of kind `cron job`
 	CronJob Kind = "cron job"
 )

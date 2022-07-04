@@ -1,5 +1,5 @@
 /*
-Copyright 2019 DigitalOcean
+Copyright 2022 DigitalOcean
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"testing"
 
+	csi "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned/fake"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -59,12 +60,14 @@ func TestFetchObjects(t *testing.T) {
 
 	for _, test := range tests {
 		cs := fake.NewSimpleClientset()
+		csifake := csi.NewSimpleClientset()
 		if test.fakeMutator != nil {
 			test.fakeMutator(cs)
 		}
 
 		api := &Client{
 			KubeClient: cs,
+			CSIClient:  csifake,
 		}
 
 		api.KubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
@@ -92,6 +95,10 @@ func TestFetchObjects(t *testing.T) {
 		assert.NotNil(t, actual.MutatingWebhookConfigurations)
 		assert.NotNil(t, actual.SystemNamespace)
 		assert.NotNil(t, actual.CronJobs)
+		assert.NotNil(t, actual.VolumeSnapshotsV1)
+		assert.NotNil(t, actual.VolumeSnapshotsBeta)
+		assert.NotNil(t, actual.VolumeSnapshotsV1Content)
+		assert.NotNil(t, actual.VolumeSnapshotsBetaContent)
 	}
 
 }
