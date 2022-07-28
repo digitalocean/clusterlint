@@ -792,3 +792,66 @@ spec:
 ### How to Fix
 
 GitHub recommends [migrating to GitHub Container Registry](https://docs.github.com/en/packages/guides/migrating-to-github-container-registry-for-docker-images#domain-changes), which is compatible with containerd.
+
+## Invalid CSI Volume Snapshots
+
+- Name: `invalid-volume-snapshot`
+- Groups: `doks`
+
+Volume snapshots created with invalid configurations are not supported in versions 1.23.9.do-0 or later. The CSI snapshot validation will label any invalid snapshots with the following label `snapshot.storage.kubernetes.io/invalid-snapshot-resource`. You can also list Invalid snapshots with the `kubectl get volumesnapshots -l snapshot.storage.kubernetes.io/invalid-snapshot-resource="" -A` command.
+
+### Example
+
+```yaml
+# v1beta1 should be changed to v1
+apiVersion: snapshot.storage.k8s.io/v1beta1
+kind: VolumeSnapshot
+metadata:
+  name: invalid-snapshot
+  labels: 
+    snapshot.storage.kubernetes.io/invalid-snapshot-resource: ""
+spec:
+  volumeSnapshotClassName: do-block-storage
+  source: # Only one of the two fields should be set for a snapshot. Therefore, this snapshot is invalid.
+    persistentVolumeClaimName: pvc 
+    volumeSnapshotContentName: vsc 
+```
+
+### How to Fix
+
+Ensure that only `persistentVolumeClaimName` or `volumeSnapshotContentName` is set
+
+## Invalid CSI Volume Snapshot Contents
+
+- Name: `invalid-volume-snapshot-content`
+- Groups: `doks`
+
+Volume snapshot contents created with invalid configurations are not supported in versions 1.23.9.do-0 or later. The CSI snapshot validation will label any invalid snapshot contents with the following label `snapshot.storage.sigs.k8s.io/invalid-snapshot-content-resource`. You can also list invalid snapshots with the `kubectl get volumesnapshots -l snapshot.storage.sigs.k8s.io/invalid-snapshot-content-resource="" -A` command.
+
+### Example
+
+```yaml
+# v1beta1 should be changed to v1
+apiVersion: snapshot.storage.k8s.io/v1beta1
+kind: VolumeSnapshotContent
+metadata:
+  name: invalid-snapshot-contents
+  labels: 
+    snapshot.storage.kubernetes.io/invalid-snapshot-content-resource: ""
+spec:
+  deletionPolicy: Delete
+  driver: hostpath.csi.k8s.io
+  source: # Only one of the two fields should be set for snapshot contents. Therefore, this snapshot content is invalid.
+    volumeHandle: ee0cfb94-f8d4-11e9-b2d8-0242ac110002
+    snapshotHandler: ee0cfb94-f8d4-11e9-b2d8-0242ac110002
+  sourceVolumeMode: Filesystem
+  volumeSnapshotClassName: do-block-store
+  volumeSnapshotRef:
+    name: new-snapshot-test
+    namespace: default
+    uid: 72d9a349-aacd-42d2-a240-d775650d2455
+```
+
+### How to Fix
+
+Ensure that only `volumeHandle` or `snapshotHandler` is set.
