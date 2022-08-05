@@ -110,7 +110,8 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 		}
 		for _, s := range objects.StorageClasses.Items {
 			if v, _ := s.Annotations["storageclass.kubernetes.io/is-default-class"]; v == "true" {
-				objects.DefaultStorageClass = &s
+				defaultStorageClass := s
+				objects.DefaultStorageClass = &defaultStorageClass
 			}
 		}
 		return
