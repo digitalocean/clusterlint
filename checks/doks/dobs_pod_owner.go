@@ -90,11 +90,12 @@ func isDOBSVolume(volume corev1.Volume, namespace string, objects *kube.Objects)
 		if claim == nil {
 			return false
 		}
-		if claim.Spec.StorageClassName == nil && isDOCSI(objects.DefaultStorageClass.Provisioner) {
+
+		scn := getStorageClassName(claim)
+		if scn == nil && isDOCSI(objects.DefaultStorageClass.Provisioner) {
 			return true
 		}
-
-		sc := getStorageClass(objects.StorageClasses, claim.Spec.StorageClassName)
+		sc := getStorageClass(objects.StorageClasses, scn)
 		if sc != nil && isDOCSI(sc.Provisioner) {
 			return true
 		}
@@ -106,6 +107,16 @@ func isDOBSVolume(volume corev1.Volume, namespace string, objects *kube.Objects)
 		}
 	}
 	return false
+}
+
+func getStorageClassName(claim *corev1.PersistentVolumeClaim) *string{
+	if claim.Spec.StorageClassName != nil {
+		return claim.Spec.StorageClassName
+	}
+	if scn, found := claim.Annotations["volume.beta.kubernetes.io/storage-class"]; found {
+		return &scn
+	}
+	return nil
 }
 
 func isDOCSI(referrer string) bool {

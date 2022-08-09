@@ -17,8 +17,9 @@ limitations under the License.
 package doks
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
@@ -257,6 +258,11 @@ func TestDobsPodOwnerWarning(t *testing.T) {
 			objs:     statefulSet(pvcDobs("", LegacyCSIDriver)),
 			expected: nil,
 		},
+		{
+			name:     "dobs pod owned by statefulset, storage-class from annotations",
+			objs:     statefulSet(deprecatedPvcDobs("", DOCSIDriver)),
+			expected: nil,
+		},
 	}
 
 	for _, test := range tests {
@@ -460,6 +466,66 @@ func pvcDobs(storageClass, driver string) *kube.Objects {
 			Provisioner: driver,
 		},
 	}
+	objs.PersistentVolumeClaims.Items[0].Spec.StorageClassName = nil
+	return objs
+}
+// Users request dynamically provisioned storage by including a storage class in their PersistentVolumeClaim.
+// Before Kubernetes v1.6, this was done via the volume.beta.kubernetes.io/storage-class annotation. However, this annotation is deprecated since v1.9. 
+// https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/#:~:text=Users%20request%20dynamically,the%20PersistentVolumeClaim%20object.
+func deprecatedPvcDobs(storageClass, driver string) *kube.Objects {
+	var sc = ""
+	if storageClass != "" {
+		sc = storageClass
+	}
+
+	objs := &kube.Objects{
+		Pods: &corev1.PodList{
+			Items: []corev1.Pod{
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: metav1.NamespaceDefault},
+					Spec: corev1.PodSpec{
+						Volumes: []corev1.Volume{
+							{
+								Name: "def-pvc-source",
+								VolumeSource: corev1.VolumeSource{
+									PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+										ClaimName: "def-pvc",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		PersistentVolumeClaims: &corev1.PersistentVolumeClaimList{
+			Items: []corev1.PersistentVolumeClaim{
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "PersistentVolumeClaim", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "def-pvc", Namespace: metav1.NamespaceDefault, Annotations: map[string]string{"volume.beta.kubernetes.io/storage-class": sc}},
+					Spec: corev1.PersistentVolumeClaimSpec{
+						VolumeName:       "dobs-v1",
+					},
+				},
+			},
+		},
+		StorageClasses: &st.StorageClassList{
+			Items: []st.StorageClass{
+				{
+					TypeMeta:    metav1.TypeMeta{Kind: "StorageClass", APIVersion: "storage.k8s.io/v1"},
+					ObjectMeta:  metav1.ObjectMeta{Name: DOBlockStorageName, Namespace: metav1.NamespaceDefault},
+					Provisioner: driver,
+				},
+			},
+		},
+		DefaultStorageClass: &st.StorageClass{
+			TypeMeta:    metav1.TypeMeta{Kind: "StorageClass", APIVersion: "storage.k8s.io/v1"},
+			ObjectMeta:  metav1.ObjectMeta{Name: DOBlockStorageName, Namespace: metav1.NamespaceDefault},
+			Provisioner: driver,
+		},
+	}
+	objs.PersistentVolumeClaims.Items[0].Spec.StorageClassName = nil
 	return objs
 }
 
