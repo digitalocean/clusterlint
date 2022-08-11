@@ -17,8 +17,9 @@ limitations under the License.
 package doks
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/digitalocean/clusterlint/checks"
 	"github.com/digitalocean/clusterlint/kube"
@@ -73,8 +74,34 @@ func TestDobsPodOwnerWarning(t *testing.T) {
 			},
 		},
 		{
+			name: "bare dobs pod referenced by deprecated pvc annotation",
+			objs: provideStorageClassInAnnotation(pvcDobs(DOBlockStorageName, DOCSIDriver)),
+			expected: []checks.Diagnostic{
+				{
+					Severity: checks.Warning,
+					Message:  "Pod referencing DOBS volumes must be owned by StatefulSet",
+					Kind:     checks.Pod,
+					Object:   &metav1.ObjectMeta{Name: "foo", Namespace: metav1.NamespaceDefault},
+					Owners:   nil,
+				},
+			},
+		},
+		{
 			name: "bare dobs pod referenced by pvc -- with legacy driver",
 			objs: pvcDobs(DOBlockStorageName, LegacyCSIDriver),
+			expected: []checks.Diagnostic{
+				{
+					Severity: checks.Warning,
+					Message:  "Pod referencing DOBS volumes must be owned by StatefulSet",
+					Kind:     checks.Pod,
+					Object:   &metav1.ObjectMeta{Name: "foo", Namespace: metav1.NamespaceDefault},
+					Owners:   nil,
+				},
+			},
+		},
+		{
+			name: "bare dobs pod referenced by deprecated pvc annotation -- with legacy driver",
+			objs: provideStorageClassInAnnotation(pvcDobs(DOBlockStorageName, LegacyCSIDriver)),
 			expected: []checks.Diagnostic{
 				{
 					Severity: checks.Warning,
@@ -99,8 +126,34 @@ func TestDobsPodOwnerWarning(t *testing.T) {
 			},
 		},
 		{
+			name: "bare dobs pod referenced by deprecated pvc with default storage class",
+			objs: provideStorageClassInAnnotation(pvcDobs("", DOCSIDriver)),
+			expected: []checks.Diagnostic{
+				{
+					Severity: checks.Warning,
+					Message:  "Pod referencing DOBS volumes must be owned by StatefulSet",
+					Kind:     checks.Pod,
+					Object:   &metav1.ObjectMeta{Name: "foo", Namespace: metav1.NamespaceDefault},
+					Owners:   nil,
+				},
+			},
+		},
+		{
 			name: "bare dobs pod referenced by pvc with default storage class -- with legacy driver",
 			objs: pvcDobs("", LegacyCSIDriver),
+			expected: []checks.Diagnostic{
+				{
+					Severity: checks.Warning,
+					Message:  "Pod referencing DOBS volumes must be owned by StatefulSet",
+					Kind:     checks.Pod,
+					Object:   &metav1.ObjectMeta{Name: "foo", Namespace: metav1.NamespaceDefault},
+					Owners:   nil,
+				},
+			},
+		},
+		{
+			name: "bare dobs pod referenced by deprecated pvc annotation with default storage class -- with legacy driver",
+			objs:   provideStorageClassInAnnotation(pvcDobs("", LegacyCSIDriver)),
 			expected: []checks.Diagnostic{
 				{
 					Severity: checks.Warning,
@@ -140,6 +193,35 @@ func TestDobsPodOwnerWarning(t *testing.T) {
 		{
 			name: "dobs pod owned by deployment",
 			objs: deployment(pvcDobs("", DOCSIDriver)),
+			expected: []checks.Diagnostic{
+				{
+					Severity: checks.Warning,
+					Message:  "Pod referencing DOBS volumes must be owned by StatefulSet",
+					Kind:     checks.Pod,
+					Object: &metav1.ObjectMeta{
+						Name:      "foo",
+						Namespace: metav1.NamespaceDefault,
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								APIVersion: "apps/v1",
+								Kind:       "Deployment",
+								Name:       "web-app",
+							},
+						},
+					},
+					Owners: []metav1.OwnerReference{
+						{
+							APIVersion: "apps/v1",
+							Kind:       "Deployment",
+							Name:       "web-app",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "dobs pod owned by deployment, with deprecated pvc annotation",
+			objs: deployment(provideStorageClassInAnnotation(pvcDobs("", DOCSIDriver))),
 			expected: []checks.Diagnostic{
 				{
 					Severity: checks.Warning,
@@ -248,13 +330,52 @@ func TestDobsPodOwnerWarning(t *testing.T) {
 			},
 		},
 		{
+			name: "dobs pod owned by deployment, with deprecated pvc annotation -- with legacy driver",
+			objs: deployment(provideStorageClassInAnnotation(pvcDobs("", LegacyCSIDriver))),
+			expected: []checks.Diagnostic{
+				{
+					Severity: checks.Warning,
+					Message:  "Pod referencing DOBS volumes must be owned by StatefulSet",
+					Kind:     checks.Pod,
+					Object: &metav1.ObjectMeta{
+						Name:      "foo",
+						Namespace: metav1.NamespaceDefault,
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								APIVersion: "apps/v1",
+								Kind:       "Deployment",
+								Name:       "web-app",
+							},
+						},
+					},
+					Owners: []metav1.OwnerReference{
+						{
+							APIVersion: "apps/v1",
+							Kind:       "Deployment",
+							Name:       "web-app",
+						},
+					},
+				},
+			},
+		},
+		{
 			name:     "dobs pod owned by statefulset",
 			objs:     statefulSet(pvcDobs("", DOCSIDriver)),
 			expected: nil,
 		},
 		{
+			name:     "dobs pod owned by statefulset, with deprecated pvc annotation",
+			objs:     statefulSet(provideStorageClassInAnnotation(pvcDobs("", DOCSIDriver))),
+			expected: nil,
+		},
+		{
 			name:     "dobs pod owned by statefulset -- with legacy driver",
 			objs:     statefulSet(pvcDobs("", LegacyCSIDriver)),
+			expected: nil,
+		},
+		{
+			name:     "dobs pod owned by statefulset, with deprecated pvc annotation -- with legacy driver",
+			objs:     statefulSet(provideStorageClassInAnnotation(pvcDobs("", LegacyCSIDriver))),
 			expected: nil,
 		},
 	}
@@ -312,6 +433,20 @@ func deployment(objs *kube.Objects) *kube.Objects {
 			Kind:       "Deployment",
 			Name:       "web-app",
 		},
+	}
+	return objs
+}
+
+// Users request dynamically provisioned storage by including a storage class in their PersistentVolumeClaim.
+// Before Kubernetes v1.6, this was done via the volume.beta.kubernetes.io/storage-class annotation. However, this annotation is deprecated since v1.9. 
+// https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/#:~:text=Users%20request%20dynamically,the%20PersistentVolumeClaim%20object.
+func provideStorageClassInAnnotation(objs *kube.Objects) *kube.Objects {
+	if objs.PersistentVolumeClaims.Items[0].Spec.StorageClassName != nil {
+		if objs.PersistentVolumeClaims.Items[0].Annotations == nil {
+			objs.PersistentVolumeClaims.Items[0].Annotations = make(map[string]string)
+		}
+		objs.PersistentVolumeClaims.Items[0].Annotations["volume.beta.kubernetes.io/storage-class"] = *objs.PersistentVolumeClaims.Items[0].Spec.StorageClassName
+		objs.PersistentVolumeClaims.Items[0].Spec.StorageClassName = nil
 	}
 	return objs
 }
