@@ -31,7 +31,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
           # uses the HEAD on the default branch when creating the tag
           tag_name: ${{ github.event.inputs.tag }}
