@@ -1,19 +1,40 @@
+name: release
 on:
-  release:
-    types: [published, edited, prereleased]
-name: publish-release
+  workflow_dispatch:
+    # Inputs the workflow accepts.
+    inputs:
+      tag:
+        # Friendly description to be shown in the UI instead of 'name'
+        description: 'tag and release to create'
+        # Input has to be provided for the workflow to run
+        required: true
+env:
+  GITHUB_ENV: ".env"
 jobs:
-  generate:
-    name: Create release-artifacts
+  release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@master
-      - name: Generate artifacts
-        uses: skx/github-action-build@master
-      - name: Upload artifacts
-        uses: skx/github-action-publish-binaries@master
+      - name: Install go
+        uses: actions/setup-go@0caeaed6fd66a828038c2da3c0f662a42862658f
+        with:
+          go-version: ^1.17
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+      - name: Login to dockerhub to push the image
+        run: echo "${{ secrets.DockerHubToken }}" | docker login --username ${DOCKER_USER} --password-stdin
+        env:
+          DOCKER_USER: ${{ secrets.DockerHubUser }}
+      - name: run make release ${{ github.event.inputs.tag }}
+        run: make docker-build docker-push build-binaries
+        env:
+          TAG: ${{ github.event.inputs.tag }}
+      - name: Create Release
+        uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
-          args: 'clusterlint-*'
+          # uses the HEAD on the default branch when creating the tag
+          tag_name: ${{ github.event.inputs.tag }}
+          release_name: Release ${{ github.event.inputs.tag }}
+          files: |
+            clusterlint-*

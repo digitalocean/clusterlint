@@ -123,6 +123,20 @@ $ clusterlint --plugins=/path/to/plugin.so list
 $ clusterlint --plugins=/path/to/plugin.so run -c my-plugin-check
 ```
 
+## Release
+
+To release a new version of clusterlint, go to the actions page on GitHub, click on `Run workflow`.
+Specify the new tag to create. Make sure the tag is prefixed with `v`.
+
+The workflow does the following:
+
+- Checks out the source code from the default branch
+- Login with dockerhub credentials specified as secrets
+- Builds the docker image digitalocean/clusterlint:<tag>
+- Pushes digitalocean/clusterlint:<tag> to dockerhub
+- Builds binaries for all archs and computes sha256 sums for each binary
+- Creates release and tags the latest commit on the default branch with the input tag specified when workflow is triggered
+
 ## Contributing
 
 Contributions are welcome, in the form of either issues or pull requests. Please
