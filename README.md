@@ -126,7 +126,7 @@ $ clusterlint --plugins=/path/to/plugin.so run -c my-plugin-check
 ## Release
 
 To release a new version of clusterlint, go to the actions page on GitHub, click on `Run workflow`.
-Specify the new tag to create. Make sure the tag is prefixed with `v`.
+Specify the new version tag to create. Make sure the tag is prefixed with `v` and `app.Version` in [cmd/clusterlint/main.go](cmd/clusterlint/main.go) is updated accordingly.
 
 The workflow does the following:
 
