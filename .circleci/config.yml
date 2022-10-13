@@ -2,32 +2,25 @@ version: 2
 jobs:
   license:
     docker:
-      - image: golang:1.17
+      - image: golang:1.19
     steps:
       - checkout
       - run: ./script/check-licenses.sh
   vet:
     docker:
-      - image: golang:1.17
+      - image: golang:1.19
     steps:
       - checkout
       - run: go vet ./...
-  lint:
-    docker:
-      - image: golang:1.17
-    steps:
-      - checkout
-      - run: go get golang.org/x/lint/golint
-      - run: sh -c golint -set_exit_status $(go list ./...)
   test:
     docker:
-      - image: golang:1.17
+      - image: golang:1.19
     steps:
       - checkout
       - run: go test -race -cover ./...
   smoke-test:
     docker:
-      - image: golang:1.17
+      - image: golang:1.19
     steps:
       - checkout
       - run: go run ./cmd/clusterlint --version
@@ -37,6 +30,5 @@ workflows:
     jobs:
       - license
       - vet
-      - lint
       - test
       - smoke-test
