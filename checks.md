@@ -82,7 +82,7 @@ We do not recommend having a `concurrencyPolicy` of `Allow` for CronJob resource
 
 ```yaml
 # Not recommended: Having a concurrency policy of Allow
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
    name: mycron
@@ -94,7 +94,7 @@ spec:
 
 ```yaml
 # Recommended: Having a concurrency policy of Forbid or Replace
-apiVersion: batch/v1beta1
+apiVersion: batch/v1
 kind: CronJob
 metadata:
    name: mycron

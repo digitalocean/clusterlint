@@ -18,6 +18,7 @@ package basic
 
 import (
 	"fmt"
+	batchv1 "k8s.io/api/batch/v1"
 
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 
@@ -54,7 +55,7 @@ func (c *cronJobConcurrencyCheck) Run(objects *kube.Objects) ([]checks.Diagnosti
 	var diagnostics []checks.Diagnostic
 
 	for _, cronjob := range objects.CronJobs.Items {
-		if batchv1beta1.AllowConcurrent == cronjob.Spec.ConcurrencyPolicy {
+		if batchv1.AllowConcurrent == cronjob.Spec.ConcurrencyPolicy {
 			d := checks.Diagnostic{
 				Severity: checks.Warning,
 				Message:  fmt.Sprintf("CronJob has a concurrency policy of `%s`. Prefer to use `%s` or `%s`", cronjob.Spec.ConcurrencyPolicy, batchv1beta1.ForbidConcurrent, batchv1beta1.ReplaceConcurrent),

@@ -17,10 +17,10 @@ limitations under the License.
 package basic
 
 import (
+	batchv1 "k8s.io/api/batch/v1"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/digitalocean/clusterlint/checks"
@@ -50,17 +50,17 @@ func TestCronJobConcurrency(t *testing.T) {
 	}{
 		{
 			name:     "cronjob with 'Forbid' policy",
-			objs:     policy(batchv1beta1.ForbidConcurrent),
+			objs:     policy(batchv1.ForbidConcurrent),
 			expected: nil,
 		},
 		{
 			name:     "cronjob with 'Replace' policy",
-			objs:     policy(batchv1beta1.ReplaceConcurrent),
+			objs:     policy(batchv1.ReplaceConcurrent),
 			expected: nil,
 		},
 		{
 			name: "cronjob with 'Allow' policy",
-			objs: policy(batchv1beta1.AllowConcurrent),
+			objs: policy(batchv1.AllowConcurrent),
 			expected: []checks.Diagnostic{
 				{
 					Severity: checks.Warning,
@@ -82,9 +82,9 @@ func TestCronJobConcurrency(t *testing.T) {
 	}
 }
 
-func policy(policy batchv1beta1.ConcurrencyPolicy) *kube.Objects {
+func policy(policy batchv1.ConcurrencyPolicy) *kube.Objects {
 	objs := initCronJob()
-	objs.CronJobs.Items[0].Spec = batchv1beta1.CronJobSpec{
+	objs.CronJobs.Items[0].Spec = batchv1.CronJobSpec{
 		ConcurrencyPolicy: policy,
 	}
 	return objs
@@ -92,10 +92,10 @@ func policy(policy batchv1beta1.ConcurrencyPolicy) *kube.Objects {
 
 func initCronJob() *kube.Objects {
 	objs := &kube.Objects{
-		CronJobs: &batchv1beta1.CronJobList{
-			Items: []batchv1beta1.CronJob{
+		CronJobs: &batchv1.CronJobList{
+			Items: []batchv1.CronJob{
 				{
-					TypeMeta:   metav1.TypeMeta{Kind: "CronJob", APIVersion: "batch/v1beta1"},
+					TypeMeta:   metav1.TypeMeta{Kind: "CronJob", APIVersion: "batch/v1"},
 					ObjectMeta: metav1.ObjectMeta{Name: "cronjob_foo"},
 				},
 			},

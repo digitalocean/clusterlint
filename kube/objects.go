@@ -26,7 +26,7 @@ import (
 	csi "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
 	"golang.org/x/sync/errgroup"
 	arv1 "k8s.io/api/admissionregistration/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	st "k8s.io/api/storage/v1"
@@ -70,7 +70,7 @@ type Objects struct {
 	MutatingWebhookConfigurations   *arv1.MutatingWebhookConfigurationList
 	ValidatingWebhookConfigurations *arv1.ValidatingWebhookConfigurationList
 	Namespaces                      *corev1.NamespaceList
-	CronJobs                        *batchv1beta1.CronJobList
+	CronJobs                        *batchv1.CronJobList
 }
 
 // Client encapsulates a client for a Kubernetes cluster.
@@ -91,7 +91,7 @@ func (c *Client) Close() {
 func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Objects, error) {
 	client := c.KubeClient.CoreV1()
 	admissionControllerClient := c.KubeClient.AdmissionregistrationV1()
-	batchClient := c.KubeClient.BatchV1beta1()
+	batchClient := c.KubeClient.BatchV1()
 	storageClient := c.KubeClient.StorageV1()
 	csiClient := c.CSIClient.SnapshotV1()
 	csiBetaClient := c.CSIClient.SnapshotV1beta1()
@@ -281,7 +281,7 @@ func objectsWithoutNils(objects *Objects) *Objects {
 		objects.Namespaces = &v1.NamespaceList{}
 	}
 	if objects.CronJobs == nil {
-		objects.CronJobs = &batchv1beta1.CronJobList{}
+		objects.CronJobs = &batchv1.CronJobList{}
 	}
 	if objects.VolumeSnapshotsV1 == nil {
 		objects.VolumeSnapshotsV1 = &csitypes.VolumeSnapshotList{}
