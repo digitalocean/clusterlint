@@ -3,7 +3,7 @@ module github.com/digitalocean/clusterlint
 go 1.19
 
 require (
-	github.com/docker/distribution v2.7.1+incompatible
+	github.com/docker/distribution v2.8.0+incompatible
 	github.com/fatih/color v1.12.0
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0
 	github.com/stretchr/testify v1.7.0
