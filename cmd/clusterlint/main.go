@@ -36,10 +36,13 @@ import (
 
 const delimiter = ":"
 
+var Version string
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "clusterlint"
 	app.Usage = "Linter for k8s objects from a live cluster"
+	app.Version = Version
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "kubeconfig",
