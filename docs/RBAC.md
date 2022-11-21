@@ -8,23 +8,49 @@ metadata:
 rules:
 - apiGroups: [""]
   resources:
-    - pods
-    - volumes
-    - deployments
-    - services
-    - cronjobs
-    - namespaces
-    - jobs
-    - persistentvolumeclaims
-    - persistentvolumes
-    - statefulsets
-    - storageclasses
-    - configmaps
-    - defaultstorageclass
+   - configmaps
+   - cronjobs
+   - defaultstorageclass
+   - deployments
+   - jobs
+   - limitranges
+   - namespaces
+   - nodes
+   - persistentvolumeclaims
+   - persistentvolumes
+   - pods
+   - podtemplates
+   - resourcequotas
+   - secrets
+   - serviceaccounts
+   - services
+   - statefulsets
+   - storageclasses
+   - volumes
+   - volumesnapshots
   verbs: ["get", "watch", "list"]
+- apiGroups: ["snapshot.storage.k8s.io"]]
+  resources:
+  - volumesnapshotcontents
+  - volumesnapshots
+  verbs: ["get", "watch", "list"]
+ - apiGroups: ["batch"]
+   resources:
+   - cronjobs
+   verbs: ["get", "watch", "list"]
+ - apiGroups: ["admissionregistration.k8s.io"]
+   resources:
+   - validatingwebhookconfigurations
+   - mutatingwebhookconfigurations
+   verbs: ["get", "watch", "list"]
+ - apiGroups: ["storage.k8s.io"]
+   resources:
+   - storageclasses
+   - defaultstorageclass
+   verbs: ["get", "watch", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: clusterlint-role-binding
   namespace: clusterlint
