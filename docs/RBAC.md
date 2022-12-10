@@ -10,7 +10,6 @@ rules:
   resources:
    - configmaps
    - cronjobs
-   - defaultstorageclass
    - deployments
    - jobs
    - limitranges
@@ -25,9 +24,7 @@ rules:
    - serviceaccounts
    - services
    - statefulsets
-   - storageclasses
    - volumes
-   - volumesnapshots
   verbs: ["get", "watch", "list"]
 - apiGroups: ["snapshot.storage.k8s.io"]]
   resources:
@@ -53,7 +50,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: clusterlint-role-binding
-  namespace: clusterlint
 subjects:
   - kind: ServiceAccount
     name: clusterlint
