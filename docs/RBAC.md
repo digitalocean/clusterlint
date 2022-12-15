@@ -26,7 +26,7 @@ rules:
    - statefulsets
    - volumes
   verbs: ["get", "watch", "list"]
-- apiGroups: ["snapshot.storage.k8s.io"]]
+- apiGroups: ["snapshot.storage.k8s.io"]
   resources:
   - volumesnapshotcontents
   - volumesnapshots
