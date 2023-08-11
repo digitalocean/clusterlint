@@ -74,6 +74,11 @@ func TestDobsPodOwnerWarning(t *testing.T) {
 			},
 		},
 		{
+			name:     "bare dobs pod referenced by pvc, but pvc does not specify storageclass name, default storage class is nil",
+			objs:     noDefaultStorageClass(DOCSIDriver),
+			expected: []checks.Diagnostic{},
+		},
+		{
 			name: "bare dobs pod referenced by deprecated pvc annotation",
 			objs: provideStorageClassInAnnotation(pvcDobs(DOBlockStorageName, DOCSIDriver)),
 			expected: []checks.Diagnostic{
@@ -153,7 +158,7 @@ func TestDobsPodOwnerWarning(t *testing.T) {
 		},
 		{
 			name: "bare dobs pod referenced by deprecated pvc annotation with default storage class -- with legacy driver",
-			objs:   provideStorageClassInAnnotation(pvcDobs("", LegacyCSIDriver)),
+			objs: provideStorageClassInAnnotation(pvcDobs("", LegacyCSIDriver)),
 			expected: []checks.Diagnostic{
 				{
 					Severity: checks.Warning,
@@ -438,7 +443,7 @@ func deployment(objs *kube.Objects) *kube.Objects {
 }
 
 // Users request dynamically provisioned storage by including a storage class in their PersistentVolumeClaim.
-// Before Kubernetes v1.6, this was done via the volume.beta.kubernetes.io/storage-class annotation. However, this annotation is deprecated since v1.9. 
+// Before Kubernetes v1.6, this was done via the volume.beta.kubernetes.io/storage-class annotation. However, this annotation is deprecated since v1.9.
 // https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/#:~:text=Users%20request%20dynamically,the%20PersistentVolumeClaim%20object.
 func provideStorageClassInAnnotation(objs *kube.Objects) *kube.Objects {
 	if objs.PersistentVolumeClaims.Items[0].Spec.StorageClassName != nil {
@@ -495,14 +500,14 @@ func multiDeployment() *kube.Objects {
 					TypeMeta:   metav1.TypeMeta{Kind: "PersistentVolumeClaim", APIVersion: "v1"},
 					ObjectMeta: metav1.ObjectMeta{Name: "def-pvc-1", Namespace: metav1.NamespaceDefault},
 					Spec: corev1.PersistentVolumeClaimSpec{
-						VolumeName:       "dobs-v1",
+						VolumeName: "dobs-v1",
 					},
 				},
 				{
 					TypeMeta:   metav1.TypeMeta{Kind: "PersistentVolumeClaim", APIVersion: "v1"},
 					ObjectMeta: metav1.ObjectMeta{Name: "def-pvc-2", Namespace: metav1.NamespaceDefault},
 					Spec: corev1.PersistentVolumeClaimSpec{
-						VolumeName:       "dobs-v2",
+						VolumeName: "dobs-v2",
 					},
 				},
 			},
@@ -625,6 +630,52 @@ func noDobs() *kube.Objects {
 				{
 					TypeMeta:   metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},
 					ObjectMeta: metav1.ObjectMeta{Name: "secret_foo", Namespace: "k8s"},
+				},
+			},
+		},
+	}
+	return objs
+}
+
+func noDefaultStorageClass(driver string) *kube.Objects {
+	objs := &kube.Objects{
+		Pods: &corev1.PodList{
+			Items: []corev1.Pod{
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "Pod", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: metav1.NamespaceDefault},
+					Spec: corev1.PodSpec{
+						Volumes: []corev1.Volume{
+							{
+								Name: "def-pvc-source",
+								VolumeSource: corev1.VolumeSource{
+									PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+										ClaimName: "def-pvc",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		PersistentVolumeClaims: &corev1.PersistentVolumeClaimList{
+			Items: []corev1.PersistentVolumeClaim{
+				{
+					TypeMeta:   metav1.TypeMeta{Kind: "PersistentVolumeClaim", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "def-pvc", Namespace: metav1.NamespaceDefault},
+					Spec: corev1.PersistentVolumeClaimSpec{
+						VolumeName: "dobs-v1",
+					},
+				},
+			},
+		},
+		StorageClasses: &st.StorageClassList{
+			Items: []st.StorageClass{
+				{
+					TypeMeta:    metav1.TypeMeta{Kind: "StorageClass", APIVersion: "storage.k8s.io/v1"},
+					ObjectMeta:  metav1.ObjectMeta{Name: DOBlockStorageName, Namespace: metav1.NamespaceDefault},
+					Provisioner: driver,
 				},
 			},
 		},

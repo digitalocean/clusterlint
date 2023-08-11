@@ -92,6 +92,14 @@ func isDOBSVolume(volume corev1.Volume, namespace string, objects *kube.Objects)
 		}
 
 		scn := getStorageClassName(claim)
+
+		if scn == nil {
+			// ideally, this (scn == nil and defaultStorageClass == nil) shouldn't be possible because k8s will complain
+			// but it can happen if defaultStorageClass != nil at one point and user later changed the cluster to have no default sc
+			if objects.DefaultStorageClass == nil {
+				return false
+			}
+		}
 		if scn == nil && isDOCSI(objects.DefaultStorageClass.Provisioner) {
 			return true
 		}
@@ -109,7 +117,7 @@ func isDOBSVolume(volume corev1.Volume, namespace string, objects *kube.Objects)
 	return false
 }
 
-func getStorageClassName(claim *corev1.PersistentVolumeClaim) *string{
+func getStorageClassName(claim *corev1.PersistentVolumeClaim) *string {
 	if claim.Spec.StorageClassName != nil {
 		return claim.Spec.StorageClassName
 	}
