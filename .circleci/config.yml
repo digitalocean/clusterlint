@@ -2,28 +2,28 @@ version: 2
 jobs:
   license:
     docker:
-      - image: golang:1.19
+      - image: golang:1.21
     steps:
       - checkout
       - run: ./script/check-licenses.sh
   vet:
     docker:
-      - image: golang:1.19
+      - image: golang:1.21
     steps:
       - checkout
       - run: go vet ./...
   test:
     docker:
-      - image: golang:1.19
+      - image: golang:1.21
     steps:
       - checkout
       - run: go test -race -cover ./...
   smoke-test:
     docker:
-      - image: golang:1.19
+      - image: golang:1.21
     steps:
       - checkout
-      - run: go run ./cmd/clusterlint --version
+      - run: go run ./cmd/clusterlint --help
 workflows:
   version: 2
   all:
