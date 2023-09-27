@@ -123,6 +123,20 @@ $ clusterlint --plugins=/path/to/plugin.so list
 $ clusterlint --plugins=/path/to/plugin.so run -c my-plugin-check
 ```
 
+## Update Go and dependencies
+1. Update Go version in
+   1. [go.mod](./go.mod)
+   2. [.circleci/config.yml](./.circleci/config.yml)
+   3. [.github/workflows/release.yml](./.github/workflows/release.yml)
+   4. [Dockerfile](./Dockerfile)
+2. Update Go dependencies
+   ```shell
+   go get -u ./...
+   go mod tidy
+   go mod vendor
+   ```
+3. Create and merge PR
+
 ## Release
 
 To release a new version of clusterlint, go to the actions page on GitHub, click on `Run workflow`.
