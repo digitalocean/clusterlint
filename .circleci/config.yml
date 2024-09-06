@@ -2,25 +2,25 @@ version: 2
 jobs:
   license:
     docker:
-      - image: golang:1.22
+      - image: golang:1.23
     steps:
       - checkout
       - run: ./script/check-licenses.sh
   vet:
     docker:
-      - image: golang:1.22
+      - image: golang:1.23
     steps:
       - checkout
       - run: go vet ./...
   test:
     docker:
-      - image: golang:1.22
+      - image: golang:1.23
     steps:
       - checkout
       - run: go test -race -cover ./...
   smoke-test:
     docker:
-      - image: golang:1.22
+      - image: golang:1.23
     steps:
       - checkout
       - run: go run ./cmd/clusterlint --help

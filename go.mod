@@ -1,8 +1,6 @@
 module github.com/digitalocean/clusterlint
 
-go 1.22.0
-
-toolchain go1.22.2
+go 1.23.1
 
 require (
 	github.com/docker/distribution v2.8.3+incompatible
