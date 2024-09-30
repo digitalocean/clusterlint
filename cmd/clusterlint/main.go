@@ -93,7 +93,7 @@ func main() {
 				},
 				cli.StringSliceFlag{
 					Name:  "G, ignore-groups",
-					Usage: "run all checks not in groups `GROUP1, GROUP2`",
+					Usage: "do not run all checks in groups `GROUP1, GROUP2`",
 				},
 				cli.StringSliceFlag{
 					Name:  "c, checks",
@@ -101,7 +101,7 @@ func main() {
 				},
 				cli.StringSliceFlag{
 					Name:  "C, ignore-checks",
-					Usage: "run a specific check",
+					Usage: "do not run a specific check",
 				},
 				cli.StringFlag{
 					Name:  "n, namespace",
@@ -109,7 +109,7 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "N, ignore-namespace",
-					Usage: "run checks not in specific namespace",
+					Usage: "do not run checks in specific namespace",
 				},
 				cli.StringFlag{
 					Name:  "output, o",
