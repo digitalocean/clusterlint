@@ -6,7 +6,21 @@ As clusters scale and become increasingly difficult to maintain, clusterlint hel
 
 Clusterlint queries live Kubernetes clusters for resources, executes common and platform specific checks against these resources and provides actionable feedback to cluster operators.  It is a non invasive tool that is run externally. Clusterlint does not alter the resource configurations.
 
-### Background
+## Table of Contents
+
+- [Background](#background)
+- [Install](#install)
+- [Usage](#usage)
+- [Running in-cluster](#running-in-cluster)
+- [Specific checks and groups](#specific-checks-and-groups)
+- [Disabling checks via Annotations](#disabling-checks-via-annotations)
+- [Building local checks](#building-local-checks)
+- [Update Go and dependencies](#update-go-and-dependencies)
+- [Release](#release)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Background
 
 Kubernetes resources can be configured and applied in many ways. This flexibility often makes it difficult to identify problems across the cluster at the time of configuration. Clusterlint looks at live clusters to analyze all its resources and report problems, if any.
 
