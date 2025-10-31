@@ -1,5 +1,5 @@
 # Build the clusterlint binary
-FROM golang:1.24 as builder
+FROM golang:1.25 as builder
 WORKDIR /workspace
 # Copy the Go Modules manifests
 COPY go.mod go.mod
