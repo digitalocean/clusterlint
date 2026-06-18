@@ -54,6 +54,8 @@ func TestFetchObjects(t *testing.T) {
 				}
 				cs.PrependReactor("list", "mutatingwebhookconfigurations", notFoundReactionFunc)
 				cs.PrependReactor("list", "validatingwebhookconfigurations", notFoundReactionFunc)
+				cs.PrependReactor("list", "validatingadmissionpolicies", notFoundReactionFunc)
+				cs.PrependReactor("list", "validatingadmissionpolicybindings", notFoundReactionFunc)
 			},
 		},
 	}
@@ -93,6 +95,8 @@ func TestFetchObjects(t *testing.T) {
 		assert.NotNil(t, actual.LimitRanges)
 		assert.NotNil(t, actual.ValidatingWebhookConfigurations)
 		assert.NotNil(t, actual.MutatingWebhookConfigurations)
+		assert.NotNil(t, actual.ValidatingAdmissionPolicies)
+		assert.NotNil(t, actual.ValidatingAdmissionPolicyBindings)
 		assert.NotNil(t, actual.SystemNamespace)
 		assert.NotNil(t, actual.CronJobs)
 		assert.NotNil(t, actual.VolumeSnapshotsV1)

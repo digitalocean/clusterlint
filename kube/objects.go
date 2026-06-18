@@ -41,7 +41,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-//Identifier is used to identify a specific namspace scoped object.
+// Identifier is used to identify a specific namspace scoped object.
 type Identifier struct {
 	Name      string
 	Namespace string
@@ -49,28 +49,30 @@ type Identifier struct {
 
 // Objects encapsulates all the objects from a Kubernetes cluster.
 type Objects struct {
-	Nodes                           *corev1.NodeList
-	PersistentVolumes               *corev1.PersistentVolumeList
-	SystemNamespace                 *corev1.Namespace
-	Pods                            *corev1.PodList
-	PodTemplates                    *corev1.PodTemplateList
-	PersistentVolumeClaims          *corev1.PersistentVolumeClaimList
-	ConfigMaps                      *corev1.ConfigMapList
-	Services                        *corev1.ServiceList
-	Secrets                         *corev1.SecretList
-	ServiceAccounts                 *corev1.ServiceAccountList
-	ResourceQuotas                  *corev1.ResourceQuotaList
-	LimitRanges                     *corev1.LimitRangeList
-	VolumeSnapshotsV1               *csitypes.VolumeSnapshotList
-	VolumeSnapshotsV1Content        *csitypes.VolumeSnapshotContentList
-	VolumeSnapshotsBeta             *csitypesbeta.VolumeSnapshotList
-	VolumeSnapshotsBetaContent      *csitypesbeta.VolumeSnapshotContentList
-	StorageClasses                  *st.StorageClassList
-	DefaultStorageClass             *st.StorageClass
-	MutatingWebhookConfigurations   *arv1.MutatingWebhookConfigurationList
-	ValidatingWebhookConfigurations *arv1.ValidatingWebhookConfigurationList
-	Namespaces                      *corev1.NamespaceList
-	CronJobs                        *batchv1.CronJobList
+	Nodes                             *corev1.NodeList
+	PersistentVolumes                 *corev1.PersistentVolumeList
+	SystemNamespace                   *corev1.Namespace
+	Pods                              *corev1.PodList
+	PodTemplates                      *corev1.PodTemplateList
+	PersistentVolumeClaims            *corev1.PersistentVolumeClaimList
+	ConfigMaps                        *corev1.ConfigMapList
+	Services                          *corev1.ServiceList
+	Secrets                           *corev1.SecretList
+	ServiceAccounts                   *corev1.ServiceAccountList
+	ResourceQuotas                    *corev1.ResourceQuotaList
+	LimitRanges                       *corev1.LimitRangeList
+	VolumeSnapshotsV1                 *csitypes.VolumeSnapshotList
+	VolumeSnapshotsV1Content          *csitypes.VolumeSnapshotContentList
+	VolumeSnapshotsBeta               *csitypesbeta.VolumeSnapshotList
+	VolumeSnapshotsBetaContent        *csitypesbeta.VolumeSnapshotContentList
+	StorageClasses                    *st.StorageClassList
+	DefaultStorageClass               *st.StorageClass
+	MutatingWebhookConfigurations     *arv1.MutatingWebhookConfigurationList
+	ValidatingWebhookConfigurations   *arv1.ValidatingWebhookConfigurationList
+	ValidatingAdmissionPolicies       *arv1.ValidatingAdmissionPolicyList
+	ValidatingAdmissionPolicyBindings *arv1.ValidatingAdmissionPolicyBindingList
+	Namespaces                        *corev1.NamespaceList
+	CronJobs                          *batchv1.CronJobList
 }
 
 // Client encapsulates a client for a Kubernetes cluster.
@@ -184,6 +186,16 @@ func (c *Client) FetchObjects(ctx context.Context, filter ObjectFilter) (*Object
 		return
 	})
 	g.Go(func() (err error) {
+		objects.ValidatingAdmissionPolicies, err = admissionControllerClient.ValidatingAdmissionPolicies().List(gCtx, opts)
+		err = annotateFetchError("ValidatingAdmissionPolicies (v1)", err)
+		return
+	})
+	g.Go(func() (err error) {
+		objects.ValidatingAdmissionPolicyBindings, err = admissionControllerClient.ValidatingAdmissionPolicyBindings().List(gCtx, opts)
+		err = annotateFetchError("ValidatingAdmissionPolicyBindings (v1)", err)
+		return
+	})
+	g.Go(func() (err error) {
 		objects.Namespaces, err = client.Namespaces().List(gCtx, opts)
 		err = annotateFetchError("Namespaces", err)
 		return
@@ -276,6 +288,12 @@ func objectsWithoutNils(objects *Objects) *Objects {
 	}
 	if objects.ValidatingWebhookConfigurations == nil {
 		objects.ValidatingWebhookConfigurations = &arv1.ValidatingWebhookConfigurationList{}
+	}
+	if objects.ValidatingAdmissionPolicies == nil {
+		objects.ValidatingAdmissionPolicies = &arv1.ValidatingAdmissionPolicyList{}
+	}
+	if objects.ValidatingAdmissionPolicyBindings == nil {
+		objects.ValidatingAdmissionPolicyBindings = &arv1.ValidatingAdmissionPolicyBindingList{}
 	}
 	if objects.Namespaces == nil {
 		objects.Namespaces = &v1.NamespaceList{}
