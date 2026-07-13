@@ -472,6 +472,84 @@ webhooks:
   timeoutSeconds: 10
 ```
 
+## Validating Admission Policy
+
+- Name: `validating-admission-policy`
+- Groups: `doks`
+
+[ValidatingAdmissionPolicies](https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/) evaluate CEL expressions in-process to accept or reject API requests. Like admission control webhooks, a policy that denies requests can disrupt upgrade and node replacement operations by preventing the DOKS reconciler from managing system components. This check flags a `ValidatingAdmissionPolicy` when all of the following are true:
+* It is referenced by a `ValidatingAdmissionPolicyBinding` whose `validationActions` include `Deny`. A policy with no binding, or one that only warns or audits, can never block a request.
+* Its `matchConstraints.resourceRules` apply to `v1`, `apps/v1`, `apps/v1beta1`, or `apps/v1beta2` resources.
+* It applies to the `kube-system` namespace once the policy and binding namespace selectors are combined.
+
+This check deliberately ignores `failurePolicy`. Unlike admission webhooks, a policy's `failurePolicy` only controls what happens when a CEL expression fails to evaluate. It does not affect validations that simply evaluate to `false`, so a policy enforced with `Deny` can block requests no matter how `failurePolicy` is set.
+
+For example, a cluster running the `safe-upgrades.gateway.networking.k8s.io` policy enforced through a `Deny` binding can get stuck in the `upgrading` or `reconcile pending` state because the reconciler's operations are rejected.
+
+### Example
+
+```yaml
+# Not recommended: a Deny-enforced policy that applies to core resources in kube-system.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: sample-policy.example.com
+spec:
+  matchConstraints:
+    resourceRules:
+    - apiGroups:   ["*"]
+      apiVersions: ["*"]
+      operations:  ["CREATE", "UPDATE"]
+      resources:   ["*"]
+  validations:
+  - expression: "false"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: sample-policy-binding.example.com
+spec:
+  policyName: sample-policy.example.com
+  validationActions: ["Deny"]
+```
+
+### How to Fix
+
+Use one of the following options:
+* Change the binding's `validationActions` to `Warn` or `Audit` instead of `Deny`.
+* Exclude the `kube-system` namespace with a `namespaceSelector` on the policy's `matchConstraints` or the binding's `matchResources`.
+* Scope the policy's `resourceRules` so they do not match the core or `apps` API groups that system components rely on during upgrades.
+
+```yaml
+# Recommended: exclude the kube-system namespace via a namespaceSelector.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: sample-policy.example.com
+spec:
+  matchConstraints:
+    namespaceSelector:
+      matchExpressions:
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values: ["kube-system"]
+    resourceRules:
+    - apiGroups:   ["*"]
+      apiVersions: ["*"]
+      operations:  ["CREATE", "UPDATE"]
+      resources:   ["*"]
+  validations:
+  - expression: "false"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: sample-policy-binding.example.com
+spec:
+  policyName: sample-policy.example.com
+  validationActions: ["Deny"]
+```
+
 ## DOBS Pod Owner
 
 - Name: `dobs-pod-owner`

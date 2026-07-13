@@ -39,6 +39,8 @@ rules:
    resources:
    - validatingwebhookconfigurations
    - mutatingwebhookconfigurations
+   - validatingadmissionpolicies
+   - validatingadmissionpolicybindings
    verbs: ["get", "watch", "list"]
  - apiGroups: ["storage.k8s.io"]
    resources:
