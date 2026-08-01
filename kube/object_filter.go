@@ -25,12 +25,12 @@ import (
 
 // ObjectFilter stores k8s object's fields that needs to be included or excluded while running checks
 type ObjectFilter struct {
-	IncludeNamespace string
-	ExcludeNamespace string
+	IncludeNamespace []string
+	ExcludeNamespace []string
 }
 
 // NewObjectFilter is a constructor to initialize an instance of ObjectFilter
-func NewObjectFilter(includeNamespace, excludeNamespace string) (ObjectFilter, error) {
+func NewObjectFilter(includeNamespace, excludeNamespace []string) (ObjectFilter, error) {
 	if len(includeNamespace) > 0 && len(excludeNamespace) > 0 {
 		return ObjectFilter{}, fmt.Errorf("cannot specify both include and exclude namespace conditions")
 	}
@@ -42,11 +42,18 @@ func NewObjectFilter(includeNamespace, excludeNamespace string) (ObjectFilter, e
 
 // NamespaceOptions returns ListOptions for filtering by namespace
 func (f ObjectFilter) NamespaceOptions(opts metav1.ListOptions) metav1.ListOptions {
+	var selectors []fields.Selector
 	if len(f.IncludeNamespace) > 0 {
-		opts.FieldSelector = fields.OneTermEqualSelector("metadata.namespace", f.IncludeNamespace).String()
+		for _, namespace := range f.IncludeNamespace {
+			selectors = append(selectors, fields.OneTermEqualSelector("metadata.namespace", namespace))
+		}
+	} else if len(f.ExcludeNamespace) > 0 {
+		for _, namespace := range f.ExcludeNamespace {
+			selectors = append(selectors, fields.OneTermNotEqualSelector("metadata.namespace", namespace))
+		}
 	}
-	if len(f.ExcludeNamespace) > 0 {
-		opts.FieldSelector = fields.OneTermNotEqualSelector("metadata.namespace", f.ExcludeNamespace).String()
+	if len(selectors) > 0 {
+		opts.FieldSelector = fields.AndSelectors(selectors...).String()
 	}
 	return opts
 }
