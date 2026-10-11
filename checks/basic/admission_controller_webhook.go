@@ -54,6 +54,16 @@ func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 
 	for _, config := range objects.ValidatingWebhookConfigurations.Items {
 		for _, wh := range config.Webhooks {
+			if wh.TimeoutSeconds != nil && *wh.TimeoutSeconds >= 30 {
+				diagnostics = append(diagnostics, checks.Diagnostic{
+					Severity: checks.Warning,
+					Message:  fmt.Sprintf("Validating webhook %s has a TimeoutSeconds value of %d seconds; values of 30 seconds or greater can cause admission and upgrade deadlocks.", wh.Name, *wh.TimeoutSeconds),
+					Kind:     checks.ValidatingWebhookConfiguration,
+					Object:   &config.ObjectMeta,
+					Owners:   config.ObjectMeta.GetOwnerReferences(),
+				})
+			}
+
 			if wh.ClientConfig.Service != nil {
 				// Ensure that the service (and its namespace) that is configure actually exists.
 
@@ -83,6 +93,16 @@ func (w *webhookCheck) Run(objects *kube.Objects) ([]checks.Diagnostic, error) {
 
 	for _, config := range objects.MutatingWebhookConfigurations.Items {
 		for _, wh := range config.Webhooks {
+			if wh.TimeoutSeconds != nil && *wh.TimeoutSeconds >= 30 {
+				diagnostics = append(diagnostics, checks.Diagnostic{
+					Severity: checks.Warning,
+					Message:  fmt.Sprintf("Mutating webhook %s has a TimeoutSeconds value of %d seconds; values of 30 seconds or greater can cause admission and upgrade deadlocks.", wh.Name, *wh.TimeoutSeconds),
+					Kind:     checks.MutatingWebhookConfiguration,
+					Object:   &config.ObjectMeta,
+					Owners:   config.ObjectMeta.GetOwnerReferences(),
+				})
+			}
+
 			if wh.ClientConfig.Service != nil {
 				// Ensure that the service (and its namespace) that is configure actually exists.
 

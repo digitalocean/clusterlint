@@ -240,9 +240,10 @@ spec:
 - Name: `admission-controller-webhook`
 - Groups: `basic`
 
-Admission control webhooks can disrupt normal cluster operations. Specifically, this happens when an admission control webhook targets a service that:
-* Does not exist
-* Is in a namespace that does not exist
+Admission control webhooks can disrupt normal cluster operations. Specifically, this happens when an admission control webhook:
+* Targets a service that does not exist
+* Targets a service in a namespace that does not exist
+* Has a `timeoutSeconds` value of 30 seconds or greater
 
 ### Example
 

@@ -239,6 +239,208 @@ func TestWebHookRun(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "webhook with timeout of 30 seconds triggers warning",
+			objs: &kube.Objects{
+				Namespaces: emptyNamespaceList,
+				MutatingWebhookConfigurations: &ar.MutatingWebhookConfigurationList{
+					Items: []ar.MutatingWebhookConfiguration{
+						func() ar.MutatingWebhookConfiguration {
+							mwc := baseMWC
+							mw := baseMW
+							mw.ClientConfig = ar.WebhookClientConfig{
+								URL: strPtr("https://webhook.example.com"),
+							}
+							mw.TimeoutSeconds = int32Ptr(30)
+							mwc.Webhooks = append(mwc.Webhooks, mw)
+							return mwc
+						}(),
+					},
+				},
+				ValidatingWebhookConfigurations: &ar.ValidatingWebhookConfigurationList{
+					Items: []ar.ValidatingWebhookConfiguration{
+						func() ar.ValidatingWebhookConfiguration {
+							vwc := baseVWC
+							vw := baseVW
+							vw.ClientConfig = ar.WebhookClientConfig{
+								URL: strPtr("https://webhook.example.com"),
+							}
+							vw.TimeoutSeconds = int32Ptr(30)
+							vwc.Webhooks = append(vwc.Webhooks, vw)
+							return vwc
+						}(),
+					},
+				},
+				SystemNamespace: &corev1.Namespace{},
+			},
+			expected: []checks.Diagnostic{
+				{
+					Severity: checks.Warning,
+					Message:  "Validating webhook vw_foo has a TimeoutSeconds value of 30 seconds; values of 30 seconds or greater can cause admission and upgrade deadlocks.",
+					Kind:     checks.ValidatingWebhookConfiguration,
+				},
+				{
+					Severity: checks.Warning,
+					Message:  "Mutating webhook mw_foo has a TimeoutSeconds value of 30 seconds; values of 30 seconds or greater can cause admission and upgrade deadlocks.",
+					Kind:     checks.MutatingWebhookConfiguration,
+				},
+			},
+		},
+		{
+			name: "webhook with timeout of 35 seconds triggers warning",
+			objs: &kube.Objects{
+				Namespaces: emptyNamespaceList,
+				MutatingWebhookConfigurations: &ar.MutatingWebhookConfigurationList{
+					Items: []ar.MutatingWebhookConfiguration{
+						func() ar.MutatingWebhookConfiguration {
+							mwc := baseMWC
+							mw := baseMW
+							mw.ClientConfig = ar.WebhookClientConfig{
+								URL: strPtr("https://webhook.example.com"),
+							}
+							mw.TimeoutSeconds = int32Ptr(35)
+							mwc.Webhooks = append(mwc.Webhooks, mw)
+							return mwc
+						}(),
+					},
+				},
+				ValidatingWebhookConfigurations: &ar.ValidatingWebhookConfigurationList{
+					Items: []ar.ValidatingWebhookConfiguration{
+						func() ar.ValidatingWebhookConfiguration {
+							vwc := baseVWC
+							vw := baseVW
+							vw.ClientConfig = ar.WebhookClientConfig{
+								URL: strPtr("https://webhook.example.com"),
+							}
+							vw.TimeoutSeconds = int32Ptr(35)
+							vwc.Webhooks = append(vwc.Webhooks, vw)
+							return vwc
+						}(),
+					},
+				},
+				SystemNamespace: &corev1.Namespace{},
+			},
+			expected: []checks.Diagnostic{
+				{
+					Severity: checks.Warning,
+					Message:  "Validating webhook vw_foo has a TimeoutSeconds value of 35 seconds; values of 30 seconds or greater can cause admission and upgrade deadlocks.",
+					Kind:     checks.ValidatingWebhookConfiguration,
+				},
+				{
+					Severity: checks.Warning,
+					Message:  "Mutating webhook mw_foo has a TimeoutSeconds value of 35 seconds; values of 30 seconds or greater can cause admission and upgrade deadlocks.",
+					Kind:     checks.MutatingWebhookConfiguration,
+				},
+			},
+		},
+		{
+			name: "webhook with timeout of 29 seconds passes cleanly",
+			objs: &kube.Objects{
+				Namespaces: emptyNamespaceList,
+				MutatingWebhookConfigurations: &ar.MutatingWebhookConfigurationList{
+					Items: []ar.MutatingWebhookConfiguration{
+						func() ar.MutatingWebhookConfiguration {
+							mwc := baseMWC
+							mw := baseMW
+							mw.ClientConfig = ar.WebhookClientConfig{
+								URL: strPtr("https://webhook.example.com"),
+							}
+							mw.TimeoutSeconds = int32Ptr(29)
+							mwc.Webhooks = append(mwc.Webhooks, mw)
+							return mwc
+						}(),
+					},
+				},
+				ValidatingWebhookConfigurations: &ar.ValidatingWebhookConfigurationList{
+					Items: []ar.ValidatingWebhookConfiguration{
+						func() ar.ValidatingWebhookConfiguration {
+							vwc := baseVWC
+							vw := baseVW
+							vw.ClientConfig = ar.WebhookClientConfig{
+								URL: strPtr("https://webhook.example.com"),
+							}
+							vw.TimeoutSeconds = int32Ptr(29)
+							vwc.Webhooks = append(vwc.Webhooks, vw)
+							return vwc
+						}(),
+					},
+				},
+				SystemNamespace: &corev1.Namespace{},
+			},
+			expected: nil,
+		},
+		{
+			name: "webhook with timeout of 10 seconds passes cleanly",
+			objs: &kube.Objects{
+				Namespaces: emptyNamespaceList,
+				MutatingWebhookConfigurations: &ar.MutatingWebhookConfigurationList{
+					Items: []ar.MutatingWebhookConfiguration{
+						func() ar.MutatingWebhookConfiguration {
+							mwc := baseMWC
+							mw := baseMW
+							mw.ClientConfig = ar.WebhookClientConfig{
+								URL: strPtr("https://webhook.example.com"),
+							}
+							mw.TimeoutSeconds = int32Ptr(10)
+							mwc.Webhooks = append(mwc.Webhooks, mw)
+							return mwc
+						}(),
+					},
+				},
+				ValidatingWebhookConfigurations: &ar.ValidatingWebhookConfigurationList{
+					Items: []ar.ValidatingWebhookConfiguration{
+						func() ar.ValidatingWebhookConfiguration {
+							vwc := baseVWC
+							vw := baseVW
+							vw.ClientConfig = ar.WebhookClientConfig{
+								URL: strPtr("https://webhook.example.com"),
+							}
+							vw.TimeoutSeconds = int32Ptr(10)
+							vwc.Webhooks = append(vwc.Webhooks, vw)
+							return vwc
+						}(),
+					},
+				},
+				SystemNamespace: &corev1.Namespace{},
+			},
+			expected: nil,
+		},
+		{
+			name: "webhook with nil timeout passes cleanly",
+			objs: &kube.Objects{
+				Namespaces: emptyNamespaceList,
+				MutatingWebhookConfigurations: &ar.MutatingWebhookConfigurationList{
+					Items: []ar.MutatingWebhookConfiguration{
+						func() ar.MutatingWebhookConfiguration {
+							mwc := baseMWC
+							mw := baseMW
+							mw.ClientConfig = ar.WebhookClientConfig{
+								URL: strPtr("https://webhook.example.com"),
+							}
+							mw.TimeoutSeconds = nil
+							mwc.Webhooks = append(mwc.Webhooks, mw)
+							return mwc
+						}(),
+					},
+				},
+				ValidatingWebhookConfigurations: &ar.ValidatingWebhookConfigurationList{
+					Items: []ar.ValidatingWebhookConfiguration{
+						func() ar.ValidatingWebhookConfiguration {
+							vwc := baseVWC
+							vw := baseVW
+							vw.ClientConfig = ar.WebhookClientConfig{
+								URL: strPtr("https://webhook.example.com"),
+							}
+							vw.TimeoutSeconds = nil
+							vwc.Webhooks = append(vwc.Webhooks, vw)
+							return vwc
+						}(),
+					},
+				},
+				SystemNamespace: &corev1.Namespace{},
+			},
+			expected: nil,
+		},
 	}
 
 	webhookCheck := webhookCheck{}
@@ -263,4 +465,8 @@ func TestWebHookRun(t *testing.T) {
 
 func strPtr(s string) *string {
 	return &s
+}
+
+func int32Ptr(i int32) *int32 {
+	return &i
 }
