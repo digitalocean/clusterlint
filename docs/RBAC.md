@@ -1,6 +1,11 @@
 The snippet below is an example to show how to run clusterlint in-cluster with RBAC enabled.
 
 ```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: clusterlint
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -31,22 +36,22 @@ rules:
   - volumesnapshotcontents
   - volumesnapshots
   verbs: ["get", "watch", "list"]
- - apiGroups: ["batch"]
-   resources:
-   - cronjobs
-   verbs: ["get", "watch", "list"]
- - apiGroups: ["admissionregistration.k8s.io"]
-   resources:
-   - validatingwebhookconfigurations
-   - mutatingwebhookconfigurations
-   - validatingadmissionpolicies
-   - validatingadmissionpolicybindings
-   verbs: ["get", "watch", "list"]
- - apiGroups: ["storage.k8s.io"]
-   resources:
-   - storageclasses
-   - defaultstorageclass
-   verbs: ["get", "watch", "list"]
+- apiGroups: ["batch"]
+  resources:
+  - cronjobs
+  verbs: ["get", "watch", "list"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources:
+  - validatingwebhookconfigurations
+  - mutatingwebhookconfigurations
+  - validatingadmissionpolicies
+  - validatingadmissionpolicybindings
+  verbs: ["get", "watch", "list"]
+- apiGroups: ["storage.k8s.io"]
+  resources:
+  - storageclasses
+  - defaultstorageclass
+  verbs: ["get", "watch", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -56,7 +61,6 @@ subjects:
   - kind: ServiceAccount
     name: clusterlint
     namespace: clusterlint
-    apiGroup: rbac.authorization.k8s.io
 roleRef:
   kind: ClusterRole
   name: clusterlint-role
@@ -84,9 +88,11 @@ spec:
       template:
         spec:
           serviceAccountName: clusterlint
+          automountServiceAccountToken: true
           containers:
             - name: clusterlint
-              image: docker.io/clusterlint:latest
+              image: digitalocean/clusterlint:latest
+              command: ['/clusterlint', '--in-cluster', 'run']
               imagePullPolicy: IfNotPresent
           restartPolicy: Never
 ```
