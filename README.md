@@ -27,10 +27,11 @@ Some examples of such checks are:
 ### Install
 
 ```bash
-go get github.com/digitalocean/clusterlint/cmd/clusterlint
+go install github.com/digitalocean/clusterlint/cmd/clusterlint@latest
 ```
 
-The above command creates the `clusterlint` binary in `$GOPATH/bin`
+The above command installs the `clusterlint` binary in `$GOBIN`, or in `$GOPATH/bin`
+when `GOBIN` is not set.
 
 ### Usage
 
