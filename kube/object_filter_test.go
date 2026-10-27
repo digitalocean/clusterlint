@@ -27,24 +27,44 @@ import (
 )
 
 func TestNamespaceError(t *testing.T) {
-	_, err := NewObjectFilter("kube-system", "kube-system")
+	_, err := NewObjectFilter([]string{"namespace-1"}, []string{"namespace-2"})
 
 	assert.Error(t, err)
 	assert.Equal(t, fmt.Errorf("cannot specify both include and exclude namespace conditions"), err)
 }
 
 func TestNamespaceOptions(t *testing.T) {
-	filter, err := NewObjectFilter("namespace-1", "")
+	filter, err := NewObjectFilter([]string{"namespace-1"}, []string{})
 	assert.NoError(t, err)
 	assert.Equal(t,
 		metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.namespace", "namespace-1").String()},
 		filter.NamespaceOptions(metav1.ListOptions{}),
 	)
 
-	filter, err = NewObjectFilter("", "namespace-2")
+	filter, err = NewObjectFilter([]string{}, []string{"namespace-2"})
 	assert.NoError(t, err)
 	assert.Equal(t,
 		metav1.ListOptions{FieldSelector: fields.OneTermNotEqualSelector("metadata.namespace", "namespace-2").String()},
+		filter.NamespaceOptions(metav1.ListOptions{}),
+	)
+
+	filter, err = NewObjectFilter([]string{"namespace-1", "namespace-2"}, []string{})
+	assert.NoError(t, err)
+	assert.Equal(t,
+		metav1.ListOptions{FieldSelector: fields.AndSelectors(
+			fields.OneTermEqualSelector("metadata.namespace", "namespace-1"),
+			fields.OneTermEqualSelector("metadata.namespace", "namespace-2"),
+		).String()},
+		filter.NamespaceOptions(metav1.ListOptions{}),
+	)
+
+	filter, err = NewObjectFilter([]string{}, []string{"namespace-3", "namespace-4"})
+	assert.NoError(t, err)
+	assert.Equal(t,
+		metav1.ListOptions{FieldSelector: fields.AndSelectors(
+			fields.OneTermNotEqualSelector("metadata.namespace", "namespace-3"),
+			fields.OneTermNotEqualSelector("metadata.namespace", "namespace-4"),
+		).String()},
 		filter.NamespaceOptions(metav1.ListOptions{}),
 	)
 }
